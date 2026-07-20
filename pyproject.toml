@@ -1,0 +1,15 @@
+[project]
+name = "tinymesh"
+version = "0.1.0"
+description = "Tinygrad-native learning over sparse structures through space and time"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = [
+    "tinygrad==0.13.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.29,<0.12.0"]
+build-backend = "uv_build"

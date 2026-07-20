@@ -42,7 +42,17 @@ an application, data platform, trainer framework, or model zoo.
 
 ## Status
 
-Early research. There is no stable API or installable release yet.
+Early research. The package is installable from source, but there is no stable
+API or published release yet.
 
 The `tinygrad` submodule is a pinned source reference for implementation study.
 It is not vendored application code.
+
+## Development
+
+Requires [uv](https://docs.astral.sh/uv/):
+
+```console
+uv sync --locked
+uv run python -m unittest discover -s tests -p 'test_*.py'
+```
