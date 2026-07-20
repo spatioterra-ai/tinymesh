@@ -1,18 +1,27 @@
 # tinymesh
 
-**Graphs through time, in tinygrad.**
+**Sparse structure through space and time, in tinygrad.**
 
-tinymesh is an experimental library for learning over sparse spatiotemporal
-graphs using [tinygrad](https://github.com/tinygrad/tinygrad).
+tinymesh is an experimental library for learning over graphs, geospatial
+structures, and geometric meshes using
+[tinygrad](https://github.com/tinygrad/tinygrad).
 
-A mesh is a sparse graph topology together with time-indexed node and edge
-state. The initial focus is deliberately narrow: fixed graphs, temporal
-windows, message passing, and recurrent forecasting.
+A mesh combines sparse topology, optional geometry, attached tensor fields, and
+time. A graph is the simplest mesh. Coordinates embed it in geographic or
+physical space; faces and volumes extend it into 2D and 3D; time-varying fields
+or geometry make it 4D.
+
+The initial implementation remains deliberately narrow: fixed graph topology,
+optional coordinates, temporal fields, message passing, and recurrent
+forecasting. Higher-dimensional cells and changing topology follow only when
+the core provides a natural extension.
 
 ## Principles
 
 - Sparse by construction: computation scales with edges, not node pairs.
-- Tensor-first: graph and temporal state have small, explicit contracts.
+- Tensor-first: topology, geometry, fields, and time have explicit contracts.
+- Geometry is optional: topology remains useful without an embedding.
+- Geo-aware: coordinates and spatial-reference metadata are first-class.
 - Tinygrad-native: no compatibility layer over another ML framework.
 - Composable: message, aggregate, update, and temporal evolution remain separate.
 - Minimal: one clear primitive before multiple architectures or abstractions.
@@ -21,14 +30,15 @@ windows, message passing, and recurrent forecasting.
 
 The first milestone is:
 
-1. A sparse graph record.
-2. A temporal graph record.
-3. An edge-based message-passing primitive.
-4. One recurrent spatiotemporal forecasting model.
-5. One reproducible synthetic example.
+1. A sparse vertex-and-edge topology.
+2. Optional coordinates and attached tensor fields.
+3. Fixed-topology, time-indexed fields.
+4. An edge-based message-passing primitive.
+5. One recurrent spatiotemporal model and reproducible synthetic example.
 
-tinymesh is not an application, GIS SDK, data platform, trainer framework, or
-model zoo.
+Geospatial learning is core scope. General-purpose GIS storage, file parsing,
+reprojection, and cartographic rendering enter through adapters. tinymesh is not
+an application, data platform, trainer framework, or model zoo.
 
 ## Status
 
