@@ -45,6 +45,11 @@ an application, data platform, trainer framework, or model zoo.
 Early research. The package is installable from source, but there is no stable
 API or published release yet.
 
+Sparse aggregation is not yet admitted: the native Tinygrad candidate is
+correct and differentiable, but its work scales with node-edge pairs. The
+[feasibility record](docs/sparse-aggregation.md) contains the reproducible gate
+and exact evidence.
+
 The `tinygrad` submodule is a pinned source reference for implementation study.
 It is not vendored application code.
 
@@ -59,4 +64,5 @@ Requires [uv](https://docs.astral.sh/uv/):
 ```console
 uv sync --locked
 uv run python -m unittest discover -s tests -p 'test_*.py'
+uv run python experiments/sparse_aggregation.py
 ```
