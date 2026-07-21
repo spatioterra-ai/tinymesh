@@ -2,9 +2,11 @@
 
 ## Decision
 
-Sparse message passing remains blocked at Tinygrad revision
-[`980748c`](https://github.com/tinygrad/tinygrad/tree/980748ccfc4e3900ac652d8451e2ead9bfb4d09a).
-No graph primitive enters the Tinymesh package in this stage.
+Tinymesh still withholds sparse message passing: at Tinygrad revision
+[`980748c`](https://github.com/tinygrad/tinygrad/tree/980748ccfc4e3900ac652d8451e2ead9bfb4d09a),
+the tested native composition passed the recorded correctness gates but was not
+edge-linear. No sparse message-passing implementation enters Tinymesh in this
+stage.
 
 The smallest native candidate is:
 
@@ -29,10 +31,11 @@ fourfold increase instead:
 | CPU operations | 7,376 | 29,156 | 115,656 | 460,680 |
 | Metal operations | 91,232 | 325,824 | 1,225,088 | 4,743,936 |
 
-The lazy graph also contains `N * E * H` carriers. Tinygrad may fuse these rather
-than allocate the full tensors, but fusion does not remove the quadratic work.
-A synthetic `N=30,000`, `E=60,000`, `H=32` case therefore implies 57.6 billion
-logical node-edge-feature lanes before useful message computation.
+A fresh pinned-revision Metal rerun retained 24 `N * E * H` carriers at every
+measured size. Tinygrad may fuse these rather than allocate the full tensors,
+but fusion does not remove the quadratic work. A synthetic `N=30,000`,
+`E=60,000`, `H=32` case therefore implies 57.6 billion logical
+node-edge-feature lanes before useful message computation.
 
 This matches the pinned implementation: `gather` uses a one-hot mask and
 `scatter_reduce` expands source values and a destination mask before reduction
@@ -41,12 +44,44 @@ The current upstream scatter-reduce comparisons remain forward-only
 ([tests](https://github.com/tinygrad/tinygrad/blob/980748ccfc4e3900ac652d8451e2ead9bfb4d09a/test/backend/test_ops.py#L3130-L3141)),
 although this experiment observes correct sum gradients on its small cases.
 
-Tinygrad's atomic embedding backward is not a general escape hatch. It is a
-custom UOp kernel limited to CPU and AMD, while `Tensor.custom_kernel` is marked
-alpha; its forward lookup still uses one-hot reduction
+Tinygrad's atomic embedding backward was not a complete tested alternative. It
+is a custom UOp kernel limited to CPU and AMD, while `Tensor.custom_kernel` is
+marked alpha; its forward lookup still uses one-hot reduction
 ([implementation](https://github.com/tinygrad/tinygrad/blob/980748ccfc4e3900ac652d8451e2ead9bfb4d09a/tinygrad/nn/__init__.py#L307-L396)).
-Depending on that path would create the private, backend-specific compiler layer
-this stage explicitly excludes.
+This leaves custom UOps as a research candidate rather than an established
+library path; it does not assign the solution to either repository.
+
+## Current-master follow-up
+
+An isolated 2026-07-21 probe at Tinygrad
+[`f64f96ec`](https://github.com/tinygrad/tinygrad/tree/f64f96ec596082c5230cda9471b54af7b88b58cd)
+made the unresolved boundary narrower. Current source still uses one-hot
+expansion for public `gather` and `scatter_reduce`, while
+`Tensor.custom_kernel` remains alpha
+([indexed operations](https://github.com/tinygrad/tinygrad/blob/f64f96ec596082c5230cda9471b54af7b88b58cd/tinygrad/mixin/op.py#L1008-L1117),
+[custom kernels](https://github.com/tinygrad/tinygrad/blob/f64f96ec596082c5230cda9471b54af7b88b58cd/tinygrad/tensor.py#L166-L172)):
+
+| Path | Observed evidence | Remaining gap |
+|---|---|---|
+| Public `gather + scatter_reduce(sum)` | For `N=16,32,64,128`, `E=2N`, and `H=4`, CPU forward work grew `7,376 -> 29,156 -> 115,656 -> 460,680`; squared-loss gradient-evaluation work, including that forward computation, grew `13,616 -> 54,052 -> 214,600 -> 855,176` | Still node-edge scaling; backward-only work was not isolated |
+| Direct UOp gather | Existing `INDEX`, `LOAD`, and `STORE` operations produced the expected small result on CPU and Metal | Alpha custom-kernel boundary; no integrated gradient or scaling result |
+| Destination-CSR sum | One global worker per destination looped over its stored row and produced `[3, 6, 11, 0]` from values `[3, 1, 5, 4, 7]` and row pointers `[0, 1, 3, 5, 5]` on CPU and Metal | Backward, degree-skew performance, and default-optimized and instrumented execution remain unproven |
+
+The direct probes used existing UOps through `Tensor.custom_kernel`; they did
+not require a new low-level operation. The CSR probe avoided atomics by giving
+each destination row one writer. Its backward gathers destination gradients;
+the direct gather's backward reduces over topology grouped by source. Neither
+gradient was implemented.
+
+These probes are not yet a usable Tinymesh path. Default kernel optimization failed
+with `KeyError: dtypes.weakint` unless options were fixed explicitly, and normal
+statistics collection raised
+`TypeError: _f() missing 1 required positional argument: 'core_id'` for the
+data-dependent row loop. Disabling statistics allowed the small kernel to run.
+The custom-kernel API remains alpha, and neither end-to-end autograd nor scaling,
+compile time, memory, degree imbalance, or topology-preprocessing cost was
+measured. This probe must become a checked-in Tinymesh experiment before it can
+justify product or upstream work.
 
 ## How the PyTorch stack expresses it
 
@@ -111,7 +146,12 @@ uv run python experiments/sparse_aggregation.py
 DEV=CPU uv run python experiments/sparse_aggregation.py
 ```
 
-The gate can reopen when Tinygrad exposes backend-neutral indexed gather and
-segment-sum semantics whose forward and backward work are proportional to
-`(N + E) * H`. Until then, Tinymesh can study tensor, temporal, and composition
-contracts, but it must not call dense emulation sparse graph support.
+The gate can reopen when one implementation demonstrates transport and
+aggregation work and memory proportional to `(N + E) * H` for the
+identity-message case, in both directions and on the intended devices. More complex
+messages add their own edge-local costs. The component probes make grouped CSR
+one concrete path to test, but they do not establish a complete execution
+strategy or implementation boundary. Possible code owners remain Tinymesh—
+through downstream composition over public Tensor APIs or a custom UOp—or
+Tinygrad—through optimized current lowering or a new generic operation. Until
+then, Tinymesh must not call the measured dense emulation sparse graph support.

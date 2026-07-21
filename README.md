@@ -46,9 +46,10 @@ Early research. The package is installable from source, but there is no stable
 API or published release yet.
 
 Sparse aggregation is not yet admitted: the native Tinygrad candidate is
-correct and differentiable, but its work scales with node-edge pairs. The
-[feasibility record](docs/sparse-aggregation.md) contains the reproducible gate
-and exact evidence.
+passed the recorded forward and gradient cases, but its work scales with
+node-edge pairs. The [feasibility record](docs/sparse-aggregation.md) contains
+the reproducible gate and exact evidence. The remedy and its implementation
+boundary remain open.
 
 The submodules are pinned, reference-only source for implementation study:
 
