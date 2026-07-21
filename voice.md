@@ -3,7 +3,8 @@
 tinymesh sounds calm, direct, exact, and evidence-first.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) owns contribution scope, evidence, and
-workflow. This file owns the prose used to communicate that work.
+workflow. This file owns the prose used to communicate that work. Its examples
+are illustrative and add no acceptance or evidence requirements.
 
 The voice borrows useful habits from Tinygrad and George Hotz's technical
 writing: start from the real problem, use concrete examples, make claims
@@ -73,10 +74,11 @@ long enough to need them.
 Small change:
 
 ```markdown
-`Mesh.validate` accepted destinations outside the node range. Rejecting them at
-construction keeps invalid topology out of every downstream operation.
+`native_edge_sum` creates `[N, E, H]` carriers. Keeping it in the experiment
+prevents the package from claiming sparse aggregation before work scales with
+edges.
 
-Verified with `uv run python -m unittest tests.test_mesh`.
+Verified with `uv run python -m unittest tests.test_sparse_aggregation`.
 ```
 
 Measured change:
