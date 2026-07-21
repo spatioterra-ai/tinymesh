@@ -80,3 +80,8 @@ Initialize the optional study references with:
 ```console
 git submodule update --init
 ```
+
+Contributions follow
+[CONTRIBUTING.md](CONTRIBUTING.md).
+Repository prose, issues, pull requests, and reviews follow
+[voice.md](voice.md).
