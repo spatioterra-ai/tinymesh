@@ -31,7 +31,7 @@ Read [README.md](README.md), the relevant document under [`docs/`](docs/), and
 
 - A small bug fix with a focused regression test.
 - A simplification that removes a concept or unifies duplicated paths.
-- A backend-neutral primitive required by more than one model composition.
+- A reusable mesh operation required by more than one current model composition.
 - A reproducible experiment that resolves an architecture decision.
 - A non-brittle correctness, gradient, equivariance, or scaling test.
 - Documentation that makes an implemented contract, limitation, or result more
@@ -54,7 +54,8 @@ of scope.
    example, backward for a gradient claim or optimization search for compiler
    metadata.
 5. Identify the smallest owner of the fix. tinymesh owns mesh contracts and
-   compositions; tinygrad owns primitive tensor and compiler behavior.
+   compositions; tinygrad owns primitive tensor and compiler behavior. A
+   scaling observation alone does not decide which repository must change.
 6. Check whether a clean prerequisite refactor can make the behavior change
    small and obvious. Keep that refactor independently useful.
 7. If no live caller or documented contract depends on the behavior, stop. Do

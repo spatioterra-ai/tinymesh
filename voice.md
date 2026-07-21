@@ -129,8 +129,8 @@ Bad titles:
 - `Idea: build the ultimate mesh framework`
 
 Do not bundle gather, segmented reduction, temporal recurrence, and a model zoo
-into one issue because one application needs all four. Prove and discuss one
-primitive at a time.
+into one issue because one application needs all four. Measure and discuss one
+behavior at a time.
 
 ## Comments and reviews
 
