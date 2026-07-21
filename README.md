@@ -82,6 +82,6 @@ git submodule update --init
 ```
 
 Contributions follow
-[CONTRIBUTING.md](https://github.com/spatioterra-ai/tinymesh/blob/main/CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md).
 Repository prose, issues, pull requests, and reviews follow
-[voice.md](https://github.com/spatioterra-ai/tinymesh/blob/main/voice.md).
+[voice.md](voice.md).

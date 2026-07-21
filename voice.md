@@ -2,6 +2,9 @@
 
 tinymesh sounds calm, direct, exact, and evidence-first.
 
+[CONTRIBUTING.md](CONTRIBUTING.md) owns contribution scope, evidence, and
+workflow. This file owns the prose used to communicate that work.
+
 The voice borrows useful habits from Tinygrad and George Hotz's technical
 writing: start from the real problem, use concrete examples, make claims
 falsifiable, prefer a complete simple formulation, and admit uncertainty or a
@@ -185,9 +188,10 @@ Tinygrad's current
 [contribution guide](https://github.com/tinygrad/tinygrad/blob/2864036e8ef99cab0a14d3bc19574a052d09b1b8/README.md#contributing)
 supplies the small-diff, readability, benchmark, regression-test, API-parity,
 and replay discipline. Representative accepted changes show unification
-([`#9114`](https://github.com/tinygrad/tinygrad/pull/9114)), exact performance
-evidence ([`#14400`](https://github.com/tinygrad/tinygrad/pull/14400)), and tests
-whose parity can be inspected ([`#8947`](https://github.com/tinygrad/tinygrad/pull/8947)).
+([`#9114`](https://github.com/tinygrad/tinygrad/pull/9114)), a named-hardware
+measurement ([`#14400`](https://github.com/tinygrad/tinygrad/pull/14400)), and
+tests whose parity can be inspected
+([`#8947`](https://github.com/tinygrad/tinygrad/pull/8947)).
 
 The blog posts
 [“Can tinygrad win?”](https://geohot.github.io/blog/jekyll/update/2025/07/06/can-tinygrad-win.html),

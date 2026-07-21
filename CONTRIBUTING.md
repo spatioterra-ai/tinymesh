@@ -48,16 +48,17 @@ of scope.
    correctness, scaling, or metadata consequence. A reachable synthetic state
    alone is not a demonstrated product defect.
 2. Reproduce the problem through that caller on current `main`.
-3. Record the exact tinygrad revision, device, shapes, command, expected result,
-   and observed result.
-4. Trace the fact through adjacent paths such as optimization search, caching,
-   JIT, backward execution, and custom programs before choosing its owner.
-5. Identify the smallest owner of the fix. tinymesh owns mesh semantics;
-   tinygrad owns tensor execution, autograd, lowering, and device kernels.
+3. Record the revision, command, expected result, and observed result. Include
+   the dependency revision, device, and shapes when they affect the claim.
+4. Trace only adjacent paths that can change or consume the claimed fact: for
+   example, backward for a gradient claim or optimization search for compiler
+   metadata.
+5. Identify the smallest owner of the fix. tinymesh owns mesh contracts and
+   compositions; tinygrad owns primitive tensor and compiler behavior.
 6. Check whether a clean prerequisite refactor can make the behavior change
    small and obvious. Keep that refactor independently useful.
-7. If no live caller or documented contract depends on the behavior, record the
-   finding as a latent hypothesis and stop instead of patching it.
+7. If no live caller or documented contract depends on the behavior, stop. Do
+   not turn a latent hypothesis into product code or an upstream issue.
 8. Open an issue first when the API, ownership, sparse invariant, or dependency
    direction is unresolved. Small proven fixes can go directly to a pull
    request.
