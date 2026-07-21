@@ -50,12 +50,20 @@ correct and differentiable, but its work scales with node-edge pairs. The
 [feasibility record](docs/sparse-aggregation.md) contains the reproducible gate
 and exact evidence.
 
-The `tinygrad` submodule is a pinned source reference for implementation study.
-It is not vendored application code.
+The submodules are pinned, reference-only source for implementation study:
 
-Development follows upstream `master`. The runtime dependency, lockfile, and
-reference submodule pin the same commit so each experiment remains reproducible;
-all three advance together at the start of a new stage.
+- `tinygrad` matches the exact runtime dependency and lockfile revision;
+- PyTorch Geometric 2.8.0 and PyTorch Geometric Temporal `fe555bc` provide
+  comparative graph and temporal implementations.
+
+They are not vendored runtime code. PyTorch itself is not a submodule: its
+repository is much larger, while exact links to the indexed, scatter, segment,
+and sparse-matrix operators provide the useful study boundary.
+
+Tinygrad development follows upstream `master`. The runtime dependency,
+lockfile, and reference submodule pin the same commit so each experiment remains
+reproducible; all three advance together at the start of a new stage. The
+comparative references move only with an intentional, revision-bound study.
 
 ## Development
 
@@ -65,4 +73,10 @@ Requires [uv](https://docs.astral.sh/uv/):
 uv sync --locked
 uv run python -m unittest discover -s tests -p 'test_*.py'
 uv run python experiments/sparse_aggregation.py
+```
+
+Initialize the optional study references with:
+
+```console
+git submodule update --init
 ```

@@ -1,3 +1,9 @@
 [submodule "submodules/tinygrad"]
 	path = submodules/tinygrad
 	url = https://github.com/tinygrad/tinygrad.git
+[submodule "submodules/pytorch-geometric"]
+	path = submodules/pytorch-geometric
+	url = https://github.com/pyg-team/pytorch_geometric.git
+[submodule "submodules/pytorch-geometric-temporal"]
+	path = submodules/pytorch-geometric-temporal
+	url = https://github.com/benedekrozemberczki/pytorch_geometric_temporal.git

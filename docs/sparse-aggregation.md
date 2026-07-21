@@ -48,6 +48,61 @@ alpha; its forward lookup still uses one-hot reduction
 Depending on that path would create the private, backend-specific compiler layer
 this stage explicitly excludes.
 
+## How the PyTorch stack expresses it
+
+PyTorch Geometric 2.8.0 uses the same semantic lowering Tinymesh needs, but its
+backend primitives are genuinely indexed:
+
+```text
+node state [N, H]
+  -> torch.index_select(source)       [E, H]
+  -> message                          [E, H]
+  -> zeros[N, H].scatter_add(target)  [N, H]
+```
+
+`MessagePassing` obtains source or target rows with `Tensor.index_select`
+([PyG source](https://github.com/pyg-team/pytorch_geometric/blob/2.8.0/torch_geometric/nn/conv/message_passing.py#L263-L328)).
+Its sum and mean aggregations use PyTorch's in-place `scatter_add_`
+([PyG source](https://github.com/pyg-team/pytorch_geometric/blob/2.8.0/torch_geometric/utils/_scatter.py#L67-L80)).
+The expanded target index has shape `[E, H]`; it never introduces an `N * E`
+axis. For compatible layers and sparse adjacency inputs, PyG can instead fuse
+message and aggregation into sparse matrix multiplication
+([PyG source](https://github.com/pyg-team/pytorch_geometric/blob/2.8.0/torch_geometric/utils/_spmm.py#L12-L131)).
+
+PyTorch owns the corresponding backward operations. The source gradient of
+`scatter_add` is a gather
+([PyTorch source](https://github.com/pytorch/pytorch/blob/v2.12.0/tools/autograd/derivatives.yaml#L1518-L1522));
+the input gradient of `index_select` is a zero tensor followed by `index_add_`
+([PyTorch source](https://github.com/pytorch/pytorch/blob/v2.12.0/aten/src/ATen/native/TensorAdvancedIndexing.cpp#L1878-L1890)).
+Both directions therefore touch node or edge feature lanes, not every
+node-edge pair. PyG owns graph semantics and orchestration; PyTorch owns indexed
+loads, accumulation, autograd, and device kernels.
+
+PyTorch Geometric Temporal adds no universal temporal graph kernel. Its static
+signal container returns one ordinary PyG `Data` snapshot at a time while
+reusing one `edge_index`
+([source](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/fe555bc30ee197755c4b58a89407033a5f383415/torch_geometric_temporal/signal/static_graph_temporal_signal.py#L14-L134)).
+The recurrent model then composes PyG operations across time:
+
+- `GConvGRU` performs six `ChebConv` calls per time step—two for each GRU
+  gate—and each Chebyshev order adds another sparse propagation
+  ([cell](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/fe555bc30ee197755c4b58a89407033a5f383415/torch_geometric_temporal/nn/recurrent/gconv_gru.py#L55-L170),
+  [convolution](https://github.com/pyg-team/pytorch_geometric/blob/2.8.0/torch_geometric/nn/conv/cheb_conv.py#L142-L182)).
+  It remains edge-linear, with work roughly proportional to `T * K * E` times
+  feature widths and gate constants.
+- The ordinary `DCRNN` implementation is not sparse end to end. Its `DConv`
+  constructs an `[N, N]` adjacency with `to_dense_adj` for degree calculation
+  and reverse-edge construction before calling sparse `propagate`
+  ([source](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/fe555bc30ee197755c4b58a89407033a5f383415/torch_geometric_temporal/nn/recurrent/dcrnn.py#L42-L111)).
+  `DCRNN` invokes that layer for all three recurrent gates. The separate
+  `BatchedDConv` path instead computes degrees with `scatter_add_` and reverses
+  the edge list directly
+  ([source](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/fe555bc30ee197755c4b58a89407033a5f383415/torch_geometric_temporal/nn/recurrent/dcrnn.py#L258-L325)).
+
+The lesson is narrower than “PyG Temporal is sparse”: PyG's primitive path is
+edge-linear, but every temporal architecture must still be audited for dense
+normalization, adjacency conversion, batching, and repeated topology work.
+
 ## Reproduce
 
 ```console
