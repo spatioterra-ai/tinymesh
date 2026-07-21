@@ -48,6 +48,10 @@ API or published release yet.
 The `tinygrad` submodule is a pinned source reference for implementation study.
 It is not vendored application code.
 
+Development follows upstream `master`. The runtime dependency, lockfile, and
+reference submodule pin the same commit so each experiment remains reproducible;
+all three advance together at the start of a new stage.
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/):
