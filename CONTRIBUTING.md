@@ -99,6 +99,9 @@ aggregation, lowering assumptions, or scaling evidence. Test every backend
 named in the claim. A passing numerical result does not prove sparse complexity;
 inspect operation growth and intermediate shapes too.
 
+Run `uv run python experiments/csr_aggregation.py` when changing the CSR
+candidate, its transpose backward, or degree-skew evidence.
+
 Dependency changes must keep `pyproject.toml`, `uv.lock`, and the corresponding
 reference submodule on the same exact revision. Change a gitlink in a dedicated
 pull request and record the upstream delta and compatibility evidence.

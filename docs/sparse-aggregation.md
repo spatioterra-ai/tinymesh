@@ -2,13 +2,85 @@
 
 ## Decision
 
-Tinymesh still withholds sparse message passing: at Tinygrad revision
-[`980748c`](https://github.com/tinygrad/tinygrad/tree/980748ccfc4e3900ac652d8451e2ead9bfb4d09a),
-the tested native composition passed the recorded correctness gates but was not
-edge-linear. No sparse message-passing implementation enters Tinymesh in this
-stage.
+At Tinygrad revision
+[`b1a7229`](https://github.com/tinygrad/tinygrad/tree/b1a72299ab3f2c94eceb644f1ed43117149679d1),
+a Tinymesh-owned destination-CSR kernel passes the identity-message correctness,
+gradient, and sparse-structure gates on CPU and Metal. Forward computes `A @ X`;
+its custom gradient runs the same kernel over transpose CSR to compute
+`A^T @ dY`. Neither direction uses atomics or constructs node-edge state.
 
-The smallest native candidate is:
+This resolves the implementation boundary without adding a Tinygrad primitive,
+but not the public API. The candidate remains in `experiments/`: it relies on
+the alpha `Tensor.custom_kernel` surface and a newly landed data-dependent
+`Ops.LOOP`; Tinygrad's default kernel option search still raises
+`KeyError: dtypes.weakint`, so the kernel pins `opts_to_apply=()`. It covers
+fixed-topology first-order sum aggregation only and serializes each CSR row
+within one feature lane. Admit it to the package only after those contracts
+prove stable enough for a real model caller.
+
+## CSR result
+
+One immutable topology stores both destination CSR and its transpose:
+
+```text
+forward:  destination row -> source columns -> sum source features
+backward: source row      -> target columns -> sum target gradients
+```
+
+The transpose makes backward the same operation as forward. Preprocessing sorts
+each row by column, so a fixed node labeling is deterministic regardless of COO
+input order. Duplicate edges retain multiplicity; isolated rows return zero.
+Hand-computed tests cover both directions, repeated sources and destinations,
+duplicate edges, isolated nodes, empty topology, COO-order invariance, and
+vertex-permutation equivariance on exact-valued fixtures on CPU and Metal. As
+with any sequential floating-point reduction, relabeling can change summation
+order and therefore the final rounding bits.
+
+For balanced degree-eight graphs with feature width `H = 32`, the stored
+topology has exactly `2E + 2(N + 1)` integer elements. Each direction launches
+`N * H` lanes whose row loops make exactly `E * H` active edge visits:
+
+| N | E | Topology elements | Forward lane work | Backward lane work |
+|---:|---:|---:|---:|---:|
+| 4,096 | 32,768 | 73,730 | 1,179,648 | 1,179,648 |
+| 8,192 | 65,536 | 147,458 | 2,359,296 | 2,359,296 |
+| 16,384 | 131,072 | 294,914 | 4,718,592 | 4,718,592 |
+
+Doubling `N` and `E` therefore doubles useful lane work exactly and grows
+topology storage linearly. This follows from the CSR representation and the
+single dynamic row loop; it is the complexity proof. Tinygrad's counters cannot
+observe data-dependent loop trips, so wall time is supporting evidence, not the
+proof.
+
+On a 32 GB Apple M4 MacBook Air running macOS 26.5.2, after five warmups and
+across 20 samples, the largest cases produced these representative medians:
+
+| Device | Topology | Forward (ms) | Backward (ms) |
+|---|---|---:|---:|
+| CPU | balanced | 3.81 | 4.03 |
+| CPU | one destination hub | 6.86 | 4.67 |
+| CPU | one source hub | 3.59 | 7.89 |
+| Metal | balanced | 3.71 | 3.15 |
+| Metal | one destination hub | 17.55 | 1.30 |
+| Metal | one source hub | 2.41 | 17.38 |
+
+The hub cases expose the present tradeoff: one high-degree row serializes its
+edges across only `H` feature lanes. Preprocessing and compilation are excluded
+from these kernel medians. Tinygrad's kernel option search is disabled as noted
+above, and repeated balanced timings varied enough that no performance claim
+should rest on the table alone.
+
+The result does not yet cover weighted or edge-dependent messages, batching,
+changing topology, higher-order gradients, or topology construction cost.
+Empty graphs use Tinygrad's ordinary `values * 0` path because a custom kernel
+cannot receive zero-length buffers. A one-node graph similarly reduces to
+`values * E`, avoiding unnecessary traversal and a degenerate Metal loop scope.
+
+## Rejected public composition
+
+At the earlier Tinygrad revision
+[`980748c`](https://github.com/tinygrad/tinygrad/tree/980748ccfc4e3900ac652d8451e2ead9bfb4d09a),
+the smallest native candidate was:
 
 ```text
 node state [N, H]
@@ -16,11 +88,12 @@ node state [N, H]
   -> scatter_reduce(sum) by target [N, H]
 ```
 
-It passes hand-computed forward values, isolated-node behavior, finite-difference
-gradients, and vertex-permutation equivariance. It fails the defining sparse
-invariant: work must scale with edges rather than node-edge pairs.
+It passed hand-computed forward values, isolated-node behavior,
+finite-difference gradients, and vertex-permutation equivariance. It failed the
+defining sparse invariant: work must scale with edges rather than node-edge
+pairs.
 
-## Evidence
+### Evidence
 
 For `E = 2N` and `H = 4`, doubling both `N` and `E` should approximately double
 the work of an edge-linear implementation. The native candidate approaches a
@@ -51,7 +124,7 @@ marked alpha; its forward lookup still uses one-hot reduction
 This leaves custom UOps as a research candidate rather than an established
 library path; it does not assign the solution to either repository.
 
-## Current-master follow-up
+## Precursor custom-kernel probe
 
 An isolated 2026-07-21 probe at Tinygrad
 [`f64f96ec`](https://github.com/tinygrad/tinygrad/tree/f64f96ec596082c5230cda9471b54af7b88b58cd)
@@ -65,23 +138,22 @@ expansion for public `gather` and `scatter_reduce`, while
 |---|---|---|
 | Public `gather + scatter_reduce(sum)` | For `N=16,32,64,128`, `E=2N`, and `H=4`, CPU forward work grew `7,376 -> 29,156 -> 115,656 -> 460,680`; squared-loss gradient-evaluation work, including that forward computation, grew `13,616 -> 54,052 -> 214,600 -> 855,176` | Still node-edge scaling; backward-only work was not isolated |
 | Direct UOp gather | Existing `INDEX`, `LOAD`, and `STORE` operations produced the expected small result on CPU and Metal | Alpha custom-kernel boundary; no integrated gradient or scaling result |
-| Destination-CSR sum | One global worker per destination looped over its stored row and produced `[3, 6, 11, 0]` from values `[3, 1, 5, 4, 7]` and row pointers `[0, 1, 3, 5, 5]` on CPU and Metal | Backward, degree-skew performance, and default-optimized and instrumented execution remain unproven |
+| Destination-CSR sum | One global worker per destination looped over its stored row and produced `[3, 6, 11, 0]` from values `[3, 1, 5, 4, 7]` and row pointers `[0, 1, 3, 5, 5]` on CPU and Metal | Backward, degree-skew performance, and default-optimized and instrumented execution were unproven |
 
 The direct probes used existing UOps through `Tensor.custom_kernel`; they did
 not require a new low-level operation. The CSR probe avoided atomics by giving
-each destination row one writer. Its backward gathers destination gradients;
-the direct gather's backward reduces over topology grouped by source. Neither
-gradient was implemented.
+each destination row one writer. The checked-in experiment above completes its
+first-order gradient with transpose CSR.
 
-These probes are not yet a usable Tinymesh path. Default kernel optimization failed
-with `KeyError: dtypes.weakint` unless options were fixed explicitly, and normal
+At that revision, default kernel optimization failed with
+`KeyError: dtypes.weakint` unless options were fixed explicitly, and normal
 statistics collection raised
 `TypeError: _f() missing 1 required positional argument: 'core_id'` for the
-data-dependent row loop. Disabling statistics allowed the small kernel to run.
-The custom-kernel API remains alpha, and neither end-to-end autograd nor scaling,
-compile time, memory, degree imbalance, or topology-preprocessing cost was
-measured. This probe must become a checked-in Tinymesh experiment before it can
-justify product or upstream work.
+data-dependent row loop. Tinygrad revision `b1a7229` supplies the loop form used
+by the checked-in experiment, but default kernel optimization still fails with
+the same `KeyError`, so the candidate pins `opts_to_apply=()`. The alpha API,
+disabled option search, and unmeasured compilation and topology-preprocessing
+costs remain limitations.
 
 ## How the PyTorch stack expresses it
 
@@ -142,16 +214,17 @@ normalization, adjacency conversion, batching, and repeated topology work.
 
 ```console
 uv run python -m unittest tests.test_sparse_aggregation
+DEV=CPU uv run python -m unittest tests.test_csr_aggregation
+DEV=METAL uv run python -m unittest tests.test_csr_aggregation
 uv run python experiments/sparse_aggregation.py
-DEV=CPU uv run python experiments/sparse_aggregation.py
+DEV=CPU uv run python experiments/csr_aggregation.py
+DEV=METAL uv run python experiments/csr_aggregation.py
 ```
 
-The gate can reopen when one implementation demonstrates transport and
-aggregation work and memory proportional to `(N + E) * H` for the
-identity-message case, in both directions and on the intended devices. More complex
-messages add their own edge-local costs. The component probes make grouped CSR
-one concrete path to test, but they do not establish a complete execution
-strategy or implementation boundary. Possible code owners remain Tinymesh—
-through downstream composition over public Tensor APIs or a custom UOp—or
-Tinygrad—through optimized current lowering or a new generic operation. Until
-then, Tinymesh must not call the measured dense emulation sparse graph support.
+The CSR experiment satisfies the structural gate for fixed-topology,
+identity-message, first-order sum aggregation in both directions. More complex
+messages add edge-local costs and require their own proof. Public package
+admission is a separate gate: a real model caller must justify depending on the
+alpha custom-kernel and dynamic-loop contracts, or a simpler stable Tinygrad
+surface must replace them. The rejected public gather-and-scatter composition
+must not be called sparse graph support.
