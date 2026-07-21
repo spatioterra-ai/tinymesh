@@ -44,14 +44,21 @@ of scope.
 
 ## Before changing code
 
-1. Reproduce the problem on current `main`.
-2. Record the exact tinygrad revision, device, shapes, command, expected result,
+1. Name the current caller, workload, or documented contract and its concrete
+   correctness, scaling, or metadata consequence. A reachable synthetic state
+   alone is not a demonstrated product defect.
+2. Reproduce the problem through that caller on current `main`.
+3. Record the exact tinygrad revision, device, shapes, command, expected result,
    and observed result.
-3. Identify the smallest owner of the fix. tinymesh owns mesh semantics;
+4. Trace the fact through adjacent paths such as optimization search, caching,
+   JIT, backward execution, and custom programs before choosing its owner.
+5. Identify the smallest owner of the fix. tinymesh owns mesh semantics;
    tinygrad owns tensor execution, autograd, lowering, and device kernels.
-4. Check whether a clean prerequisite refactor can make the behavior change
+6. Check whether a clean prerequisite refactor can make the behavior change
    small and obvious. Keep that refactor independently useful.
-5. Open an issue first when the API, ownership, sparse invariant, or dependency
+7. If no live caller or documented contract depends on the behavior, record the
+   finding as a latent hypothesis and stop instead of patching it.
+8. Open an issue first when the API, ownership, sparse invariant, or dependency
    direction is unresolved. Small proven fixes can go directly to a pull
    request.
 
