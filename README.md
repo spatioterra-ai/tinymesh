@@ -50,10 +50,10 @@ pairs. A Tinymesh-owned destination-CSR custom kernel now passes the recorded
 forward, gradient, and edge-linear structure gates on CPU and Metal; its
 transpose CSR supplies the backward pass without atomics. It remains an
 experiment because `Tensor.custom_kernel` is alpha and the required dynamic
-loop is new in the pinned Tinygrad revision; Tinygrad's default kernel option
-search also still fails for this loop, so the candidate disables it. The
-[feasibility record](docs/sparse-aggregation.md) contains the exact boundary and
-evidence.
+loop is new in the pinned Tinygrad revision; Tinygrad's default kernel
+optimization still fails UOp verification for this loop, so the candidate
+disables it. The [feasibility record](docs/sparse-aggregation.md) contains the
+exact boundary and evidence.
 
 The submodules are pinned, reference-only source for implementation study:
 
