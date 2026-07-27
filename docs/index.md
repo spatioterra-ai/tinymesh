@@ -8,8 +8,8 @@ nodes may interact. Coordinates, higher-dimensional cells, and time can extend
 that structure without replacing the sparse core.
 
 tinymesh is experimental. It currently proves fixed-graph sparse aggregation
-and one trainable GraphSAGE layer on CPU and Metal. It does not expose a stable
-public API yet.
+with trainable mean-GraphSAGE and unweighted GCN callers on CPU and Metal. It
+does not expose a stable public API yet.
 
 ## Try it
 
@@ -36,7 +36,7 @@ from node `1`. The other nodes have no incoming edges, so their aggregate is
 zero.
 
 The [quick start](quickstart.md) follows this value through topology lowering,
-sparse execution, backward propagation, and one trainable layer.
+sparse execution, backward propagation, and two trainable layers.
 
 ## The stack
 
@@ -50,7 +50,7 @@ topology lowering      COO -> CSR(A) + CSR(A.T)
 sparse operation       A @ X forward, A.T @ dY backward
     |
     v
-model composition      mean GraphSAGE
+model composition      mean GraphSAGE, unweighted GCN
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -70,6 +70,7 @@ constructs dense node-pair or node-edge state.
 - fixed-topology device-buffer reuse;
 - one mean-GraphSAGE composition whose neighbor parameter learns through the
   sparse boundary;
+- one GCN composition with source and destination degree normalization;
 - CPU and Metal tests.
 
 The implementation remains under `experiments/`. Its custom kernel uses an
@@ -87,6 +88,8 @@ topology, higher-order gradients, geometry, cells, and time are not implemented.
   revision-bound implementation and scaling evidence.
 - [Mean GraphSAGE experiment](research/mean-sage.md) records the exact learning
   witness and its limits.
+- [GCN experiment](research/gcn.md) records the normalized second caller and
+  the shared boundary it exposes.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and

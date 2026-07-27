@@ -37,6 +37,21 @@ transforming before or after a mean gives the same forward value, but placing it
 before aggregation proves that its parameter gradient crosses the sparse
 backward boundary.
 
+## GCN composition
+
+The second caller uses the same sum with symmetric degree normalization:
+
+```text
+message:    m(u -> v) = W x_u / sqrt(d_u)
+aggregate:  a_v       = sum(m(u -> v) for each edge u -> v)
+update:     y_v       = a_v / sqrt(d_v)
+```
+
+For unit edges this is `D^-1/2 A D^-1/2 XW`. Source and destination
+normalization are ordinary node-wise tensor operations, so they compose around
+the existing CSR sum. The experiment requires the caller to include self-loops
+explicitly.
+
 ## Gradient path
 
 The layer's forward flow is:
@@ -84,16 +99,16 @@ or training on a real graph.
 The same decomposition identifies capabilities that do not exist yet:
 
 - GIN keeps sum aggregation and adds a learned update.
-- GCN introduces source and destination degree normalization.
 - Attention requires edge scores and a sparse normalization such as segment
   softmax.
 - Temporal graph models repeat or evolve spatial state across ordered
   snapshots.
 
-These are design probes, not supported architectures. tinymesh will expose a
-public composition only after another real caller shows which boundary is
-shared.
+These remain design probes, not supported architectures. Mean GraphSAGE and
+GCN now expose a shared semantic boundary, but the alpha execution path still
+blocks a stable public composition.
 
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives
-in [Mean GraphSAGE experiment](../research/mean-sage.md).
+in [Mean GraphSAGE experiment](../research/mean-sage.md). The normalized second
+caller lives in [GCN experiment](../research/gcn.md).

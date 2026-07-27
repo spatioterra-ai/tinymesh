@@ -1,7 +1,7 @@
 # Quick start
 
 This guide starts with one directed graph, runs sparse aggregation, follows its
-gradient, and trains one graph layer. It assumes basic Python and tensor
+gradient, and trains two graph layers. It assumes basic Python and tensor
 knowledge.
 
 tinymesh has no stable package API yet. Run this guide from a repository
@@ -89,7 +89,7 @@ contributes to two outputs, so its gradient is `2`.
 Forward uses destination CSR to compute `A @ X`. Backward uses transpose CSR to
 compute `A.T @ dY`. The same sparse sum implements both directions.
 
-## Train one graph layer
+## Train mean GraphSAGE
 
 The first model caller is mean GraphSAGE:
 
@@ -124,6 +124,26 @@ or a stable API. Read [Message passing](concepts/message-passing.md) for the
 layer decomposition and [Mean GraphSAGE experiment](research/mean-sage.md) for
 the exact witness.
 
+## Reuse the sum in GCN
+
+The second caller adds symmetric degree normalization around the same sparse
+sum:
+
+```text
+output = D^-1/2 A D^-1/2 XW
+```
+
+Run its one-step witness:
+
+```console
+DEV=CPU uv run python -m experiments.gcn
+```
+
+For unit edges, the source and destination factors are node-wise tensor
+operations. The existing CSR operation still owns only the sum; GCN owns its
+normalization and linear map. Read [GCN experiment](research/gcn.md) for the
+dense-reference, permutation, and learning evidence.
+
 ## Read the source
 
 The implementation is intentionally small:
@@ -132,10 +152,12 @@ The implementation is intentionally small:
   owns topology lowering, sparse forward, and sparse backward;
 - [`experiments/mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/mean_sage.py)
   composes the first trainable model;
+- [`experiments/gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gcn.py)
+  composes the normalized second caller;
 - [`tests/test_csr_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_csr_aggregation.py)
-  and [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
+  with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
+  and [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py)
   state the current contracts.
 
-These paths are experimental. The next public API should appear only after a
-second model caller demonstrates which topology and aggregation boundaries are
-actually shared.
+These paths remain experimental. The two callers share topology and CSR sum,
+but the alpha tinygrad execution boundary is not a stable public contract.
