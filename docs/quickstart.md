@@ -29,9 +29,13 @@ Each node has one scalar feature:
 ```python
 from tinygrad import Tensor
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_sum
+from experiments.csr_aggregation import (
+    CSRTopology,
+    csr_edge_sum,
+    csr_edge_weighted_sum,
+)
 
-topology = CSRTopology(4, source=[0, 1, 1], target=[2, 2, 3])
+topology = CSRTopology(4, source=[1, 0, 1], target=[3, 2, 2])
 state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
 
 output = csr_edge_sum(state, topology)
@@ -88,6 +92,47 @@ contributes to two outputs, so its gradient is `2`.
 
 Forward uses destination CSR to compute `A @ X`. Backward uses transpose CSR to
 compute `A.T @ dY`. The same sparse sum implements both directions.
+
+## Weight individual edges
+
+Scalar edge values follow the `source` and `target` arrays passed to
+`CSRTopology`. Lower them with the same permutation as connectivity:
+
+```python
+raw_weight = [-1.0, 0.5, 2.0]
+edge_weight = Tensor(
+    topology.lower_edge_values(raw_weight),
+    device="CPU",
+).realize()
+
+print(topology.edge_order)
+# (1, 2, 0)
+
+weighted = csr_edge_weighted_sum(state, topology, edge_weight)
+print(weighted.tolist())
+# [[0.0], [0.0], [9.0], [-4.0]]
+```
+
+CSR position `0` came from COO edge `1`, position `1` from edge `2`, and
+position `2` from edge `0`; the weight moved with each edge.
+
+Both inputs differentiate:
+
+```python
+node_gradient, edge_weight_gradient = weighted.sum().gradient(
+    state,
+    edge_weight,
+)
+print(node_gradient.tolist())
+# [[0.5], [1.0], [0.0], [0.0]]
+print(edge_weight_gradient.tolist())
+# [2.0, 4.0, 4.0]
+```
+
+The edge-weight gradient is in canonical CSR order. `topology.edge_order` maps
+each position back to its original COO edge. Read
+[Weighted aggregation experiment](research/weighted-aggregation.md) for the
+formula, duplicate-edge evidence, and sparse-structure checks.
 
 ## Train mean GraphSAGE
 
@@ -154,9 +199,12 @@ The implementation is intentionally small:
   composes the first trainable model;
 - [`experiments/gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gcn.py)
   composes the normalized second caller;
+- [`experiments/weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/weighted_aggregation.py)
+  records weighted forward and both gradients;
 - [`tests/test_csr_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_csr_aggregation.py)
   with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
-  and [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py)
+  [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
+  and [`tests/test_weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_weighted_aggregation.py)
   state the current contracts.
 
 These paths remain experimental. The two callers share topology and CSR sum,

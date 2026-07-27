@@ -7,9 +7,10 @@ A graph is the smallest mesh. Nodes carry tensor fields and edges say which
 nodes may interact. Coordinates, higher-dimensional cells, and time can extend
 that structure without replacing the sparse core.
 
-tinymesh is experimental. It currently proves fixed-graph sparse aggregation
-with trainable mean-GraphSAGE and unweighted GCN callers on CPU and Metal. It
-does not expose a stable public API yet.
+tinymesh is experimental. It currently proves fixed-graph unit and
+scalar-weighted sparse aggregation, plus trainable mean-GraphSAGE and
+unweighted GCN callers, on CPU and Metal. It does not expose a stable public
+API yet.
 
 ## Try it
 
@@ -41,13 +42,13 @@ sparse execution, backward propagation, and two trainable layers.
 ## The stack
 
 ```text
-edge facts             source -> target
+edge facts             source -> target, optional scalar value
     |
     v
-topology lowering      COO -> CSR(A) + CSR(A.T)
+topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
     |
     v
-sparse operation       A @ X forward, A.T @ dY backward
+sparse operation       unit or weighted forward, dX, and dw
     |
     v
 model composition      mean GraphSAGE, unweighted GCN
@@ -60,13 +61,14 @@ Geometric compatibility layer.
 
 The current operation stores `O(N + E)` topology and performs
 `O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`. It never
-constructs dense node-pair or node-edge state.
+constructs `[N, N]` or `[E, H]` intermediates.
 
 ## What works
 
 - deterministic directed edge-list to CSR lowering;
 - destination-owned sparse sum with no atomic writes;
 - the same operation over transpose CSR for first-order backward;
+- scalar edge weights with one gradient owner per edge;
 - fixed-topology device-buffer reuse;
 - one mean-GraphSAGE composition whose neighbor parameter learns through the
   sparse boundary;
@@ -75,7 +77,7 @@ constructs dense node-pair or node-edge state.
 
 The implementation remains under `experiments/`. Its custom kernel uses an
 alpha tinygrad surface and disables default kernel optimization for its
-data-dependent CSR loop. Weighted messages, attention, batching, changing
+data-dependent CSR loop. Vector edge messages, attention, batching, changing
 topology, higher-order gradients, geometry, cells, and time are not implemented.
 
 ## Learn how it works
@@ -90,6 +92,8 @@ topology, higher-order gradients, geometry, cells, and time are not implemented.
   witness and its limits.
 - [GCN experiment](research/gcn.md) records the normalized second caller and
   the shared boundary it exposes.
+- [Weighted aggregation experiment](research/weighted-aggregation.md) records
+  scalar edge lowering and both first-order gradients.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and

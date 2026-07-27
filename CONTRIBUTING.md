@@ -87,7 +87,9 @@ native lowering or its scaling evidence. Run
 `DEV=<device> uv run python experiments/csr_aggregation.py` on every backend
 named by a CSR, gradient, or degree-skew claim. Run
 `DEV=<device> uv run python -m experiments.mean_sage` when changing the first
-trainable caller.
+trainable caller. Run
+`DEV=<device> uv run python -m experiments.weighted_aggregation` when changing
+edge identity, scalar weighting, or edge gradients.
 
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.

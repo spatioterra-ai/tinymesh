@@ -58,8 +58,9 @@ column[row_ptr[v]:row_ptr[v + 1]]
 ```
 
 tinymesh sorts each row by source. Input edge order therefore does not change
-the stored topology for a fixed node labeling. Duplicate edges remain duplicate
-and keep their multiplicity; empty rows remain explicit.
+CSR connectivity for a fixed node labeling. A separate edge-order map retains
+which COO edge produced each CSR position. Duplicate edges remain separate and
+keep their identities and multiplicity; empty rows remain explicit.
 
 ## Adjacency without a dense matrix
 
@@ -96,8 +97,49 @@ forward CSR:    destination row -> source columns -> sum source features
 transpose CSR:  source row      -> target columns -> sum target gradients
 ```
 
-One primitive carries both directions. The topology stores
-`2E + 2(N + 1)` integers across the two CSR forms.
+One primitive carries both directions. The two CSR forms contain
+`2E + 2(N + 1)` integers.
+
+## Edge identity survives lowering
+
+Connectivity is not the only edge fact. A weight, distance, timestamp, or
+provenance value must move with the source-target pair it describes.
+
+For one unordered COO input:
+
+```text
+COO edge ordinal       0       1       2
+edge                  1 -> 3  0 -> 2  1 -> 2
+weight                -1.0     0.5     2.0
+                       |        |       |
+                       +---- lower -----+
+                                |
+CSR position           0       1       2
+edge                  0 -> 2  1 -> 2  1 -> 3
+weight                 0.5     2.0    -1.0
+edge_order              1       2       0
+```
+
+`edge_order[p]` is the original COO ordinal for forward CSR position `p`.
+`lower_edge_values` applies that map once at the host boundary. The weighted
+kernel then receives connectivity and values in one canonical order.
+
+Backward needs two more views, both derived from the same topology:
+
+```text
+transpose_edge[transpose position] -> forward CSR position
+row_index[forward CSR position]    -> destination node
+```
+
+The transpose map selects the right weight while computing `dX`. The row index
+is derived from `row_ptr` when weighted device buffers are first realized and
+locates the destination while computing `dw`; it is not a second source of
+topology truth.
+
+The topology retains `2E` host edge-identity ordinals in addition to the two
+CSR forms. Weighted execution realizes `2E` auxiliary device ordinals for the
+transpose map and derived row index. Scalar weights add `E` values. Storage
+remains `O(N + E)`; no `[E, H]` edge-feature product is materialized.
 
 ## Pull versus push
 
@@ -136,9 +178,10 @@ Python CSR tuples
 tinygrad integer tensors
 ```
 
-The edge list remains the construction input. CSR is the execution form.
-Fixed topology can reuse its realized execution form across training steps;
-cache ownership and measurements belong to the revision-bound research records.
+The edge list remains the construction input. CSR plus aligned edge values is
+the execution form. Fixed topology can reuse its realized execution form
+across training steps; cache ownership and measurements belong to the
+revision-bound research records.
 
 The current sparse invariant is:
 
@@ -146,4 +189,5 @@ The current sparse invariant is:
 > must not materialize node-pair or node-edge products.
 
 The revision-bound implementation and measurements live in
-[Sparse aggregation feasibility](../research/sparse-aggregation.md).
+[Sparse aggregation feasibility](../research/sparse-aggregation.md) and
+[Weighted aggregation experiment](../research/weighted-aggregation.md).

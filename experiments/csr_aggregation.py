@@ -7,11 +7,15 @@ import os
 from dataclasses import asdict, dataclass, field
 from importlib.metadata import distribution
 from statistics import median
+from typing import TypeVar
 
 from tinygrad import Device, Tensor, UOp, dtypes
 from tinygrad.dtype import AddrSpace
 from tinygrad.engine.realize import time_call
-from tinygrad.uop.ops import KernelInfo, Ops
+from tinygrad.uop.ops import AxisType, KernelInfo, Ops
+
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True, init=False)
@@ -21,12 +25,19 @@ class CSRTopology:
     column: tuple[int, ...]
     transpose_row_ptr: tuple[int, ...]
     transpose_column: tuple[int, ...]
+    edge_order: tuple[int, ...]
+    transpose_edge: tuple[int, ...]
     _tensors_by_device: dict[str, tuple[Tensor, Tensor, Tensor, Tensor]] = field(
         init=False,
         repr=False,
         compare=False,
     )
     _degree_by_device: dict[str, Tensor] = field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
+    _edge_tensors_by_device: dict[str, tuple[Tensor, Tensor]] = field(
         init=False,
         repr=False,
         compare=False,
@@ -45,15 +56,26 @@ class CSRTopology:
         if any(node < 0 or node >= nodes for edge in (source, target) for node in edge):
             raise ValueError(f"node IDs must be in [0, {nodes})")
 
-        column, row_ptr = _group(nodes, target, source)
-        transpose_column, transpose_row_ptr = _group(nodes, source, target)
+        column, row_ptr, edge_order = _group(nodes, target, source)
+        transpose_column, transpose_row_ptr, transpose_input_order = _group(nodes, source, target)
+        canonical_edge = [0] * len(edge_order)
+        for canonical, original in enumerate(edge_order):
+            canonical_edge[original] = canonical
         object.__setattr__(self, "nodes", nodes)
         object.__setattr__(self, "row_ptr", row_ptr)
         object.__setattr__(self, "column", column)
         object.__setattr__(self, "transpose_row_ptr", transpose_row_ptr)
         object.__setattr__(self, "transpose_column", transpose_column)
+        object.__setattr__(self, "edge_order", edge_order)
+        object.__setattr__(self, "transpose_edge", tuple(canonical_edge[edge] for edge in transpose_input_order))
         object.__setattr__(self, "_tensors_by_device", {})
         object.__setattr__(self, "_degree_by_device", {})
+        object.__setattr__(self, "_edge_tensors_by_device", {})
+
+    def lower_edge_values(self, values: list[T] | tuple[T, ...]) -> tuple[T, ...]:
+        if len(values) != len(self.edge_order):
+            raise ValueError(f"edge values must have length {len(self.edge_order)}, got {len(values)}")
+        return tuple(values[edge] for edge in self.edge_order)
 
     def _tensors(self, device: str) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         tensors = self._tensors_by_device.get(device)
@@ -78,6 +100,20 @@ class CSRTopology:
             self._degree_by_device[device] = degree
         return degree
 
+    def _edge_tensors(self, device: str) -> tuple[Tensor, Tensor]:
+        tensors = self._edge_tensors_by_device.get(device)
+        if tensors is None:
+            tensors = (
+                Tensor(self.transpose_edge, dtype=dtypes.int32, device=device).realize(),
+                Tensor(
+                    [row for row in range(self.nodes) for _ in range(self.row_ptr[row], self.row_ptr[row + 1])],
+                    dtype=dtypes.int32,
+                    device=device,
+                ).realize(),
+            )
+            self._edge_tensors_by_device[device] = tensors
+        return tensors
+
 
 @dataclass(frozen=True)
 class Observation:
@@ -85,7 +121,7 @@ class Observation:
     nodes: int
     edges: int
     width: int
-    topology_elements: int
+    csr_elements: int
     forward_lane_work: int
     backward_lane_work: int
     forward_median_ms: float
@@ -152,20 +188,62 @@ def _group(
     nodes: int,
     owner: list[int] | tuple[int, ...],
     neighbor: list[int] | tuple[int, ...],
-) -> tuple[tuple[int, ...], tuple[int, ...]]:
-    rows: list[list[int]] = [[] for _ in range(nodes)]
-    for row_index, column in zip(owner, neighbor):
-        rows[row_index].append(column)
-    flat = tuple(column for row in rows for column in sorted(row))
+) -> tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
+    rows: list[list[tuple[int, int]]] = [[] for _ in range(nodes)]
+    for edge, (row_index, column) in enumerate(zip(owner, neighbor)):
+        rows[row_index].append((column, edge))
+    flat = tuple(item for row in rows for item in sorted(row))
     row_ptr = [0]
-    for columns in rows:
-        row_ptr.append(row_ptr[-1] + len(columns))
-    return flat, tuple(row_ptr)
+    for row in rows:
+        row_ptr.append(row_ptr[-1] + len(row))
+    return (
+        tuple(column for column, _ in flat),
+        tuple(row_ptr),
+        tuple(edge for _, edge in flat),
+    )
 
 
 def _csr_sum_kernel(output: UOp, values: UOp, row_ptr: UOp, column: UOp, *_: UOp) -> UOp:
+    return _csr_kernel(output, values, row_ptr, column)
+
+
+def _csr_weighted_sum_kernel(
+    output: UOp,
+    values: UOp,
+    edge_weight: UOp,
+    row_ptr: UOp,
+    column: UOp,
+    *_: UOp,
+) -> UOp:
+    return _csr_kernel(output, values, row_ptr, column, edge_weight)
+
+
+def _csr_reindexed_weighted_sum_kernel(
+    output: UOp,
+    values: UOp,
+    edge_weight: UOp,
+    row_ptr: UOp,
+    column: UOp,
+    weight_index: UOp,
+    *_: UOp,
+) -> UOp:
+    return _csr_kernel(output, values, row_ptr, column, edge_weight, weight_index)
+
+
+def _csr_kernel(
+    output: UOp,
+    values: UOp,
+    row_ptr: UOp,
+    column: UOp,
+    edge_weight: UOp | None = None,
+    weight_index: UOp | None = None,
+) -> UOp:
     nodes, width = output.shape
     output, values, row_ptr, column = output.base, values.base, row_ptr.base, column.base
+    if edge_weight is not None:
+        edge_weight = edge_weight.base
+    if weight_index is not None:
+        weight_index = weight_index.base
     lane = UOp.range(nodes * width, 0, dtype=dtypes.int32)
     row, feature = lane // width, lane % width
     start, stop = row_ptr[row].cast(dtypes.int32), row_ptr[row + 1].cast(dtypes.int32)
@@ -180,8 +258,12 @@ def _csr_sum_kernel(output: UOp, values: UOp, row_ptr: UOp, column: UOp, *_: UOp
 
     current = edge.after(loop)[0].load()
     active = current < stop
-    source = column[active.where(current, 0)].cast(dtypes.int32)
+    position = active.where(current, 0)
+    source = column[position].load().cast(dtypes.int32)
     message = values[source * width + feature]
+    if edge_weight is not None:
+        edge_index = position if weight_index is None else weight_index[position].load().cast(dtypes.int32)
+        message = message * edge_weight[edge_index]
     next_edge = current + 1
     updated = UOp.group(
         accumulator[0].store(
@@ -196,6 +278,26 @@ def _csr_sum_kernel(output: UOp, values: UOp, row_ptr: UOp, column: UOp, *_: UOp
     )
 
 
+def _edge_dot_kernel(
+    output: UOp,
+    values: UOp,
+    gradient: UOp,
+    column: UOp,
+    row_index: UOp,
+) -> UOp:
+    edges, width = output.shape[0], values.shape[1]
+    edge = UOp.range(edges, 0, dtype=dtypes.int32)
+    feature = UOp.range(width, 1, axis_type=AxisType.REDUCE)
+    source = column[edge].load().cast(dtypes.int32)
+    target = row_index[edge].load().cast(dtypes.int32)
+    output = output[edge].set(0.0)
+    output = output[edge].set(
+        output.after(feature)[edge] + values[source, feature] * gradient[target, feature],
+        end=feature,
+    )
+    return output.end(edge).sink(arg=KernelInfo(name="edge_dot", opts_to_apply=()))
+
+
 def _csr_sum_gradient(gradient: UOp, call: UOp) -> tuple[UOp | None, ...]:
     _, values, _, _, transpose_row_ptr, transpose_column = call.src[1:]
     output = Tensor.invalids(*values.shape, dtype=values.dtype, device=values.device)
@@ -206,6 +308,28 @@ def _csr_sum_gradient(gradient: UOp, call: UOp) -> tuple[UOp | None, ...]:
         fxn=_csr_sum_kernel,
     )[0]
     return None, grad_values.uop, None, None, None, None
+
+
+def _csr_weighted_gradient(gradient: UOp, call: UOp) -> tuple[UOp | None, ...]:
+    _, values, edge_weight, _, column, transpose_row_ptr, transpose_column, transpose_edge, row_index = call.src[1:]
+    values_output = Tensor.invalids(*values.shape, dtype=values.dtype, device=values.device)
+    grad_values = values_output.custom_kernel(
+        Tensor(gradient),
+        Tensor(edge_weight),
+        Tensor(transpose_row_ptr),
+        Tensor(transpose_column),
+        Tensor(transpose_edge),
+        fxn=_csr_reindexed_weighted_sum_kernel,
+    )[0]
+    weight_output = Tensor.invalids(*edge_weight.shape, dtype=edge_weight.dtype, device=edge_weight.device)
+    grad_weight = weight_output.custom_kernel(
+        Tensor(values),
+        Tensor(gradient),
+        Tensor(column),
+        Tensor(row_index),
+        fxn=_edge_dot_kernel,
+    )[0]
+    return None, grad_values.uop, grad_weight.uop, None, None, None, None, None, None
 
 
 def csr_edge_sum(
@@ -232,6 +356,40 @@ def csr_edge_sum(
         transpose_column,
         fxn=_csr_sum_kernel,
         grad_fxn=_csr_sum_gradient,
+    )[0]
+
+
+def csr_edge_weighted_sum(
+    values: Tensor,
+    topology: CSRTopology,
+    edge_weight: Tensor,
+) -> Tensor:
+    if values.ndim != 2:
+        raise ValueError(f"values must have shape [N, H], got {values.shape}")
+    if values.shape[0] != topology.nodes:
+        raise ValueError(f"values must have {topology.nodes} rows, got {values.shape[0]}")
+    if edge_weight.ndim != 1 or edge_weight.shape[0] != len(topology.column):
+        raise ValueError(f"edge_weight must have shape [{len(topology.column)}], got {edge_weight.shape}")
+    if values.dtype != edge_weight.dtype:
+        raise ValueError(f"values and edge_weight must have the same dtype, got {values.dtype} and {edge_weight.dtype}")
+    if not isinstance(values.device, str) or edge_weight.device != values.device:
+        raise ValueError("weighted CSR aggregation requires one shared device")
+    if topology.nodes == 1 or not topology.column:
+        return values * edge_weight.sum()
+    row_ptr, column, transpose_row_ptr, transpose_column = topology._tensors(values.device)
+    transpose_edge, row_index = topology._edge_tensors(values.device)
+    output = Tensor.invalids(values.shape[0], values.shape[1], dtype=values.dtype, device=values.device)
+    return output.custom_kernel(
+        values,
+        edge_weight,
+        row_ptr,
+        column,
+        transpose_row_ptr,
+        transpose_column,
+        transpose_edge,
+        row_index,
+        fxn=_csr_weighted_sum_kernel,
+        grad_fxn=_csr_weighted_gradient,
     )[0]
 
 

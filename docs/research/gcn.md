@@ -21,10 +21,11 @@ and one destination-node scale:
 Y = D^-1/2 A D^-1/2 XW
 ```
 
-GCN therefore does not yet justify an edge-weight primitive. Topology owns
-connectivity; the layer owns normalization and its linear map. The caller
-supplies the self-loops required by the GCN renormalization rule, keeping
-topology mutation explicit.
+GCN therefore does not require an edge-weight primitive. Topology owns
+connectivity; the layer owns normalization and its linear map. A later
+[scalar-weight experiment](weighted-aggregation.md) earns edge-local
+multiplication independently. The caller supplies the self-loops required by
+the GCN renormalization rule, keeping topology mutation explicit.
 
 This is the second semantic caller for CSR sum, not evidence for a stable
 runtime API. The implementation still crosses tinygrad's alpha
@@ -53,12 +54,11 @@ Metal reproduce those values to float32 precision.
 
 ## Limits
 
-The experiment covers unweighted, fixed topology and first-order gradients.
+The experiment covers unit edges, fixed topology, and first-order gradients.
 Topology caches integer degree, while each call derives inverse square root
-with ordinary tinygrad operations. Weighted edges, implicit self-loop insertion,
-batching, depth, nonlinearities, and model quality remain unproven. In
-particular, a weighted GCN may require edge-local multiplication and must earn
-that boundary with its own sparse evidence.
+with ordinary tinygrad operations. Scalar weighted sum is proven separately,
+but weighted GCN normalization semantics are not selected. Implicit self-loop
+insertion, batching, depth, nonlinearities, and model quality remain unproven.
 
 The formulation follows Kipf and Welling's
 [paper](https://arxiv.org/abs/1609.02907); the
