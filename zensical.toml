@@ -1,0 +1,21 @@
+[project]
+site_name = "tinymesh"
+site_url = "https://spatioterra-ai.github.io/tinymesh/"
+site_description = "Tinygrad-native learning over sparse structures through space and time"
+repo_url = "https://github.com/spatioterra-ai/tinymesh"
+repo_name = "spatioterra-ai/tinymesh"
+nav = [
+  "index.md",
+  {"Concepts" = [
+    "concepts/topology.md",
+    "concepts/message-passing.md",
+  ]},
+  {"Research" = [
+    "research/sparse-aggregation.md",
+    "research/mean-sage.md",
+  ]},
+]
+
+[project.validation]
+invalid_links = true
+invalid_link_anchors = true
