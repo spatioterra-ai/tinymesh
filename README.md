@@ -14,7 +14,7 @@ over another machine-learning framework.
 
 ## What works
 
-The repository currently proves one narrow path:
+The repository currently proves one narrow sparse core:
 
 ```text
 directed edge list
@@ -24,9 +24,9 @@ CSR(A) + CSR(A.T)
       |
       v
 sparse forward + sparse backward
-      |
-      v
-trainable mean GraphSAGE
+      |                 |
+      v                 v
+mean GraphSAGE     unweighted GCN
 ```
 
 - An unordered directed edge list lowers deterministically into destination CSR
@@ -37,6 +37,8 @@ trainable mean GraphSAGE
   constructs node-pair or node-edge state.
 - A mean-GraphSAGE experiment sends gradients through the sparse boundary into
   a neighbor parameter on CPU and Metal.
+- An unweighted GCN experiment composes source and destination degree scaling
+  around the same sparse sum.
 - Fixed topology owns and reuses its realized device buffers.
 
 This is research code, not a stable API. The implementation remains under
@@ -66,12 +68,14 @@ print(csr_edge_sum(state, topology).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
-The trainable witness starts with loss `1`, takes one SGD step, and reaches loss
-`0` only through neighbor information:
+Both trainable witnesses start with loss `1`, take one SGD step, and reach loss
+`0` through graph propagation:
 
 ```console
 DEV=CPU uv run python -m experiments.mean_sage
 DEV=METAL uv run python -m experiments.mean_sage
+DEV=CPU uv run python -m experiments.gcn
+DEV=METAL uv run python -m experiments.gcn
 ```
 
 ## Learn
@@ -87,13 +91,16 @@ run the [quick start](docs/quickstart.md):
   the revision-bound scaling and kernel evidence.
 - [Mean GraphSAGE experiment](docs/research/mean-sage.md) retains the exact
   learning witness and its limits.
+- [GCN experiment](docs/research/gcn.md) tests the same sparse sum under
+  symmetric degree normalization.
 
 ## Direction
 
-The next decision is the smallest public topology and aggregation contract that
-survives a second, genuinely different model caller. Weighted or edge-dependent
-messages, batching, changing topology, and temporal recurrence remain
-unimplemented.
+Mean GraphSAGE and GCN now share deterministic topology plus destination-CSR
+sum. The next decision is its smallest honest ownership boundary: normalization
+state is still mixed into topology, while execution crosses an alpha tinygrad
+API. Weighted or edge-dependent messages, batching, changing topology, and
+temporal recurrence remain unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 time-varying fields remain the wider mesh direction. They enter only when the

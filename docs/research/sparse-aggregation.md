@@ -19,8 +19,8 @@ the alpha `Tensor.custom_kernel` surface and a newly landed data-dependent
 optimization rewrites this loop into invalid UOps and fails type verification,
 so the kernel pins `opts_to_apply=()`. It covers fixed-topology first-order sum
 aggregation only and serializes each CSR row within one feature lane. Admit it
-to the package only after those contracts prove stable enough for a real model
-caller.
+to the package only after the alpha kernel and optimization contracts become
+stable enough to own publicly.
 
 ## CSR result
 
@@ -231,8 +231,8 @@ DEV=METAL uv run python experiments/csr_aggregation.py
 
 The CSR experiment satisfies the structural gate for fixed-topology,
 identity-message, first-order sum aggregation in both directions. More complex
-messages add edge-local costs and require their own proof. The mean-GraphSAGE
-caller proves first-order parameter learning through that boundary, but does not
-make the alpha custom-kernel or dynamic-loop contracts stable enough for the
-package. The rejected public gather-and-scatter composition must not be called
-sparse graph support.
+messages add edge-local costs and require their own proof. Mean GraphSAGE and
+unweighted GCN prove first-order parameter learning through the shared sum
+boundary, but do not make the alpha custom-kernel or dynamic-loop contracts
+stable enough for the package. The rejected public gather-and-scatter
+composition must not be called sparse graph support.
