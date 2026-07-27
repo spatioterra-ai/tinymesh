@@ -32,16 +32,12 @@ def reference(source=SOURCE, target=TARGET, weight=WEIGHT):
 def run(source=SOURCE, target=TARGET, weight=WEIGHT):
     topology = CSRTopology(6, source, target)
     values = Tensor(VALUES, device=Device.DEFAULT).realize()
-    edge_weight = Tensor(topology.lower_edge_values(weight), device=Device.DEFAULT).realize()
+    edge_weight = Tensor(weight, device=Device.DEFAULT).realize()
     output = csr_edge_weighted_sum(values, topology, edge_weight)
     gradient = Tensor(GRADIENT, device=Device.DEFAULT).realize()
     values_gradient, weight_gradient = output.gradient(values, edge_weight, gradient=gradient)
     Tensor.realize(output, values_gradient, weight_gradient)
-    raw_weight_gradient = [0.0] * len(weight)
-    canonical_weight_gradient = weight_gradient.tolist()
-    for canonical, original in enumerate(topology.edge_order):
-        raw_weight_gradient[original] = canonical_weight_gradient[canonical]
-    return output.tolist(), values_gradient.tolist(), raw_weight_gradient
+    return output.tolist(), values_gradient.tolist(), weight_gradient.tolist()
 
 
 class WeightedAggregationTest(unittest.TestCase):
@@ -58,7 +54,7 @@ class WeightedAggregationTest(unittest.TestCase):
 
     def test_duplicate_edges_keep_distinct_weight_slots(self):
         topology = CSRTopology(6, SOURCE, TARGET)
-        edge_weight = Tensor(topology.lower_edge_values(WEIGHT), device=Device.DEFAULT).realize()
+        edge_weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
         values = Tensor(VALUES, device=Device.DEFAULT).realize()
         output = csr_edge_weighted_sum(values, topology, edge_weight)
         weight_gradient = output.gradient(
@@ -66,8 +62,8 @@ class WeightedAggregationTest(unittest.TestCase):
             gradient=Tensor(GRADIENT, device=Device.DEFAULT),
         )[0]
 
-        self.assertEqual(edge_weight.tolist()[2:4], [2.0, 3.0])
-        self.assertEqual(weight_gradient.tolist()[2:4], [50.0, 50.0])
+        self.assertEqual([edge_weight.tolist()[edge] for edge in (0, 2)], [2.0, 3.0])
+        self.assertEqual([weight_gradient.tolist()[edge] for edge in (0, 2)], [50.0, 50.0])
 
     def test_empty_graph(self):
         topology = CSRTopology(3, [], [])
@@ -83,7 +79,7 @@ class WeightedAggregationTest(unittest.TestCase):
     def test_single_node(self):
         topology = CSRTopology(1, [0, 0, 0], [0, 0, 0])
         values = Tensor([[2.0, 3.0]], device=Device.DEFAULT).realize()
-        edge_weight = Tensor(topology.lower_edge_values([2.0, -1.0, 4.0]), device=Device.DEFAULT).realize()
+        edge_weight = Tensor([2.0, -1.0, 4.0], device=Device.DEFAULT).realize()
         output = csr_edge_weighted_sum(values, topology, edge_weight)
         values_gradient, weight_gradient = output.gradient(
             values,
@@ -114,7 +110,7 @@ class WeightedAggregationTest(unittest.TestCase):
         target = [1, 0, 3, 3, 3, 0, 3]
         topology = CSRTopology(5, source, target)
         values = Tensor.ones(5, 3, device=Device.DEFAULT).realize()
-        edge_weight = Tensor(topology.lower_edge_values([1.0] * 7), device=Device.DEFAULT).realize()
+        edge_weight = Tensor.ones(7, device=Device.DEFAULT).realize()
         output = csr_edge_weighted_sum(values, topology, edge_weight)
         values_gradient, weight_gradient = output.gradient(
             values,

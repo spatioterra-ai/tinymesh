@@ -103,7 +103,7 @@ One primitive carries both directions. The two CSR forms contain
 ## Edge identity survives lowering
 
 Connectivity is not the only edge fact. A weight, distance, timestamp, or
-provenance value must move with the source-target pair it describes.
+provenance value must stay attached to the source-target pair it describes.
 
 For one unordered COO input:
 
@@ -111,35 +111,32 @@ For one unordered COO input:
 COO edge ordinal       0       1       2
 edge                  1 -> 3  0 -> 2  1 -> 2
 weight                -1.0     0.5     2.0
-                       |        |       |
-                       +---- lower -----+
-                                |
+
 CSR position           0       1       2
 edge                  0 -> 2  1 -> 2  1 -> 3
-weight                 0.5     2.0    -1.0
 edge_order              1       2       0
+weight lookup          w[1]    w[2]    w[0]
 ```
 
 `edge_order[p]` is the original COO ordinal for forward CSR position `p`.
-`lower_edge_values` applies that map once at the host boundary. The weighted
-kernel then receives connectivity and values in one canonical order.
+The weighted kernel uses that private map to read the caller's tensor without
+reordering it.
 
-Backward needs two more views, both derived from the same topology:
+Backward uses the same identity:
 
 ```text
-transpose_edge[transpose position] -> forward CSR position
-row_index[forward CSR position]    -> destination node
+transpose_order[transpose position] -> original COO ordinal
+dw[e] = dot(X[source[e]], dY[target[e]])
 ```
 
-The transpose map selects the right weight while computing `dX`. The row index
-is derived from `row_ptr` when weighted device buffers are first realized and
-locates the destination while computing `dw`; it is not a second source of
-topology truth.
+The transpose map selects the right raw weight while computing `dX`. The
+edge-gradient kernel gives each original COO edge one output, so `dw` has the
+same order as the input weight tensor. Parallel edges keep distinct ordinals.
 
-The topology retains `2E` host edge-identity ordinals in addition to the two
-CSR forms. Weighted execution realizes `2E` auxiliary device ordinals for the
-transpose map and derived row index. Scalar weights add `E` values. Storage
-remains `O(N + E)`; no `[E, H]` edge-feature product is materialized.
+The topology retains original `source` and `target` tuples plus the forward and
+transpose order maps. Weighted execution realizes those `4E` identity
+ordinals. Scalar weights add `E` values. Storage remains `O(N + E)`; no
+`[E, H]` edge-feature product is materialized.
 
 ## Pull versus push
 
@@ -172,16 +169,17 @@ Lowering changes representation while preserving meaning:
 COO edge facts
     | deterministic grouping
     v
-Python CSR tuples
+Python CSR tuples + private order maps
     | device realization
     v
 tinygrad integer tensors
 ```
 
-The edge list remains the construction input. CSR plus aligned edge values is
-the execution form. Fixed topology can reuse its realized execution form
-across training steps; cache ownership and measurements belong to the
-revision-bound research records.
+The edge list remains the semantic source of truth. CSR is the execution form;
+edge tensors remain in COO order and are selected through the private maps.
+Fixed topology can reuse its realized execution form across training steps;
+cache ownership and measurements belong to the revision-bound research
+records.
 
 The current sparse invariant is:
 

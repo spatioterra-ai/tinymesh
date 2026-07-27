@@ -31,30 +31,29 @@ Weights arrive in the same order as the `source` and `target` arrays passed to
 `CSRTopology`. Connectivity sorting must not detach them:
 
 ```text
-COO weight
-    |
-    | edge_order
-    v
-canonical forward weight
+raw COO weight
     |                         |
-    | forward CSR position    | transpose_edge
+    | edge_order             | transpose_order
+    v                         v
+forward CSR lookup       transpose CSR lookup
+    |                         |
     v                         v
 Y = A_w @ X              dX = A_w.T @ dY
+
+raw source + target
     |
-    | column + row derived from row_ptr
     v
-dw_e = dot(X_source, dY_target)
+dw_e = dot(X_source[e], dY_target[e])
 ```
 
-`lower_edge_values` applies the forward permutation once at the host boundary.
-The returned tensor and its gradient use canonical forward order.
-`edge_order[p]` maps position `p` back to the original COO ordinal. Duplicate
-source-target pairs keep separate positions.
+Both maps point from a CSR position to the original COO ordinal. Kernels use
+them internally; the input weight tensor and its gradient never leave COO
+order. Duplicate source-target pairs keep separate positions.
 
 The two CSR forms still contain `2E + 2(N + 1)` integers. Edge identity retains
-two additional host maps of length `E`. Weighted execution realizes the
-transpose map plus a row index derived from `row_ptr`, another `2E` device
-integers, and receives `E` scalar weights. Storage remains `O(N + E)`.
+original source and target plus two order maps. Weighted execution realizes
+those `4E` device integers and receives `E` scalar weights. Storage remains
+`O(N + E)`.
 
 ## Exact witness
 
@@ -67,12 +66,13 @@ node value:   X_0 = 2    X_1 = 4    X_2 = 8
 output grad:  g_0 = 0    g_1 = 5    g_2 = 7
 ```
 
-Lowering produces `edge_order = (2, 0, 1)`. Both devices return:
+Connectivity lowering produces `edge_order = (2, 0, 1)`, but the weights stay
+in the listed COO order. Both devices return:
 
 ```text
-Y              = [0, 6, 0]
-dX             = [29, -7, 0]
-dw in CSR order = [10, 14, 28]
+Y               = [0, 6, 0]
+dX              = [29, -7, 0]
+dw in COO order = [14, 28, 10]
 ```
 
 The multidimensional test suite compares forward, `dX`, and `dw` with an
@@ -94,8 +94,8 @@ and defines its message as `edge_weight * x_j`; compatible inputs can fuse that
 operation into sparse matrix multiplication
 ([source](https://github.com/pyg-team/pytorch_geometric/blob/2.8.0/torch_geometric/nn/conv/graph_conv.py#L77-L110)).
 PyG receives weights in the current edge-index order on each call. tinymesh
-instead lowers them once into a fixed topology's canonical order and exposes
-the inverse identity map.
+now exposes the same ordering rule while a fixed topology owns private CSR
+lookup maps.
 
 PyTorch Geometric Temporal carries one edge-weight array with a static
 edge-index array

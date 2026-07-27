@@ -42,7 +42,7 @@ sparse execution, backward propagation, and two trainable layers.
 ## The stack
 
 ```text
-edge facts             source -> target, optional scalar value
+edge facts             source -> target, optional COO-aligned scalar value
     |
     v
 topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
@@ -68,7 +68,7 @@ constructs `[N, N]` or `[E, H]` intermediates.
 - deterministic directed edge-list to CSR lowering;
 - destination-owned sparse sum with no atomic writes;
 - the same operation over transpose CSR for first-order backward;
-- scalar edge weights with one gradient owner per edge;
+- COO-ordered scalar edge weights with one gradient owner per edge;
 - fixed-topology device-buffer reuse;
 - one mean-GraphSAGE composition whose neighbor parameter learns through the
   sparse boundary;
@@ -93,7 +93,7 @@ topology, higher-order gradients, geometry, cells, and time are not implemented.
 - [GCN experiment](research/gcn.md) records the normalized second caller and
   the shared boundary it exposes.
 - [Weighted aggregation experiment](research/weighted-aggregation.md) records
-  scalar edge lowering and both first-order gradients.
+  scalar edge identity and both first-order gradients.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and
