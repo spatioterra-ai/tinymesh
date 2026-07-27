@@ -39,7 +39,7 @@ mean GraphSAGE     unweighted GCN
   a neighbor parameter on CPU and Metal.
 - An unweighted GCN experiment composes source and destination degree scaling
   around the same sparse sum.
-- Fixed topology owns and reuses its realized device buffers.
+- Fixed topology owns and reuses its realized connectivity and degree buffers.
 
 This is research code, not a stable API. The implementation remains under
 `experiments/` because `Tensor.custom_kernel` is alpha and tinygrad's default
@@ -97,10 +97,11 @@ run the [quick start](docs/quickstart.md):
 ## Direction
 
 Mean GraphSAGE and GCN now share deterministic topology plus destination-CSR
-sum. The next decision is its smallest honest ownership boundary: normalization
-state is still mixed into topology, while execution crosses an alpha tinygrad
-API. Weighted or edge-dependent messages, batching, changing topology, and
-temporal recurrence remain unimplemented.
+sum. Topology caches only topology facts; each layer derives its own
+normalization with ordinary tinygrad operations. The remaining package-admission
+blocker is the alpha kernel and optimizer boundary. Weighted or edge-dependent
+messages, batching, changing topology, and temporal recurrence remain
+unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 time-varying fields remain the wider mesh direction. They enter only when the

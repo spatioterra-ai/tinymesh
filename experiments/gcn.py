@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from math import sqrt
 
 from tinygrad import Context, Device, Tensor, nn
 
@@ -19,7 +18,10 @@ class GCN:
 
     def __call__(self, values: Tensor, topology: CSRTopology) -> Tensor:
         messages = self.linear(values)
-        scale = _inverse_sqrt_degree(messages, topology)
+        if not isinstance(messages.device, str):
+            raise ValueError("GCN requires one device")
+        degree = topology._degree(messages.device)
+        scale = (degree != 0).where(degree.maximum(1).cast(messages.dtype).rsqrt(), 0).reshape(-1, 1)
         return csr_edge_sum(messages * scale, topology) * scale
 
 
@@ -64,20 +66,6 @@ def fit_one_step(device: str) -> Observation:
         loss().item(),
         model.linear.weight.item(),
     )
-
-
-def _inverse_sqrt_degree(values: Tensor, topology: CSRTopology) -> Tensor:
-    if not isinstance(values.device, str):
-        raise ValueError("GCN requires one device")
-    return Tensor(
-        [
-            0.0 if start == stop else 1.0 / sqrt(stop - start)
-            for start, stop in zip(topology.row_ptr, topology.row_ptr[1:])
-        ],
-        dtype=values.dtype,
-        device=values.device,
-    ).reshape(-1, 1)
-
 
 def main() -> None:
     print(json.dumps(asdict(fit_one_step(Device.DEFAULT)), indent=2))

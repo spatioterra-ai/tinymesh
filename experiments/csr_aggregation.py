@@ -9,7 +9,7 @@ from importlib.metadata import distribution
 from statistics import median
 
 from tinygrad import Device, Tensor, UOp, dtypes
-from tinygrad.dtype import AddrSpace, DType
+from tinygrad.dtype import AddrSpace
 from tinygrad.engine.realize import time_call
 from tinygrad.uop.ops import KernelInfo, Ops
 
@@ -26,7 +26,7 @@ class CSRTopology:
         repr=False,
         compare=False,
     )
-    _inverse_degree_by_device: dict[tuple[str, DType], Tensor] = field(
+    _degree_by_device: dict[str, Tensor] = field(
         init=False,
         repr=False,
         compare=False,
@@ -53,7 +53,7 @@ class CSRTopology:
         object.__setattr__(self, "transpose_row_ptr", transpose_row_ptr)
         object.__setattr__(self, "transpose_column", transpose_column)
         object.__setattr__(self, "_tensors_by_device", {})
-        object.__setattr__(self, "_inverse_degree_by_device", {})
+        object.__setattr__(self, "_degree_by_device", {})
 
     def _tensors(self, device: str) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         tensors = self._tensors_by_device.get(device)
@@ -67,20 +67,16 @@ class CSRTopology:
             self._tensors_by_device[device] = tensors
         return tensors
 
-    def _inverse_degree(self, device: str, dtype: DType) -> Tensor:
-        key = device, dtype
-        scale = self._inverse_degree_by_device.get(key)
-        if scale is None:
-            scale = Tensor(
-                [
-                    1.0 / max(1, stop - start)
-                    for start, stop in zip(self.row_ptr, self.row_ptr[1:])
-                ],
-                dtype=dtype,
+    def _degree(self, device: str) -> Tensor:
+        degree = self._degree_by_device.get(device)
+        if degree is None:
+            degree = Tensor(
+                [stop - start for start, stop in zip(self.row_ptr, self.row_ptr[1:])],
+                dtype=dtypes.int32,
                 device=device,
-            ).reshape(-1, 1).realize()
-            self._inverse_degree_by_device[key] = scale
-        return scale
+            ).realize()
+            self._degree_by_device[device] = degree
+        return degree
 
 
 @dataclass(frozen=True)

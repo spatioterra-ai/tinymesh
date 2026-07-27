@@ -50,7 +50,8 @@ update:     y_v       = a_v / sqrt(d_v)
 For unit edges this is `D^-1/2 A D^-1/2 XW`. Source and destination
 normalization are ordinary node-wise tensor operations, so they compose around
 the existing CSR sum. The experiment requires the caller to include self-loops
-explicitly.
+explicitly. Integer degree is a topology fact; reciprocal and inverse square
+root are model semantics.
 
 ## Gradient path
 

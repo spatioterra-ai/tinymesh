@@ -21,7 +21,7 @@ class MeanSAGE:
         messages = self.neighbor(values)
         if not isinstance(messages.device, str):
             raise ValueError("mean GraphSAGE requires one device")
-        inverse_degree = topology._inverse_degree(messages.device, messages.dtype)
+        inverse_degree = topology._degree(messages.device).maximum(1).cast(messages.dtype).reciprocal().reshape(-1, 1)
         return self.root(values) + csr_edge_sum(messages, topology) * inverse_degree
 
 
