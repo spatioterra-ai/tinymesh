@@ -12,11 +12,12 @@ its custom gradient runs the same kernel over transpose CSR to compute
 This resolves the implementation boundary without adding a Tinygrad primitive,
 but not the public API. The candidate remains in `experiments/`: it relies on
 the alpha `Tensor.custom_kernel` surface and a newly landed data-dependent
-`UOp.loop`; Tinygrad's default kernel option search still raises
-`KeyError: dtypes.weakint`, so the kernel pins `opts_to_apply=()`. It covers
-fixed-topology first-order sum aggregation only and serializes each CSR row
-within one feature lane. Admit it to the package only after those contracts
-prove stable enough for a real model caller.
+`UOp.loop`. At current revision `0f98212`, Tinygrad's default kernel
+optimization rewrites this loop into invalid UOps and fails type verification,
+so the kernel pins `opts_to_apply=()`. It covers fixed-topology first-order sum
+aggregation only and serializes each CSR row within one feature lane. Admit it
+to the package only after those contracts prove stable enough for a real model
+caller.
 
 ## CSR result
 
@@ -151,9 +152,11 @@ statistics collection raised
 `TypeError: _f() missing 1 required positional argument: 'core_id'` for the
 data-dependent row loop. Tinygrad revision `b1a7229` supplies the loop form used
 by the checked-in experiment, but default kernel optimization still fails with
-the same `KeyError`, so the candidate pins `opts_to_apply=()`. The alpha API,
-disabled option search, and unmeasured compilation and topology-preprocessing
-costs remain limitations.
+the same `KeyError`. At current revision `0f98212`, that failure instead reaches
+type verification and raises `RuntimeError: UOp verification failed` on an
+`Ops.END` or `Ops.RESHAPE`, depending on the fixture. The candidate therefore
+still pins `opts_to_apply=()`. The alpha API, disabled option search, and
+unmeasured compilation and topology-preprocessing costs remain limitations.
 
 ## How the PyTorch stack expresses it
 
