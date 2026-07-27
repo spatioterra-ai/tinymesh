@@ -12,7 +12,7 @@ its custom gradient runs the same kernel over transpose CSR to compute
 This resolves the implementation boundary without adding a Tinygrad primitive,
 but not the public API. The candidate remains in `experiments/`: it relies on
 the alpha `Tensor.custom_kernel` surface and a newly landed data-dependent
-`Ops.LOOP`; Tinygrad's default kernel option search still raises
+`UOp.loop`; Tinygrad's default kernel option search still raises
 `KeyError: dtypes.weakint`, so the kernel pins `opts_to_apply=()`. It covers
 fixed-topology first-order sum aggregation only and serializes each CSR row
 within one feature lane. Admit it to the package only after those contracts

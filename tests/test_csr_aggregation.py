@@ -1,7 +1,7 @@
 import unittest
 from math import prod
 
-from tinygrad import Device, Tensor
+from tinygrad import Device, Tensor, UOp
 from tinygrad.uop.ops import Ops
 
 from experiments.csr_aggregation import CSRTopology, csr_edge_sum
@@ -135,8 +135,18 @@ class CSRAggregationTest(unittest.TestCase):
         calls = [uop for uop in tensor.uop.toposort() if uop.op is Ops.CALL]
         self.assertEqual(len(calls), 1)
         body = calls[0].src[0]
-        self.assertEqual(sum(uop.op is Ops.LOOP for uop in body.toposort()), 1)
-        ranges = [uop for uop in body.toposort() if uop.op is Ops.RANGE]
+        loop = UOp.loop(-1)
+        loops = [
+            uop
+            for uop in body.toposort()
+            if (uop.op, uop.dtype) == (loop.op, loop.dtype)
+        ]
+        self.assertEqual(len(loops), 1)
+        ranges = [
+            uop
+            for uop in body.toposort()
+            if uop.op is Ops.RANGE and uop not in loops
+        ]
         self.assertEqual(len(ranges), 1)
         self.assertEqual(int(ranges[0].src[0]), nodes * width)
         limit = max(nodes * width, edges, nodes + 1)
