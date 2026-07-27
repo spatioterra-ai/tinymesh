@@ -34,6 +34,11 @@ class CSRTopologyTest(unittest.TestCase):
         self.assertEqual(topology.transpose_row_ptr, (0, 2, 5, 5, 6, 6, 6))
         self.assertEqual(topology.transpose_column, (1, 2, 2, 2, 4, 2))
 
+    def test_reuses_realized_device_tensors(self):
+        topology = CSRTopology(6, SOURCE, TARGET)
+
+        self.assertIs(topology._tensors(Device.DEFAULT), topology._tensors(Device.DEFAULT))
+
     def test_rejects_invalid_edges(self):
         with self.assertRaisesRegex(ValueError, "positive"):
             CSRTopology(0, [], [])

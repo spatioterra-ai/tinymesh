@@ -19,14 +19,9 @@ class MeanSAGE:
 
     def __call__(self, values: Tensor, topology: CSRTopology) -> Tensor:
         messages = self.neighbor(values)
-        inverse_degree = Tensor(
-            [
-                1.0 / max(1, stop - start)
-                for start, stop in zip(topology.row_ptr, topology.row_ptr[1:])
-            ],
-            dtype=messages.dtype,
-            device=messages.device,
-        ).reshape(-1, 1)
+        if not isinstance(messages.device, str):
+            raise ValueError("mean GraphSAGE requires one device")
+        inverse_degree = topology._inverse_degree(messages.device, messages.dtype)
         return self.root(values) + csr_edge_sum(messages, topology) * inverse_degree
 
 
@@ -56,7 +51,10 @@ def fit_one_step(device: str) -> Observation:
     with Context(TRAINING=1):
         optimizer.zero_grad()
         training_loss = loss().backward()
-        neighbor_gradient = model.neighbor.weight.grad.item()
+        gradient = model.neighbor.weight.grad
+        if gradient is None:
+            raise RuntimeError("neighbor parameter has no gradient")
+        neighbor_gradient = gradient.item()
         training_loss.realize(*optimizer.schedule_step())
 
     return Observation(

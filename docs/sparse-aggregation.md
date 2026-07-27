@@ -73,6 +73,8 @@ should rest on the table alone.
 
 The result does not yet cover weighted or edge-dependent messages, batching,
 changing topology, higher-order gradients, or topology construction cost.
+Fixed-topology buffers are realized once per device and reused by subsequent
+calls; preprocessing remains a host-side cost paid by each new topology.
 Empty graphs use Tinygrad's ordinary `values * 0` path because a custom kernel
 cannot receive zero-length buffers. A one-node graph similarly reduces to
 `values * E`, avoiding unnecessary traversal and a degenerate Metal loop scope.
@@ -226,8 +228,8 @@ DEV=METAL uv run python experiments/csr_aggregation.py
 
 The CSR experiment satisfies the structural gate for fixed-topology,
 identity-message, first-order sum aggregation in both directions. More complex
-messages add edge-local costs and require their own proof. Public package
-admission is a separate gate: a real model caller must justify depending on the
-alpha custom-kernel and dynamic-loop contracts, or a simpler stable Tinygrad
-surface must replace them. The rejected public gather-and-scatter composition
-must not be called sparse graph support.
+messages add edge-local costs and require their own proof. The mean-GraphSAGE
+caller proves first-order parameter learning through that boundary, but does not
+make the alpha custom-kernel or dynamic-loop contracts stable enough for the
+package. The rejected public gather-and-scatter composition must not be called
+sparse graph support.

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from importlib.metadata import distribution
 from statistics import median
 
 from tinygrad import Device, Tensor, UOp, dtypes
-from tinygrad.dtype import AddrSpace
+from tinygrad.dtype import AddrSpace, DType
 from tinygrad.engine.realize import time_call
 from tinygrad.uop.ops import KernelInfo, Ops
 
@@ -21,6 +21,16 @@ class CSRTopology:
     column: tuple[int, ...]
     transpose_row_ptr: tuple[int, ...]
     transpose_column: tuple[int, ...]
+    _tensors_by_device: dict[str, tuple[Tensor, Tensor, Tensor, Tensor]] = field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
+    _inverse_degree_by_device: dict[tuple[str, DType], Tensor] = field(
+        init=False,
+        repr=False,
+        compare=False,
+    )
 
     def __init__(
         self,
@@ -42,17 +52,35 @@ class CSRTopology:
         object.__setattr__(self, "column", column)
         object.__setattr__(self, "transpose_row_ptr", transpose_row_ptr)
         object.__setattr__(self, "transpose_column", transpose_column)
+        object.__setattr__(self, "_tensors_by_device", {})
+        object.__setattr__(self, "_inverse_degree_by_device", {})
 
     def _tensors(self, device: str) -> tuple[Tensor, Tensor, Tensor, Tensor]:
-        return tuple(
-            Tensor(values, dtype=dtypes.int32, device=device).realize()
-            for values in (
-                self.row_ptr,
-                self.column,
-                self.transpose_row_ptr,
-                self.transpose_column,
+        tensors = self._tensors_by_device.get(device)
+        if tensors is None:
+            tensors = (
+                Tensor(self.row_ptr, dtype=dtypes.int32, device=device).realize(),
+                Tensor(self.column, dtype=dtypes.int32, device=device).realize(),
+                Tensor(self.transpose_row_ptr, dtype=dtypes.int32, device=device).realize(),
+                Tensor(self.transpose_column, dtype=dtypes.int32, device=device).realize(),
             )
-        )
+            self._tensors_by_device[device] = tensors
+        return tensors
+
+    def _inverse_degree(self, device: str, dtype: DType) -> Tensor:
+        key = device, dtype
+        scale = self._inverse_degree_by_device.get(key)
+        if scale is None:
+            scale = Tensor(
+                [
+                    1.0 / max(1, stop - start)
+                    for start, stop in zip(self.row_ptr, self.row_ptr[1:])
+                ],
+                dtype=dtype,
+                device=device,
+            ).reshape(-1, 1).realize()
+            self._inverse_degree_by_device[key] = scale
+        return scale
 
 
 @dataclass(frozen=True)
@@ -129,13 +157,13 @@ def _group(
     owner: list[int] | tuple[int, ...],
     neighbor: list[int] | tuple[int, ...],
 ) -> tuple[tuple[int, ...], tuple[int, ...]]:
-    rows = [[] for _ in range(nodes)]
-    for row, column in zip(owner, neighbor):
-        rows[row].append(column)
+    rows: list[list[int]] = [[] for _ in range(nodes)]
+    for row_index, column in zip(owner, neighbor):
+        rows[row_index].append(column)
     flat = tuple(column for row in rows for column in sorted(row))
     row_ptr = [0]
-    for row in rows:
-        row_ptr.append(row_ptr[-1] + len(row))
+    for columns in rows:
+        row_ptr.append(row_ptr[-1] + len(columns))
     return flat, tuple(row_ptr)
 
 

@@ -31,6 +31,10 @@ parameter gradient cross the transpose-CSR backward and therefore tests the
 actual sparse composition. An isolated node has `a_v = 0` and retains only its
 root path.
 
+Because this experiment uses fixed topology, its realized CSR buffers are
+reused per device and its inverse-degree vector is reused per device and dtype.
+The topology owns both derived caches; they never enter model parameters.
+
 This is the mean special case of
 [GraphSAGE](https://arxiv.org/abs/1706.02216), which learns node representations
 by aggregating local neighborhood features rather than assigning every node an
