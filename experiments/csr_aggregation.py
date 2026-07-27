@@ -149,8 +149,10 @@ def _csr_sum_kernel(output: UOp, values: UOp, row_ptr: UOp, column: UOp, *_: UOp
     accumulator = UOp.placeholder((1,), values.dtype, 0, addrspace=AddrSpace.REG)
     edge = UOp.placeholder((1,), dtypes.int32, 1, addrspace=AddrSpace.REG)
     accumulator_init = accumulator.after(lane)[0].store(0.0)
+    accumulator = accumulator.after(accumulator_init)
     edge_init = edge.after(accumulator_init)[0].store(start)
-    loop = UOp(Ops.LOOP, src=(edge_init,), arg=(1,))
+    edge = edge.after(edge_init)
+    loop = UOp.loop(1)
 
     current = edge.after(loop)[0].load()
     active = current < stop
