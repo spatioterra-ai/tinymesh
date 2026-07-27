@@ -1,18 +1,21 @@
 # Sparse aggregation feasibility
 
+This record contains revision-bound implementation evidence. Read
+[Sparse graph topology](../concepts/topology.md) first for the stable concepts.
+
 ## Decision
 
-At Tinygrad revision
+At tinygrad revision
 [`b1a7229`](https://github.com/tinygrad/tinygrad/tree/b1a72299ab3f2c94eceb644f1ed43117149679d1),
-a Tinymesh-owned destination-CSR kernel passes the identity-message correctness,
+a tinymesh-owned destination-CSR kernel passes the identity-message correctness,
 gradient, and sparse-structure gates on CPU and Metal. Forward computes `A @ X`;
 its custom gradient runs the same kernel over transpose CSR to compute
 `A^T @ dY`. Neither direction uses atomics or constructs node-edge state.
 
-This resolves the implementation boundary without adding a Tinygrad primitive,
+This resolves the implementation boundary without adding a tinygrad primitive,
 but not the public API. The candidate remains in `experiments/`: it relies on
 the alpha `Tensor.custom_kernel` surface and a newly landed data-dependent
-`UOp.loop`. At current revision `0f98212`, Tinygrad's default kernel
+`UOp.loop`. At current revision `0f98212`, tinygrad's default kernel
 optimization rewrites this loop into invalid UOps and fails type verification,
 so the kernel pins `opts_to_apply=()`. It covers fixed-topology first-order sum
 aggregation only and serializes each CSR row within one feature lane. Admit it
@@ -49,7 +52,7 @@ topology has exactly `2E + 2(N + 1)` integer elements. Each direction launches
 
 Doubling `N` and `E` therefore doubles useful lane work exactly and grows
 topology storage linearly. This follows from the CSR representation and the
-single dynamic row loop; it is the complexity proof. Tinygrad's counters cannot
+single dynamic row loop; it is the complexity proof. tinygrad's counters cannot
 observe data-dependent loop trips, so wall time is supporting evidence, not the
 proof.
 
@@ -67,7 +70,7 @@ across 20 samples, the largest cases produced these representative medians:
 
 The hub cases expose the present tradeoff: one high-degree row serializes its
 edges across only `H` feature lanes. Preprocessing and compilation are excluded
-from these kernel medians. Tinygrad's kernel option search is disabled as noted
+from these kernel medians. tinygrad's kernel option search is disabled as noted
 above, and repeated balanced timings varied enough that no performance claim
 should rest on the table alone.
 
@@ -75,13 +78,13 @@ The result does not yet cover weighted or edge-dependent messages, batching,
 changing topology, higher-order gradients, or topology construction cost.
 Fixed-topology buffers are realized once per device and reused by subsequent
 calls; preprocessing remains a host-side cost paid by each new topology.
-Empty graphs use Tinygrad's ordinary `values * 0` path because a custom kernel
+Empty graphs use tinygrad's ordinary `values * 0` path because a custom kernel
 cannot receive zero-length buffers. A one-node graph similarly reduces to
 `values * E`, avoiding unnecessary traversal and a degenerate Metal loop scope.
 
 ## Rejected public composition
 
-At the earlier Tinygrad revision
+At the earlier tinygrad revision
 [`980748c`](https://github.com/tinygrad/tinygrad/tree/980748ccfc4e3900ac652d8451e2ead9bfb4d09a),
 the smallest native candidate was:
 
@@ -108,7 +111,7 @@ fourfold increase instead:
 | Metal operations | 91,232 | 325,824 | 1,225,088 | 4,743,936 |
 
 A fresh pinned-revision Metal rerun retained 24 `N * E * H` carriers at every
-measured size. Tinygrad may fuse these rather than allocate the full tensors,
+measured size. tinygrad may fuse these rather than allocate the full tensors,
 but fusion does not remove the quadratic work. A synthetic `N=30,000`,
 `E=60,000`, `H=32` case therefore implies 57.6 billion logical
 node-edge-feature lanes before useful message computation.
@@ -120,7 +123,7 @@ The current upstream scatter-reduce comparisons remain forward-only
 ([tests](https://github.com/tinygrad/tinygrad/blob/980748ccfc4e3900ac652d8451e2ead9bfb4d09a/test/backend/test_ops.py#L3130-L3141)),
 although this experiment observes correct sum gradients on its small cases.
 
-Tinygrad's atomic embedding backward was not a complete tested alternative. It
+tinygrad's atomic embedding backward was not a complete tested alternative. It
 is a custom UOp kernel limited to CPU and AMD, while `Tensor.custom_kernel` is
 marked alpha; its forward lookup still uses one-hot reduction
 ([implementation](https://github.com/tinygrad/tinygrad/blob/980748ccfc4e3900ac652d8451e2ead9bfb4d09a/tinygrad/nn/__init__.py#L307-L396)).
@@ -129,7 +132,7 @@ library path; it does not assign the solution to either repository.
 
 ## Precursor custom-kernel probe
 
-An isolated 2026-07-21 probe at Tinygrad
+An isolated 2026-07-21 probe at tinygrad
 [`f64f96ec`](https://github.com/tinygrad/tinygrad/tree/f64f96ec596082c5230cda9471b54af7b88b58cd)
 made the unresolved boundary narrower. Current source still uses one-hot
 expansion for public `gather` and `scatter_reduce`, while
@@ -152,7 +155,7 @@ At that revision, default kernel optimization failed with
 `KeyError: dtypes.weakint` unless options were fixed explicitly, and normal
 statistics collection raised
 `TypeError: _f() missing 1 required positional argument: 'core_id'` for the
-data-dependent row loop. Tinygrad revision `b1a7229` supplies the loop form used
+data-dependent row loop. tinygrad revision `b1a7229` supplies the loop form used
 by the checked-in experiment, but default kernel optimization still fails with
 the same `KeyError`. At current revision `0f98212`, that failure instead reaches
 type verification and raises `RuntimeError: UOp verification failed` on an
@@ -162,7 +165,7 @@ unmeasured compilation and topology-preprocessing costs remain limitations.
 
 ## How the PyTorch stack expresses it
 
-PyTorch Geometric 2.8.0 uses the same semantic lowering Tinymesh needs, but its
+PyTorch Geometric 2.8.0 uses the same semantic lowering tinymesh needs, but its
 backend primitives are genuinely indexed:
 
 ```text

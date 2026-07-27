@@ -2,99 +2,112 @@
 
 **Sparse structure through space and time, in tinygrad.**
 
-tinymesh is an experimental library for learning over graphs, geospatial
-structures, and geometric meshes using
-[tinygrad](https://github.com/tinygrad/tinygrad).
+tinymesh is an experimental library for learning over graphs and meshes with
+[tinygrad](https://github.com/tinygrad/tinygrad). A graph is the smallest mesh:
+sparse topology connects tensor fields. Geometry and time can extend that core
+without changing it. tinymesh is tinygrad-native, not a compatibility layer
+over another machine-learning framework.
 
-A mesh combines sparse topology, optional geometry, attached tensor fields, and
-time. A graph is the simplest mesh. Coordinates embed it in geographic or
-physical space; faces and volumes extend it into 2D and 3D; time-varying fields
-or geometry make it 4D.
+## What works
 
-The initial implementation remains deliberately narrow: fixed graph topology,
-optional coordinates, temporal fields, message passing, and recurrent
-forecasting. Higher-dimensional cells and changing topology follow only when
-the core provides a natural extension.
+The repository currently proves one narrow path:
 
-## Principles
+```text
+directed edge list
+      |
+      v
+CSR(A) + CSR(A.T)
+      |
+      v
+sparse forward + sparse backward
+      |
+      v
+trainable mean GraphSAGE
+```
 
-- Sparse by construction: computation scales with edges, not node pairs.
-- Tensor-first: topology, geometry, fields, and time have explicit contracts.
-- Geometry is optional: topology remains useful without an embedding.
-- Geo-aware: coordinates and spatial-reference metadata are first-class.
-- Tinygrad-native: no compatibility layer over another ML framework.
-- Composable: message, aggregate, update, and temporal evolution remain separate.
-- Minimal: one clear primitive before multiple architectures or abstractions.
+- An unordered directed edge list lowers deterministically into destination CSR
+  for forward propagation and transpose CSR for backward propagation.
+- Sparse sum stores `O(N + E)` topology and each direction performs
+  `O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`.
+- One tinygrad custom kernel implements both `A @ X` and `A.T @ dY`; neither path
+  constructs node-pair or node-edge state.
+- A mean-GraphSAGE experiment sends gradients through the sparse boundary into
+  a neighbor parameter on CPU and Metal.
+- Fixed topology owns and reuses its realized device buffers.
 
-## Scope
+This is research code, not a stable API. The implementation remains under
+`experiments/` because `Tensor.custom_kernel` is alpha and tinygrad's default
+kernel optimization does not yet accept the data-dependent CSR loop.
 
-The first milestone is:
+## Run the proof
 
-1. A sparse vertex-and-edge topology.
-2. Optional coordinates and attached tensor fields.
-3. Fixed-topology, time-indexed fields.
-4. An edge-based message-passing primitive.
-5. One recurrent spatiotemporal model and reproducible synthetic example.
+Install the exact locked tinygrad revision with
+[uv](https://docs.astral.sh/uv/):
 
-Geospatial learning is core scope. General-purpose GIS storage, file parsing,
-reprojection, and cartographic rendering enter through adapters. tinymesh is not
-an application, data platform, trainer framework, or model zoo.
+```console
+uv sync --locked
+```
 
-## Status
+Then run one sparse aggregation from the repository checkout:
 
-Early research. The package is installable from source, but there is no stable
-API or published release yet.
+```python
+from tinygrad import Tensor
 
-Tinygrad's public gather-and-scatter composition still scales with node-edge
-pairs. A Tinymesh-owned destination-CSR custom kernel now passes the recorded
-forward, gradient, and edge-linear structure gates on CPU and Metal; its
-transpose CSR supplies the backward pass without atomics. It remains an
-experiment because `Tensor.custom_kernel` is alpha and the required dynamic
-loop is new in the pinned Tinygrad revision; Tinygrad's default kernel
-optimization still fails UOp verification for this loop, so the candidate
-disables it. The [feasibility record](docs/sparse-aggregation.md) contains the
-exact boundary and evidence.
+from experiments.csr_aggregation import CSRTopology, csr_edge_sum
 
-A [mean-message-passing experiment](docs/message-passing.md) is the first
-trainable caller of that primitive. It separates neighbor messages, mean
-aggregation, and root updates, and proves that a model parameter before the CSR
-operation receives the expected transpose-CSR gradient. It remains experimental
-and makes no model-quality claim.
+topology = CSRTopology(4, source=[0, 1, 1], target=[2, 2, 3])
+state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
 
-The submodules are pinned, reference-only source for implementation study:
+print(csr_edge_sum(state, topology).tolist())
+# [[0.0], [0.0], [6.0], [4.0]]
+```
 
-- `tinygrad` matches the exact runtime dependency and lockfile revision;
-- PyTorch Geometric 2.8.0 and PyTorch Geometric Temporal `fe555bc` provide
-  comparative graph and temporal implementations.
+The trainable witness starts with loss `1`, takes one SGD step, and reaches loss
+`0` only through neighbor information:
 
-They are not vendored runtime code. PyTorch itself is not a submodule: its
-repository is much larger, while exact links to the indexed, scatter, segment,
-and sparse-matrix operators provide the useful study boundary.
+```console
+DEV=CPU uv run python -m experiments.mean_sage
+DEV=METAL uv run python -m experiments.mean_sage
+```
 
-Tinygrad development follows upstream `master`. The runtime dependency,
-lockfile, and reference submodule pin the same commit so each experiment remains
-reproducible; all three advance together at the start of a new stage. The
-comparative references move only with an intentional, revision-bound study.
+## Learn
+
+Start with the [documentation map](docs/index.md):
+
+- [Sparse graph topology](docs/concepts/topology.md) explains COO, CSR,
+  transpose, lowering, and the push-pull tradeoff.
+- [Message passing](docs/concepts/message-passing.md) explains
+  message -> aggregate -> update and the gradient path.
+- [Sparse aggregation feasibility](docs/research/sparse-aggregation.md) retains
+  the revision-bound scaling and kernel evidence.
+- [Mean GraphSAGE experiment](docs/research/mean-sage.md) retains the exact
+  learning witness and its limits.
+
+## Direction
+
+The next decision is the smallest public topology and aggregation contract that
+survives a second, genuinely different model caller. Weighted or edge-dependent
+messages, batching, changing topology, and temporal recurrence remain
+unimplemented.
+
+Coordinates, coordinate-reference metadata, higher-dimensional cells, and
+time-varying fields remain the wider mesh direction. They enter only when the
+sparse graph core extends naturally; tinymesh is not a GIS, trainer framework,
+application, or model zoo.
 
 ## Development
-
-Requires [uv](https://docs.astral.sh/uv/):
 
 ```console
 uv sync --locked
 uv run python -m unittest discover -s tests -p 'test_*.py'
-uv run python experiments/sparse_aggregation.py
-uv run python experiments/csr_aggregation.py
-uv run python -m experiments.mean_sage
+uv build
 ```
 
-Initialize the optional study references with:
+The pinned submodules are optional, reference-only source for studying tinygrad,
+PyTorch Geometric, and PyTorch Geometric Temporal:
 
 ```console
 git submodule update --init
 ```
 
-Contributions follow
-[CONTRIBUTING.md](CONTRIBUTING.md).
-Repository prose, issues, pull requests, and reviews follow
-[voice.md](voice.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) before changing code.
