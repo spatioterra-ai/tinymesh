@@ -39,6 +39,12 @@ class CSRTopologyTest(unittest.TestCase):
 
         self.assertIs(topology._tensors(Device.DEFAULT), topology._tensors(Device.DEFAULT))
 
+    def test_reuses_realized_degree(self):
+        topology = CSRTopology(6, SOURCE, TARGET)
+
+        self.assertIs(topology._degree(Device.DEFAULT), topology._degree(Device.DEFAULT))
+        self.assertEqual(topology._degree(Device.DEFAULT).tolist(), [0, 1, 4, 0, 1, 0])
+
     def test_rejects_invalid_edges(self):
         with self.assertRaisesRegex(ValueError, "positive"):
             CSRTopology(0, [], [])

@@ -41,9 +41,9 @@ The output gradient begins at nodes `2` and `3`. Transpose CSR returns it to
 nodes `0` and `1`, then tinygrad differentiates their linear messages into
 `W_neighbor`.
 
-Fixed topology reuses realized CSR buffers per device and its inverse-degree
-vector per device and dtype. The topology owns those derived caches, so they do
-not enter model parameters.
+Fixed topology reuses realized CSR and integer-degree buffers per device. The
+layer derives inverse degree with ordinary tinygrad operations, so topology
+owns only topology facts and normalization does not enter model parameters.
 
 ## Limits
 

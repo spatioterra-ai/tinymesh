@@ -54,10 +54,11 @@ Metal reproduce those values to float32 precision.
 ## Limits
 
 The experiment covers unweighted, fixed topology and first-order gradients.
-Weighted edges, implicit self-loop insertion, normalization caching, batching,
-depth, nonlinearities, and model quality remain unproven. In particular, a
-weighted GCN may require edge-local multiplication and must earn that boundary
-with its own sparse evidence.
+Topology caches integer degree, while each call derives inverse square root
+with ordinary tinygrad operations. Weighted edges, implicit self-loop insertion,
+batching, depth, nonlinearities, and model quality remain unproven. In
+particular, a weighted GCN may require edge-local multiplication and must earn
+that boundary with its own sparse evidence.
 
 The formulation follows Kipf and Welling's
 [paper](https://arxiv.org/abs/1609.02907); the
