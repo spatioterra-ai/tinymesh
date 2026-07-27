@@ -6,7 +6,7 @@ than the mean-GraphSAGE experiment.
 ## Decision
 
 At tinygrad revision
-[`bdbb1d7`](https://github.com/tinygrad/tinygrad/tree/bdbb1d702f91c68ccfb0b93d93180b6f0947c7c1),
+[`0bb36c9`](https://github.com/tinygrad/tinygrad/tree/0bb36c99899ba4742dbe1d5784397373998d81c3),
 an unweighted GCN layer composes from the same destination-CSR sum on CPU and
 Metal:
 
