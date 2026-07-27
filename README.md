@@ -55,6 +55,12 @@ optimization still fails UOp verification for this loop, so the candidate
 disables it. The [feasibility record](docs/sparse-aggregation.md) contains the
 exact boundary and evidence.
 
+A [mean-message-passing experiment](docs/message-passing.md) is the first
+trainable caller of that primitive. It separates neighbor messages, mean
+aggregation, and root updates, and proves that a model parameter before the CSR
+operation receives the expected transpose-CSR gradient. It remains experimental
+and makes no model-quality claim.
+
 The submodules are pinned, reference-only source for implementation study:
 
 - `tinygrad` matches the exact runtime dependency and lockfile revision;
@@ -79,6 +85,7 @@ uv sync --locked
 uv run python -m unittest discover -s tests -p 'test_*.py'
 uv run python experiments/sparse_aggregation.py
 uv run python experiments/csr_aggregation.py
+uv run python -m experiments.mean_sage
 ```
 
 Initialize the optional study references with:
