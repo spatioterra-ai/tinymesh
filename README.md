@@ -17,24 +17,28 @@ over another machine-learning framework.
 The repository currently proves one narrow sparse core:
 
 ```text
-directed edge list
-      |
-      v
-CSR(A) + CSR(A.T)
-      |
-      v
-sparse forward + sparse backward
-      |                 |
-      v                 v
-mean GraphSAGE     unweighted GCN
+COO connectivity + scalar edge facts
+                  |
+                  v
+       CSR(A) + CSR(A.T) + edge maps
+                  |
+          +-------+--------+
+          |                |
+          v                v
+      unit sum        weighted sum
+      A @ X           A_w @ X
+      A.T @ dY        A_w.T @ dY + dw
 ```
 
 - An unordered directed edge list lowers deterministically into destination CSR
   for forward propagation and transpose CSR for backward propagation.
+- Edge-aligned scalar values lower with connectivity; weighted forward,
+  node-gradient, and edge-weight-gradient kernels remain edge-linear.
 - Sparse sum stores `O(N + E)` topology and each direction performs
   `O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`.
-- One tinygrad custom kernel implements both `A @ X` and `A.T @ dY`; neither path
-  constructs node-pair or node-edge state.
+- One tinygrad custom kernel implements both `A @ X` and `A.T @ dY`; weighted
+  execution reuses it and computes `dw` with one owner per edge. No path
+  constructs `[N, N]` or `[E, H]` intermediates.
 - A mean-GraphSAGE experiment sends gradients through the sparse boundary into
   a neighbor parameter on CPU and Metal.
 - An unweighted GCN experiment composes source and destination degree scaling
@@ -78,6 +82,13 @@ DEV=CPU uv run python -m experiments.gcn
 DEV=METAL uv run python -m experiments.gcn
 ```
 
+Inspect weighted forward and both first-order gradients:
+
+```console
+DEV=CPU uv run python -m experiments.weighted_aggregation
+DEV=METAL uv run python -m experiments.weighted_aggregation
+```
+
 ## Learn
 
 Start with the [documentation](https://spatioterra-ai.github.io/tinymesh/) or
@@ -93,15 +104,17 @@ run the [quick start](docs/quickstart.md):
   learning witness and its limits.
 - [GCN experiment](docs/research/gcn.md) tests the same sparse sum under
   symmetric degree normalization.
+- [Weighted aggregation experiment](docs/research/weighted-aggregation.md)
+  follows scalar edge identity through lowering, forward, and both gradients.
 
 ## Direction
 
-Mean GraphSAGE and GCN now share deterministic topology plus destination-CSR
-sum. Topology caches only topology facts; each layer derives its own
-normalization with ordinary tinygrad operations. The remaining package-admission
-blocker is the alpha kernel and optimizer boundary. Weighted or edge-dependent
-messages, batching, changing topology, and temporal recurrence remain
-unimplemented.
+Unit and scalar-weighted sums now share deterministic topology plus
+destination-CSR execution. Topology caches only topology facts; each layer
+derives its own normalization with ordinary tinygrad operations. The remaining
+package-admission blocker is the alpha kernel and optimizer boundary. Vector
+edge features, attention, batching, changing topology, and temporal recurrence
+remain unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 time-varying fields remain the wider mesh direction. They enter only when the

@@ -10,7 +10,7 @@ At tinygrad revision
 a tinymesh-owned destination-CSR kernel passes the identity-message correctness,
 gradient, and sparse-structure gates on CPU and Metal. Forward computes `A @ X`;
 its custom gradient runs the same kernel over transpose CSR to compute
-`A^T @ dY`. Neither direction uses atomics or constructs node-edge state.
+`A^T @ dY`. Neither direction uses atomics or materializes `[E, H]` state.
 
 This resolves the implementation boundary without adding a tinygrad primitive,
 but not the public API. The candidate remains in `experiments/`: it relies on
@@ -40,33 +40,35 @@ vertex-permutation equivariance on exact-valued fixtures on CPU and Metal. As
 with any sequential floating-point reduction, relabeling can change summation
 order and therefore the final rounding bits.
 
-For balanced degree-eight graphs with feature width `H = 32`, the stored
-topology has exactly `2E + 2(N + 1)` integer elements. Each direction launches
-`N * H` lanes whose row loops make exactly `E * H` active edge visits:
+For balanced degree-eight graphs with feature width `H = 32`, the two CSR
+connectivity forms have exactly `2E + 2(N + 1)` integer elements. Each
+direction launches `N * H` lanes whose row loops make exactly `E * H` active
+edge visits:
 
-| N | E | Topology elements | Forward lane work | Backward lane work |
+| N | E | CSR elements | Forward lane work | Backward lane work |
 |---:|---:|---:|---:|---:|
 | 4,096 | 32,768 | 73,730 | 1,179,648 | 1,179,648 |
 | 8,192 | 65,536 | 147,458 | 2,359,296 | 2,359,296 |
 | 16,384 | 131,072 | 294,914 | 4,718,592 | 4,718,592 |
 
-Doubling `N` and `E` therefore doubles useful lane work exactly and grows
-topology storage linearly. This follows from the CSR representation and the
-single dynamic row loop; it is the complexity proof. tinygrad's counters cannot
-observe data-dependent loop trips, so wall time is supporting evidence, not the
-proof.
+Doubling `N` and `E` therefore doubles useful lane work exactly and grows CSR
+storage linearly. The current topology also retains two edge-order maps of
+length `E`; they preserve scalar edge identity without changing the complexity.
+This follows from the representation and the single dynamic row loop; it is the
+complexity proof. tinygrad's counters cannot observe data-dependent loop trips,
+so wall time is supporting evidence, not the proof.
 
 On a 32 GB Apple M4 MacBook Air running macOS 26.5.2, after five warmups and
 across 20 samples, the largest cases produced these representative medians:
 
 | Device | Topology | Forward (ms) | Backward (ms) |
 |---|---|---:|---:|
-| CPU | balanced | 3.81 | 4.03 |
-| CPU | one destination hub | 6.86 | 4.67 |
-| CPU | one source hub | 3.59 | 7.89 |
-| Metal | balanced | 3.71 | 3.15 |
-| Metal | one destination hub | 17.55 | 1.30 |
-| Metal | one source hub | 2.41 | 17.38 |
+| CPU | balanced | 4.53 | 4.48 |
+| CPU | one destination hub | 6.40 | 4.00 |
+| CPU | one source hub | 4.47 | 7.01 |
+| Metal | balanced | 2.08 | 2.86 |
+| Metal | one destination hub | 17.50 | 1.30 |
+| Metal | one source hub | 5.95 | 17.56 |
 
 The hub cases expose the present tradeoff: one high-degree row serializes its
 edges across only `H` feature lanes. Preprocessing and compilation are excluded
@@ -74,10 +76,13 @@ from these kernel medians. tinygrad's kernel option search is disabled as noted
 above, and repeated balanced timings varied enough that no performance claim
 should rest on the table alone.
 
-The result does not yet cover weighted or edge-dependent messages, batching,
-changing topology, higher-order gradients, or topology construction cost.
-Fixed-topology buffers are realized once per device and reused by subsequent
-calls; preprocessing remains a host-side cost paid by each new topology.
+The benchmark does not time weighted or edge-dependent messages. A separate
+[weighted aggregation record](weighted-aggregation.md) proves scalar weighted
+forward, `dX`, and `dw` without materializing `[E, H]` state. Vector edge
+messages, batching, changing topology, higher-order gradients, and topology
+construction cost remain open. Fixed-topology buffers are realized once per
+device and reused by subsequent calls; preprocessing remains a host-side cost
+paid by each new topology.
 Empty graphs use tinygrad's ordinary `values * 0` path because a custom kernel
 cannot receive zero-length buffers. A one-node graph similarly reduces to
 `values * E`, avoiding unnecessary traversal and a degenerate Metal loop scope.

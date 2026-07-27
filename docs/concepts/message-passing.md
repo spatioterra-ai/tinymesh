@@ -53,6 +53,27 @@ the existing CSR sum. The experiment requires the caller to include self-loops
 explicitly. Integer degree is a topology fact; reciprocal and inverse square
 root are model semantics.
 
+## Scalar weighted messages
+
+The first edge-dependent message multiplies each source row by one scalar:
+
+```text
+message:    m(u -> v, e) = w_e x_u
+aggregate:  y_v          = sum(w_e x_u for each edge e: u -> v)
+```
+
+For incoming output gradient `g_v`, reverse mode needs:
+
+```text
+dX_u = sum(w_e g_v for each edge e: u -> v)
+dw_e = dot(x_u, g_v)
+```
+
+`dX` is another weighted CSR sum over the transpose. Each `dw_e` has exactly
+one edge owner and reduces only feature width `H`, so it needs neither atomics
+nor a materialized `[E, H]` message tensor. Edge-order maps keep the scalar
+attached to the same COO edge through both traversals.
+
 ## Gradient path
 
 The layer's forward flow is:
@@ -112,4 +133,6 @@ blocks a stable public composition.
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives
 in [Mean GraphSAGE experiment](../research/mean-sage.md). The normalized second
-caller lives in [GCN experiment](../research/gcn.md).
+caller lives in [GCN experiment](../research/gcn.md). Scalar edge evidence
+lives in
+[Weighted aggregation experiment](../research/weighted-aggregation.md).

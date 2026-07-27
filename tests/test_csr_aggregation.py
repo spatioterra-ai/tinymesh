@@ -33,6 +33,15 @@ class CSRTopologyTest(unittest.TestCase):
         self.assertEqual(topology.column, (0, 0, 1, 1, 3, 1))
         self.assertEqual(topology.transpose_row_ptr, (0, 2, 5, 5, 6, 6, 6))
         self.assertEqual(topology.transpose_column, (1, 2, 2, 2, 4, 2))
+        self.assertEqual(topology.edge_order, (1, 5, 0, 2, 3, 4))
+        self.assertEqual(topology.transpose_edge, (0, 1, 2, 3, 5, 4))
+
+    def test_lowers_coo_edge_values_with_connectivity(self):
+        topology = CSRTopology(6, SOURCE, TARGET)
+
+        self.assertEqual(topology.lower_edge_values([2, -1, 3, 4, -2, 5]), (-1, 5, 2, 3, 4, -2))
+        with self.assertRaisesRegex(ValueError, "length 6"):
+            topology.lower_edge_values([1])
 
     def test_reuses_realized_device_tensors(self):
         topology = CSRTopology(6, SOURCE, TARGET)
@@ -44,6 +53,14 @@ class CSRTopologyTest(unittest.TestCase):
 
         self.assertIs(topology._degree(Device.DEFAULT), topology._degree(Device.DEFAULT))
         self.assertEqual(topology._degree(Device.DEFAULT).tolist(), [0, 1, 4, 0, 1, 0])
+
+    def test_reuses_realized_edge_maps(self):
+        topology = CSRTopology(6, SOURCE, TARGET)
+        transpose_edge, row_index = topology._edge_tensors(Device.DEFAULT)
+
+        self.assertIs(topology._edge_tensors(Device.DEFAULT), topology._edge_tensors(Device.DEFAULT))
+        self.assertEqual(transpose_edge.tolist(), [0, 1, 2, 3, 5, 4])
+        self.assertEqual(row_index.tolist(), [1, 2, 2, 2, 2, 4])
 
     def test_rejects_invalid_edges(self):
         with self.assertRaisesRegex(ValueError, "positive"):
