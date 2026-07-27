@@ -5,7 +5,7 @@ requires-python = ">=3.11"
 [[package]]
 name = "tinygrad"
 version = "0.13.0"
-source = { git = "https://github.com/tinygrad/tinygrad.git?rev=b1a72299ab3f2c94eceb644f1ed43117149679d1#b1a72299ab3f2c94eceb644f1ed43117149679d1" }
+source = { git = "https://github.com/tinygrad/tinygrad.git?rev=0f98212e80f18b0722d04811798bfefd4bf6d93d#0f98212e80f18b0722d04811798bfefd4bf6d93d" }
 
 [[package]]
 name = "tinymesh"
@@ -16,4 +16,4 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "tinygrad", git = "https://github.com/tinygrad/tinygrad.git?rev=b1a72299ab3f2c94eceb644f1ed43117149679d1" }]
+requires-dist = [{ name = "tinygrad", git = "https://github.com/tinygrad/tinygrad.git?rev=0f98212e80f18b0722d04811798bfefd4bf6d93d" }]
