@@ -6,7 +6,7 @@ This record binds one learning result to an exact tinygrad revision. Read
 ## Decision
 
 At tinygrad revision
-[`0f98212`](https://github.com/tinygrad/tinygrad/tree/0f98212e80f18b0722d04811798bfefd4bf6d93d),
+[`bdbb1d7`](https://github.com/tinygrad/tinygrad/tree/bdbb1d702f91c68ccfb0b93d93180b6f0947c7c1),
 an experimental mean-GraphSAGE layer composes tinygrad linear maps with
 tinymesh's CSR aggregation and trains on CPU and Metal.
 
