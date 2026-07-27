@@ -103,6 +103,13 @@ uv run python -m unittest discover -s tests -p 'test_*.py'
 uv build
 ```
 
+Build or preview the documentation with the locked docs environment:
+
+```console
+uv run --locked --only-group docs zensical build --clean --strict
+uv run --locked --only-group docs zensical serve
+```
+
 The pinned submodules are optional, reference-only source for studying tinygrad,
 PyTorch Geometric, and PyTorch Geometric Temporal:
 
