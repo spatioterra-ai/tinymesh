@@ -1,12 +1,20 @@
 import unittest
 
-from tinygrad import Device, Tensor
+from tinygrad import Device, Tensor, dtypes
 
 from experiments.csr_aggregation import CSRTopology
 from experiments.mean_sage import MeanSAGE, fit_one_step
 
 
 class MeanSAGETest(unittest.TestCase):
+    def test_reuses_fixed_degree_normalization(self) -> None:
+        topology = CSRTopology(4, [0, 1, 1], [2, 2, 3])
+
+        self.assertIs(
+            topology._inverse_degree(Device.DEFAULT, dtypes.float),
+            topology._inverse_degree(Device.DEFAULT, dtypes.float),
+        )
+
     def test_mean_neighbor_and_root_paths(self) -> None:
         topology = CSRTopology(4, [0, 1, 1], [2, 2, 3])
         values = Tensor([[2.0], [4.0], [8.0], [16.0]], device=Device.DEFAULT).realize()
