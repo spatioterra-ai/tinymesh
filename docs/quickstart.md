@@ -96,25 +96,19 @@ compute `A.T @ dY`. The same sparse sum implements both directions.
 ## Weight individual edges
 
 Scalar edge values follow the `source` and `target` arrays passed to
-`CSRTopology`. Lower them with the same permutation as connectivity:
+`CSRTopology`:
 
 ```python
-raw_weight = [-1.0, 0.5, 2.0]
-edge_weight = Tensor(
-    topology.lower_edge_values(raw_weight),
-    device="CPU",
-).realize()
-
-print(topology.edge_order)
-# (1, 2, 0)
+edge_weight = Tensor([-1.0, 0.5, 2.0], device="CPU").realize()
 
 weighted = csr_edge_weighted_sum(state, topology, edge_weight)
 print(weighted.tolist())
 # [[0.0], [0.0], [9.0], [-4.0]]
 ```
 
-CSR position `0` came from COO edge `1`, position `1` from edge `2`, and
-position `2` from edge `0`; the weight moved with each edge.
+The first weight belongs to `1 -> 3`, the second to `0 -> 2`, and the third to
+`1 -> 2`. Private maps select those weights after connectivity is grouped into
+CSR; the public tensor stays in COO order.
 
 Both inputs differentiate:
 
@@ -126,11 +120,10 @@ node_gradient, edge_weight_gradient = weighted.sum().gradient(
 print(node_gradient.tolist())
 # [[0.5], [1.0], [0.0], [0.0]]
 print(edge_weight_gradient.tolist())
-# [2.0, 4.0, 4.0]
+# [4.0, 2.0, 4.0]
 ```
 
-The edge-weight gradient is in canonical CSR order. `topology.edge_order` maps
-each position back to its original COO edge. Read
+The edge-weight gradient follows the same COO order as `edge_weight`. Read
 [Weighted aggregation experiment](research/weighted-aggregation.md) for the
 formula, duplicate-edge evidence, and sparse-structure checks.
 

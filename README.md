@@ -32,8 +32,8 @@ COO connectivity + scalar edge facts
 
 - An unordered directed edge list lowers deterministically into destination CSR
   for forward propagation and transpose CSR for backward propagation.
-- Edge-aligned scalar values lower with connectivity; weighted forward,
-  node-gradient, and edge-weight-gradient kernels remain edge-linear.
+- Edge-aligned scalar values and their gradients stay in original COO order;
+  private maps connect them to both CSR traversals.
 - Sparse sum stores `O(N + E)` topology and each direction performs
   `O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`.
 - One tinygrad custom kernel implements both `A @ X` and `A.T @ dY`; weighted

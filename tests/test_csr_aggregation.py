@@ -29,19 +29,22 @@ class CSRTopologyTest(unittest.TestCase):
     def test_groups_both_directions_without_merging_duplicates(self):
         topology = CSRTopology(6, SOURCE, TARGET)
 
+        self.assertEqual(topology.source, tuple(SOURCE))
+        self.assertEqual(topology.target, tuple(TARGET))
         self.assertEqual(topology.row_ptr, (0, 0, 1, 5, 5, 6, 6))
         self.assertEqual(topology.column, (0, 0, 1, 1, 3, 1))
         self.assertEqual(topology.transpose_row_ptr, (0, 2, 5, 5, 6, 6, 6))
         self.assertEqual(topology.transpose_column, (1, 2, 2, 2, 4, 2))
         self.assertEqual(topology.edge_order, (1, 5, 0, 2, 3, 4))
-        self.assertEqual(topology.transpose_edge, (0, 1, 2, 3, 5, 4))
+        self.assertEqual(topology.transpose_order, (1, 5, 0, 2, 4, 3))
 
-    def test_lowers_coo_edge_values_with_connectivity(self):
-        topology = CSRTopology(6, SOURCE, TARGET)
+    def test_owns_immutable_coo_identity(self):
+        source, target = SOURCE.copy(), TARGET.copy()
+        topology = CSRTopology(6, source, target)
+        source[0], target[0] = 0, 0
 
-        self.assertEqual(topology.lower_edge_values([2, -1, 3, 4, -2, 5]), (-1, 5, 2, 3, 4, -2))
-        with self.assertRaisesRegex(ValueError, "length 6"):
-            topology.lower_edge_values([1])
+        self.assertEqual(topology.source, tuple(SOURCE))
+        self.assertEqual(topology.target, tuple(TARGET))
 
     def test_reuses_realized_device_tensors(self):
         topology = CSRTopology(6, SOURCE, TARGET)
@@ -56,11 +59,13 @@ class CSRTopologyTest(unittest.TestCase):
 
     def test_reuses_realized_edge_maps(self):
         topology = CSRTopology(6, SOURCE, TARGET)
-        transpose_edge, row_index = topology._edge_tensors(Device.DEFAULT)
+        edge_order, transpose_order, source, target = topology._edge_tensors(Device.DEFAULT)
 
         self.assertIs(topology._edge_tensors(Device.DEFAULT), topology._edge_tensors(Device.DEFAULT))
-        self.assertEqual(transpose_edge.tolist(), [0, 1, 2, 3, 5, 4])
-        self.assertEqual(row_index.tolist(), [1, 2, 2, 2, 2, 4])
+        self.assertEqual(edge_order.tolist(), [1, 5, 0, 2, 3, 4])
+        self.assertEqual(transpose_order.tolist(), [1, 5, 0, 2, 4, 3])
+        self.assertEqual(source.tolist(), SOURCE)
+        self.assertEqual(target.tolist(), TARGET)
 
     def test_rejects_invalid_edges(self):
         with self.assertRaisesRegex(ValueError, "positive"):
@@ -69,8 +74,6 @@ class CSRTopologyTest(unittest.TestCase):
             CSRTopology(2, [0], [])
         with self.assertRaisesRegex(ValueError, r"\[0, 2\)"):
             CSRTopology(2, [0], [2])
-        with self.assertRaises(TypeError):
-            CSRTopology(2, (0, 0, 1), (0,), (0, 0, 1), (0,))
 
 
 class CSRAggregationTest(unittest.TestCase):
