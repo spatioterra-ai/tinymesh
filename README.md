@@ -8,6 +8,10 @@ sparse topology connects tensor fields. Geometry and time can extend that core
 without changing it. tinymesh is tinygrad-native, not a compatibility layer
 over another machine-learning framework.
 
+[Documentation](https://spatioterra-ai.github.io/tinymesh/) |
+[Quick start](https://spatioterra-ai.github.io/tinymesh/quickstart/) |
+[Contributing](CONTRIBUTING.md)
+
 ## What works
 
 The repository currently proves one narrow path:
@@ -72,7 +76,8 @@ DEV=METAL uv run python -m experiments.mean_sage
 
 ## Learn
 
-Start with the [documentation map](docs/index.md):
+Start with the [documentation](https://spatioterra-ai.github.io/tinymesh/) or
+run the [quick start](docs/quickstart.md):
 
 - [Sparse graph topology](docs/concepts/topology.md) explains COO, CSR,
   transpose, lowering, and the push-pull tradeoff.
