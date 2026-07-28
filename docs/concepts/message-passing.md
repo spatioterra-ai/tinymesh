@@ -91,6 +91,22 @@ COO edge order. `Graph.softmax` normalizes scalar edge scores among each
 target's incoming edges. `Graph.sum` then consumes those coefficients as scalar
 edge weights. Ordinary tinygrad operations own every learned transform.
 
+Multiple heads add a parameter axis, not a new graph operation:
+
+```text
+state       [N, K, C]
+node score  [N, K]
+edge score  [E, K]
+    |
+    +--> head 0: target softmax -> weighted sum [N, C] --+
+    +--> head 1: target softmax -> weighted sum [N, C] --+--> concatenate
+    `--> ...                                               [N, K*C]
+```
+
+Each head normalizes only against other edges in that head. The current
+experiment calls scalar `Graph.softmax` and `Graph.sum` once per head. Kernel
+count therefore grows with head count, but topology and semantics stay shared.
+
 ## Gradient path
 
 The layer's forward flow is:
@@ -138,13 +154,13 @@ or training on a real graph.
 The same decomposition identifies capabilities that do not exist yet:
 
 - GIN keeps sum aggregation and adds a learned update.
-- Multi-head attention repeats scalar sparse normalization and combines heads.
+- Edge-conditioned attention adds edge features to score construction.
 - Temporal graph models repeat or evolve spatial state across ordered
   snapshots.
 
-GIN, multi-head attention, and temporal layers remain design probes. Mean
-GraphSAGE, GCN, and single-head GAT use the shared experimental `Graph`
-boundary, but none is a public Tinymesh model API.
+GIN, edge-conditioned attention, and temporal layers remain design probes.
+Mean GraphSAGE, GCN, and single- and multi-head GAT use the shared experimental
+`Graph` boundary, but none is a public Tinymesh model API.
 
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives

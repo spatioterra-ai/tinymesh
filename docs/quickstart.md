@@ -214,6 +214,17 @@ One SGD step lowers loss from `0.214323` to `0.126819` and updates the shared
 attention parameter. Read [Sparse attention experiment](research/attention.md)
 for the exact composition, gradient evidence, and limits.
 
+A multi-head layer repeats normalization and aggregation independently, then
+concatenates the node outputs:
+
+```console
+DEV=CPU uv run python -m experiments.multi_head_gat
+```
+
+The checked fixture gives two heads opposite initial attention parameters. One
+step sends equal and opposite gradients to them and lowers loss from `0.214323`
+to `0.168497`. No new `Graph` operation is involved.
+
 ## Read the source
 
 The implementation is intentionally small:
@@ -231,15 +242,18 @@ The implementation is intentionally small:
 - [`experiments/weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/weighted_aggregation.py)
   records weighted forward and both gradients;
 - [`experiments/gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gat.py)
-  composes the single-head attention caller;
+  composes graph-attention heads;
+- [`experiments/multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/multi_head_gat.py)
+  records the two-head learning witness;
 - [`tests/test_graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_graph.py)
   with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
   [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
   [`tests/test_weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_weighted_aggregation.py),
   [`tests/test_edge_values.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_edge_values.py),
   [`tests/test_softmax.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_softmax.py),
-  and [`tests/test_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gat.py)
+  [`tests/test_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gat.py),
+  and [`tests/test_multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_multi_head_gat.py)
   state the current contracts.
 
-`Graph` is public but experimental. The three model callers remain experiments,
-and the alpha tinygrad execution boundary is not a stable contract.
+`Graph` is public but experimental. Model callers remain experiments, and the
+alpha tinygrad execution boundary is not a stable contract.

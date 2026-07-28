@@ -43,8 +43,8 @@ COO connectivity + scalar edge facts
   a neighbor parameter on CPU and Metal.
 - An unweighted GCN experiment composes source and destination degree scaling
   around the same sparse sum.
-- Edge endpoint projection and target-grouped stable softmax compose one
-  trainable single-head GAT experiment without an `N * E` axis.
+- Edge endpoint projection and target-grouped stable softmax compose trainable
+  single- and multi-head GAT experiments without an `N * E` axis.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
@@ -75,7 +75,7 @@ print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
-Run the three trainable witnesses:
+Run the four trainable witnesses:
 
 ```console
 DEV=CPU uv run python -m experiments.mean_sage
@@ -84,6 +84,8 @@ DEV=CPU uv run python -m experiments.gcn
 DEV=METAL uv run python -m experiments.gcn
 DEV=CPU uv run python -m experiments.gat
 DEV=METAL uv run python -m experiments.gat
+DEV=CPU uv run python -m experiments.multi_head_gat
+DEV=METAL uv run python -m experiments.multi_head_gat
 ```
 
 Inspect weighted forward and both first-order gradients:
@@ -112,7 +114,7 @@ run the [quick start](docs/quickstart.md):
   follows scalar edge identity through lowering, forward, and both gradients.
 - [Sparse attention experiment](docs/research/attention.md) follows node
   coefficients into COO edge order, target softmax, weighted aggregation, and
-  a trainable attention parameter.
+  independently trainable attention heads.
 
 ## Direction
 
@@ -120,8 +122,9 @@ Unit and scalar-weighted sums now share deterministic topology plus
 destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
 endpoint projection, target softmax, and in-degree; its private backend owns
 lowering and rebuildable device caches. The alpha kernel and optimizer boundary
-still block stability. Multi-head attention, external vector edge features,
-batching, changing topology, and temporal recurrence remain unimplemented.
+still block stability. Vectorized head execution, external vector edge
+features, batching, changing topology, and temporal recurrence remain
+unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 time-varying fields remain the wider mesh direction. They enter only when the
