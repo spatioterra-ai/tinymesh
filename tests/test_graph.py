@@ -50,11 +50,14 @@ class GraphTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r"\[0, 2\)"):
             Graph(2, [0], [2])
 
-    def test_reuses_realized_in_degree(self):
+    def test_in_degree_does_not_expose_mutable_topology(self):
         graph = Graph(6, SOURCE, TARGET)
+        expected = [0, 1, 4, 0, 1, 0]
+        degree = graph.in_degree(device=Device.DEFAULT).realize()
 
-        self.assertIs(graph.in_degree(device=Device.DEFAULT), graph.in_degree(device=Device.DEFAULT))
-        self.assertEqual(graph.in_degree(device=Device.DEFAULT).tolist(), [0, 1, 4, 0, 1, 0])
+        self.assertEqual(degree.tolist(), expected)
+        degree.assign(Tensor.zeros(6, dtype=degree.dtype, device=Device.DEFAULT)).realize()
+        self.assertEqual(graph.in_degree(device=Device.DEFAULT).tolist(), expected)
 
 
 class CSRBackendTest(unittest.TestCase):

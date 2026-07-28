@@ -16,7 +16,6 @@ class _CSR:
         self.column, self.row_ptr, self.edge_order = _group(nodes, target, source)
         self.transpose_column, self.transpose_row_ptr, self.transpose_order = _group(nodes, source, target)
         self._tensors_by_device: dict[str, tuple[Tensor, Tensor, Tensor, Tensor]] = {}
-        self._degree_by_device: dict[str, Tensor] = {}
         self._edge_tensors_by_device: dict[str, tuple[Tensor, Tensor, Tensor, Tensor]] = {}
 
     def sum(self, values: Tensor) -> Tensor:
@@ -58,15 +57,8 @@ class _CSR:
         )[0]
 
     def in_degree(self, device: str) -> Tensor:
-        degree = self._degree_by_device.get(device)
-        if degree is None:
-            degree = Tensor(
-                [stop - start for start, stop in zip(self.row_ptr, self.row_ptr[1:])],
-                dtype=dtypes.int32,
-                device=device,
-            ).realize()
-            self._degree_by_device[device] = degree
-        return degree
+        row_ptr = self._tensors(device)[0]
+        return row_ptr[1:] - row_ptr[:-1]
 
     def _tensors(self, device: str) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         tensors = self._tensors_by_device.get(device)
