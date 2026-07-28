@@ -79,5 +79,20 @@ A wrapper would not yet enforce timestamps, masks, sampling intervals, labels,
 or provenance, so it would add a name without adding a contract. It should
 exist only when one of those invariants has a real caller.
 
+## Where spatial mixing happens
+
+Two fixed-graph cells now expose one architectural choice:
+
+```text
+T-GCN       graph-mix X_t, then combine node-local H_(t-1)
+GConvGRU    graph-mix X_t and H_(t-1) inside the gates
+```
+
+T-GCN is cheaper. GConvGRU lets a node's remembered state affect neighboring
+nodes before the next update. Whether that extra path helps is a model and data
+question, not a temporal-container question. Both consume the same explicit
+`Graph`, snapshots, and hidden tensor.
+
 The exact checked result lives in the
-[T-GCN experiment](../research/tgcn.md).
+[T-GCN experiment](../research/tgcn.md). The controlled architectural
+comparison lives in the [GConvGRU experiment](../research/gconv-gru.md).

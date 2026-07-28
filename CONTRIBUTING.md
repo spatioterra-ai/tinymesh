@@ -96,6 +96,8 @@ Run `DEV=<device> uv run python -m experiments.multi_head_gat` when changing
 head composition.
 Run `DEV=<device> uv run python -m experiments.tgcn` when changing temporal
 recurrence or hidden-state flow.
+Run `DEV=<device> uv run python -m experiments.gconv_gru` when changing
+Chebyshev filtering or graph-convolutional recurrence.
 
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.

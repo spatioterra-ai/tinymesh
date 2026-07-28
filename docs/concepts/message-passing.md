@@ -126,6 +126,19 @@ over an ordered tensor sequence creates a gradient path through both graph
 propagation and earlier hidden state. Read [Time](time.md) for the temporal data
 contract.
 
+GConvGRU moves hidden state over the graph too:
+
+```text
+[Z, R]  = sigmoid(Cheb_K([X, H]))
+H_tilde = tanh(Cheb_K([X, R * H]))
+```
+
+The Chebyshev basis repeatedly applies a scaled normalized adjacency through
+the same sparse sum. Order `K` uses `K - 1` sparse calls per convolution. Input
+and hidden projections fuse along feature width, so the recurrent cell needs
+two Chebyshev convolutions rather than six separate logical ones. This changes
+model capacity and cost; it does not change `Graph`.
+
 ## Gradient path
 
 The layer's forward flow is:
@@ -174,11 +187,10 @@ The same decomposition identifies capabilities that do not exist yet:
 
 - GIN keeps sum aggregation and adds a learned update.
 - Edge-conditioned attention adds edge features to score construction.
-- GConvGRU also graph-convolves hidden state and uses Chebyshev filters.
 
-GIN, edge-conditioned attention, and GConvGRU remain design probes. Mean
-GraphSAGE, GCN, single- and multi-head GAT, and T-GCN use the shared
-experimental `Graph` boundary, but none is a public Tinymesh model API.
+GIN and edge-conditioned attention remain design probes. Mean GraphSAGE, GCN,
+single- and multi-head GAT, T-GCN, and GConvGRU use the shared experimental
+`Graph` boundary, but none is a public Tinymesh model API.
 
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives
@@ -189,4 +201,5 @@ lives in
 Endpoint projection, segment softmax, and the attention witness live in
 [Sparse attention experiment](../research/attention.md).
 Fixed-topology recurrence lives in
-[T-GCN experiment](../research/tgcn.md).
+[T-GCN experiment](../research/tgcn.md) and
+[GConvGRU experiment](../research/gconv-gru.md).
