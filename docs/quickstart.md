@@ -1,8 +1,8 @@
 # Quick start
 
 This guide starts with one directed graph, runs sparse aggregation, follows its
-gradient, and trains five graph-layer families. It assumes basic Python and
-tensor knowledge.
+gradient, and reaches the temporal model experiments. It assumes basic Python
+and tensor knowledge.
 
 `Graph` is an experimental 0.x API, not a stability promise. Run this guide
 from a repository checkout with [uv](https://docs.astral.sh/uv/) and Python
@@ -227,6 +227,28 @@ to `0.168497`. No new `Graph` operation is involved.
 
 ## Carry state through time
 
+Load the public PyTorch Geometric Temporal chickenpox signal without adding
+PyTorch or NumPy to the runtime:
+
+```python
+from tinymesh.datasets import chickenpox
+
+signal = chickenpox(lags=4, device="CPU")
+train, test = signal.split(0.8)
+
+print(len(train), len(test))
+# 413 104
+x, y = train[0]
+print(x.shape, y.shape)
+# (20, 4) (20, 1)
+```
+
+One `Graph` is shared by all `517` snapshots. Each input row holds four
+previous weekly values for one county; each target row holds its following
+value. The loader preserves all `102` source edges, including `20` self-loops.
+Read the [Chickenpox data record](research/chickenpox-data.md) for the source,
+lowering, parity, and batching boundary.
+
 Temporal recurrence reuses one graph while node fields and hidden state change:
 
 ```python
@@ -290,6 +312,10 @@ The implementation is intentionally small:
   owns public graph identity, validation, and methods;
 - [`src/tinymesh/_csr.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/_csr.py)
   owns private lowering, device caches, sparse forward, and sparse backward;
+- [`src/tinymesh/temporal.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/temporal.py)
+  owns aligned fixed-graph temporal signals;
+- [`src/tinymesh/datasets.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/datasets.py)
+  owns the pinned chickenpox source lowering;
 - [`experiments/csr_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/csr_aggregation.py)
   retains the revision-bound CSR benchmark;
 - [`experiments/mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/mean_sage.py)
@@ -315,8 +341,10 @@ The implementation is intentionally small:
   [`tests/test_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gat.py),
   [`tests/test_multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_multi_head_gat.py),
   [`tests/test_tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_tgcn.py),
-  and [`tests/test_gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gconv_gru.py)
+  [`tests/test_gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gconv_gru.py),
+  [`tests/test_temporal.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_temporal.py),
+  and [`tests/test_datasets.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_datasets.py)
   state the current contracts.
 
-`Graph` is public but experimental. Model callers remain experiments, and the
+The public surface is experimental. Model callers remain experiments, and the
 alpha tinygrad execution boundary is not a stable contract.

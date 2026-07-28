@@ -1,0 +1,91 @@
+from __future__ import annotations
+
+from collections.abc import Iterator, Sequence
+from dataclasses import dataclass
+from typing import overload
+
+from tinygrad import Tensor, dtypes
+
+from tinymesh.graph import Graph
+
+
+@dataclass(frozen=True, eq=False)
+class StaticGraphTemporalSignal(Sequence[tuple[Tensor, Tensor]]):
+    """An ordered tensor signal over one immutable graph."""
+
+    graph: Graph
+    node_ids: tuple[str, ...]
+    x: Tensor
+    y: Tensor
+    edge_weight: Tensor | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "node_ids", tuple(self.node_ids))
+        if self.x.ndim != 3:
+            raise ValueError(f"x must have shape [T, N, F], got {self.x.shape}")
+        if self.y.ndim != 3:
+            raise ValueError(f"y must have shape [T, N, Y], got {self.y.shape}")
+        if self.x.shape[:2] != self.y.shape[:2]:
+            raise ValueError("x and y must have the same time and node axes")
+        if self.x.shape[1] != self.graph.nodes:
+            raise ValueError(f"x must have {self.graph.nodes} node rows, got {self.x.shape[1]}")
+        if self.x.shape[2] == 0 or self.y.shape[2] == 0:
+            raise ValueError("feature counts must be positive")
+        if len(self.node_ids) != self.graph.nodes:
+            raise ValueError(f"expected {self.graph.nodes} node IDs, got {len(self.node_ids)}")
+        if any(not isinstance(node_id, str) or not node_id for node_id in self.node_ids):
+            raise ValueError("node IDs must be non-empty strings")
+        if len(set(self.node_ids)) != len(self.node_ids):
+            raise ValueError("node IDs must be unique")
+        if not dtypes.is_float(self.x.dtype):
+            raise ValueError(f"x must have a floating dtype, got {self.x.dtype}")
+        if self.x.device != self.y.device or not isinstance(self.x.device, str):
+            raise ValueError("x and y must share one device")
+        if self.edge_weight is not None:
+            if self.edge_weight.ndim != 1 or self.edge_weight.shape[0] != self.graph.edges:
+                raise ValueError(
+                    f"edge_weight must have shape [{self.graph.edges}], got {self.edge_weight.shape}"
+                )
+            if not dtypes.is_float(self.edge_weight.dtype):
+                raise ValueError(f"edge_weight must have a floating dtype, got {self.edge_weight.dtype}")
+            if self.edge_weight.dtype != self.x.dtype or self.edge_weight.device != self.x.device:
+                raise ValueError("x and edge_weight must share dtype and device")
+
+    def __len__(self) -> int:
+        return self.x.shape[0]
+
+    @overload
+    def __getitem__(self, index: int) -> tuple[Tensor, Tensor]: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> StaticGraphTemporalSignal: ...
+
+    def __getitem__(self, index: int | slice) -> tuple[Tensor, Tensor] | StaticGraphTemporalSignal:
+        if isinstance(index, slice):
+            start, stop, step = index.indices(len(self))
+            if step != 1:
+                raise ValueError("temporal slices must be contiguous and forward")
+            return StaticGraphTemporalSignal(
+                self.graph,
+                self.node_ids,
+                self.x[start:stop],
+                self.y[start:stop],
+                self.edge_weight,
+            )
+        if index < 0:
+            index += len(self)
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+        return self.x[index], self.y[index]
+
+    def __iter__(self) -> Iterator[tuple[Tensor, Tensor]]:
+        return (self[index] for index in range(len(self)))
+
+    def split(self, train_ratio: float) -> tuple[StaticGraphTemporalSignal, StaticGraphTemporalSignal]:
+        """Split once along time, preserving order and topology."""
+        if not 0 < train_ratio < 1:
+            raise ValueError("train_ratio must be between zero and one")
+        train_steps = int(train_ratio * len(self))
+        if train_steps == 0 or train_steps == len(self):
+            raise ValueError("train and test must both be non-empty")
+        return self[:train_steps], self[train_steps:]

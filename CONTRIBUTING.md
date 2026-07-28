@@ -98,6 +98,8 @@ Run `DEV=<device> uv run python -m experiments.tgcn` when changing temporal
 recurrence or hidden-state flow.
 Run `DEV=<device> uv run python -m experiments.gconv_gru` when changing
 Chebyshev filtering or graph-convolutional recurrence.
+Run `DEV=<device> uv run python -m experiments.chickenpox_data` when changing
+the fixed-graph temporal signal or public dataset lowering.
 
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.

@@ -50,13 +50,14 @@ COO connectivity + scalar edge facts
 - A GConvGRU experiment adds sparse Chebyshev filtering over both input and
   hidden state and reports its extra parameter and sparse-call cost against
   T-GCN.
+- A fixed-graph temporal signal and pinned PyG Temporal chickenpox loader keep
+  graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
-`Graph` is Tinymesh's first public API. It is experimental 0.x code, not a
-stability promise: the private CSR backend uses alpha `Tensor.custom_kernel`
-and tinygrad's default kernel optimization does not yet accept its
-data-dependent loop.
+The public surface is experimental 0.x code, not a stability promise: the
+private CSR backend uses alpha `Tensor.custom_kernel` and tinygrad's default
+kernel optimization does not yet accept its data-dependent loop.
 
 ## Run the proof
 
@@ -97,6 +98,13 @@ DEV=CPU uv run python -m experiments.gconv_gru
 DEV=METAL uv run python -m experiments.gconv_gru
 ```
 
+Inspect the pinned external temporal dataset:
+
+```console
+DEV=CPU uv run python -m experiments.chickenpox_data
+DEV=METAL uv run python -m experiments.chickenpox_data
+```
+
 Inspect weighted forward and both first-order gradients:
 
 ```console
@@ -130,16 +138,19 @@ run the [quick start](docs/quickstart.md):
   gradient through one spatial edge and one temporal transition.
 - [GConvGRU experiment](docs/research/gconv-gru.md) compares node-local and
   graph-convolutional recurrence under one controlled temporal witness.
+- [Chickenpox temporal data](docs/research/chickenpox-data.md) lowers one
+  canonical PyG Temporal dataset into the public fixed-graph signal.
 
 ## Direction
 
 Unit and scalar-weighted sums now share deterministic topology plus
 destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
 endpoint projection, target softmax, and in-degree; its private backend owns
-lowering and rebuildable device caches. The alpha kernel and optimizer boundary
-still block stability. Vectorized head execution, external vector edge
-features, batching, changing topology, and temporal metadata remain
-unimplemented.
+lowering and rebuildable device caches. A fixed-graph temporal signal now owns
+aligned node IDs, features, targets, and edge weights. The alpha kernel and
+optimizer boundary still block stability. Vectorized head execution, external
+vector edge features, graph batching, changing topology, timestamps, and masks
+remain unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 richer temporal fields remain the wider mesh direction. They enter only when
