@@ -107,6 +107,25 @@ Each head normalizes only against other edges in that head. The current
 experiment calls scalar `Graph.softmax` and `Graph.sum` once per head. Kernel
 count therefore grows with head count, but topology and semantics stay shared.
 
+## Temporal recurrence
+
+T-GCN places three logical GCN projections inside a GRU:
+
+```text
+current X_t -- GCN --> update, reset, candidate gates
+previous H_t-1 -----> update, reset, candidate gates
+                                |
+                                v
+                              H_t
+```
+
+The three projections share input, topology, and normalization, so Tinymesh
+computes their concatenated `3H` channels with one GCN call and then slices
+them. The gates retain or replace node-local hidden state. Calling the same cell
+over an ordered tensor sequence creates a gradient path through both graph
+propagation and earlier hidden state. Read [Time](time.md) for the temporal data
+contract.
+
 ## Gradient path
 
 The layer's forward flow is:
@@ -155,12 +174,11 @@ The same decomposition identifies capabilities that do not exist yet:
 
 - GIN keeps sum aggregation and adds a learned update.
 - Edge-conditioned attention adds edge features to score construction.
-- Temporal graph models repeat or evolve spatial state across ordered
-  snapshots.
+- GConvGRU also graph-convolves hidden state and uses Chebyshev filters.
 
-GIN, edge-conditioned attention, and temporal layers remain design probes.
-Mean GraphSAGE, GCN, and single- and multi-head GAT use the shared experimental
-`Graph` boundary, but none is a public Tinymesh model API.
+GIN, edge-conditioned attention, and GConvGRU remain design probes. Mean
+GraphSAGE, GCN, single- and multi-head GAT, and T-GCN use the shared
+experimental `Graph` boundary, but none is a public Tinymesh model API.
 
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives
@@ -170,3 +188,5 @@ lives in
 [Weighted aggregation experiment](../research/weighted-aggregation.md).
 Endpoint projection, segment softmax, and the attention witness live in
 [Sparse attention experiment](../research/attention.md).
+Fixed-topology recurrence lives in
+[T-GCN experiment](../research/tgcn.md).

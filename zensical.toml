@@ -10,6 +10,7 @@ nav = [
   {"Concepts" = [
     "concepts/topology.md",
     "concepts/message-passing.md",
+    "concepts/time.md",
   ]},
   {"Research" = [
     "research/sparse-aggregation.md",
@@ -17,6 +18,7 @@ nav = [
     "research/gcn.md",
     "research/weighted-aggregation.md",
     "research/attention.md",
+    "research/tgcn.md",
   ]},
 ]
 

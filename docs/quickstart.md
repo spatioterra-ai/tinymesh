@@ -1,8 +1,8 @@
 # Quick start
 
 This guide starts with one directed graph, runs sparse aggregation, follows its
-gradient, and trains three graph layers. It assumes basic Python and tensor
-knowledge.
+gradient, and trains four graph-layer families. It assumes basic Python and
+tensor knowledge.
 
 `Graph` is an experimental 0.x API, not a stability promise. Run this guide
 from a repository checkout with [uv](https://docs.astral.sh/uv/) and Python
@@ -225,6 +225,38 @@ The checked fixture gives two heads opposite initial attention parameters. One
 step sends equal and opposite gradients to them and lowers loss from `0.214323`
 to `0.168497`. No new `Graph` operation is involved.
 
+## Carry state through time
+
+Temporal recurrence reuses one graph while node fields and hidden state change:
+
+```python
+from experiments.tgcn import TGCN
+
+temporal_graph = Graph(2, source=[0, 1, 0], target=[0, 1, 1])
+snapshots = (
+    Tensor([[1.0], [0.0]], device="CPU"),
+    Tensor([[0.0], [0.0]], device="CPU"),
+)
+cell = TGCN(in_features=1, hidden_features=1)
+
+hidden = cell(snapshots[0], temporal_graph)
+for snapshot in snapshots[1:]:
+    hidden = cell(snapshot, temporal_graph, hidden)
+```
+
+The topology and its CSR buffers stay fixed. One width-`3H` GCN call computes
+the update, reset, and candidate graph projections together. Run the checked
+two-snapshot learning witness:
+
+```console
+DEV=CPU uv run python -m experiments.tgcn
+```
+
+The first snapshot crosses edge `0 -> 1`; the second contains no signal, so the
+final prediction also requires temporal memory. One SGD step lowers loss from
+`0.718740` to `0.686385`. Read [Time](concepts/time.md) for the data model and
+[T-GCN experiment](research/tgcn.md) for the exact evidence.
+
 ## Read the source
 
 The implementation is intentionally small:
@@ -245,6 +277,8 @@ The implementation is intentionally small:
   composes graph-attention heads;
 - [`experiments/multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/multi_head_gat.py)
   records the two-head learning witness;
+- [`experiments/tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/tgcn.py)
+  composes the fixed-graph recurrent cell;
 - [`tests/test_graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_graph.py)
   with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
   [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
@@ -252,7 +286,8 @@ The implementation is intentionally small:
   [`tests/test_edge_values.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_edge_values.py),
   [`tests/test_softmax.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_softmax.py),
   [`tests/test_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gat.py),
-  and [`tests/test_multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_multi_head_gat.py)
+  [`tests/test_multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_multi_head_gat.py),
+  and [`tests/test_tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_tgcn.py)
   state the current contracts.
 
 `Graph` is public but experimental. Model callers remain experiments, and the

@@ -94,6 +94,8 @@ Run `DEV=<device> uv run python -m experiments.gat` when changing endpoint
 projection, target normalization, or attention composition.
 Run `DEV=<device> uv run python -m experiments.multi_head_gat` when changing
 head composition.
+Run `DEV=<device> uv run python -m experiments.tgcn` when changing temporal
+recurrence or hidden-state flow.
 
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.

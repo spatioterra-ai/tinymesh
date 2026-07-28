@@ -10,8 +10,8 @@ that structure without replacing the sparse core.
 tinymesh is experimental. It currently proves fixed-graph unit and
 scalar-weighted sparse aggregation, target-normalized sparse attention, and
 trainable mean-GraphSAGE, unweighted GCN, and single- and multi-head GAT callers
-on CPU and Metal. Its one public 0.x type is `Graph`; the contract is
-intentionally narrow and not stable.
+plus fixed-topology T-GCN recurrence on CPU and Metal. Its one public 0.x type
+is `Graph`; the contract is intentionally narrow and not stable.
 
 ## Try it
 
@@ -37,7 +37,7 @@ from node `1`. The other nodes have no incoming edges, so their aggregate is
 zero.
 
 The [quick start](quickstart.md) follows this value through topology lowering,
-sparse execution, backward propagation, and three trainable layers.
+sparse execution, backward propagation, and four trainable layer families.
 
 ## The stack
 
@@ -51,7 +51,7 @@ topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
 sparse operation       sum, endpoint projection, target softmax
     |
     v
-model composition      mean GraphSAGE, unweighted GCN, GAT heads
+model composition      mean GraphSAGE, unweighted GCN, GAT heads, T-GCN
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -78,6 +78,8 @@ field; no operation constructs an `N * E` axis.
 - one GCN composition with source and destination degree normalization;
 - single- and multi-head GAT compositions whose attention parameters learn
   through endpoint projection, softmax, and weighted sum;
+- one T-GCN composition whose hidden state and parameter gradient cross space
+  and time;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
@@ -85,7 +87,7 @@ backend owns lowering and device caches. Model callers remain experiments.
 The backend uses an alpha tinygrad surface and disables default kernel
 optimization for its data-dependent loop. Vectorized head execution, external
 vector edge features, batching, changing topology, higher-order gradients,
-geometry, cells, and time are not implemented.
+temporal metadata, geometry, and cells are not implemented.
 
 ## Learn how it works
 
@@ -93,6 +95,8 @@ geometry, cells, and time are not implemented.
   lowering, and the push-pull tradeoff.
 - [Message passing](concepts/message-passing.md) explains
   message -> aggregate -> update and the gradient path.
+- [Time](concepts/time.md) explains fixed-topology snapshots, causal recurrence,
+  temporal resolution, and why missingness is not zero.
 - [Sparse aggregation feasibility](research/sparse-aggregation.md) records the
   revision-bound implementation and scaling evidence.
 - [Mean GraphSAGE experiment](research/mean-sage.md) records the exact learning
@@ -103,6 +107,8 @@ geometry, cells, and time are not implemented.
   scalar edge identity and both first-order gradients.
 - [Sparse attention experiment](research/attention.md) records endpoint
   projection, target softmax, and independently trainable heads.
+- [T-GCN experiment](research/tgcn.md) records fixed-graph recurrence and the
+  exact spatial-temporal learning witness.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and
