@@ -11,9 +11,8 @@ an experimental mean-GraphSAGE layer composes tinygrad linear maps with
 tinymesh's CSR aggregation and trains on CPU and Metal.
 
 The result proves composition and first-order parameter learning, not a stable
-tinymesh API or useful model quality. The caller remains under `experiments/`
-because the alpha custom-kernel boundary and disabled default kernel
-optimization still make package admission premature.
+model API or useful model quality. The caller remains under `experiments/`; it
+uses the public `Graph` boundary but is not exported.
 
 ## Learning witness
 

@@ -1,10 +1,11 @@
 import unittest
+from dataclasses import FrozenInstanceError
 from math import prod
 
 from tinygrad import Device, Tensor, UOp
 from tinygrad.uop.ops import Ops
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_sum
+from tinymesh import Graph
 
 
 SOURCE = [1, 0, 1, 3, 1, 0]
@@ -16,85 +17,95 @@ EXPECTED_GRADIENT = [[7.0, 10.0], [27.0, 33.0], [0.0, 0.0], [5.0, 7.0], [0.0, 0.
 
 
 def run(source=SOURCE, target=TARGET, values=VALUES, gradient_values=GRADIENT):
-    topology = CSRTopology(6, source, target)
+    graph = Graph(6, source, target)
     state = Tensor(values, device=Device.DEFAULT).realize()
-    output = csr_edge_sum(state, topology)
+    output = graph.sum(state)
     gradient = Tensor(gradient_values, device=Device.DEFAULT).realize()
     state_gradient = output.gradient(state, gradient=gradient)[0]
     Tensor.realize(output, state_gradient)
     return output.tolist(), state_gradient.tolist()
 
 
-class CSRTopologyTest(unittest.TestCase):
-    def test_groups_both_directions_without_merging_duplicates(self):
-        topology = CSRTopology(6, SOURCE, TARGET)
-
-        self.assertEqual(topology.source, tuple(SOURCE))
-        self.assertEqual(topology.target, tuple(TARGET))
-        self.assertEqual(topology.row_ptr, (0, 0, 1, 5, 5, 6, 6))
-        self.assertEqual(topology.column, (0, 0, 1, 1, 3, 1))
-        self.assertEqual(topology.transpose_row_ptr, (0, 2, 5, 5, 6, 6, 6))
-        self.assertEqual(topology.transpose_column, (1, 2, 2, 2, 4, 2))
-        self.assertEqual(topology.edge_order, (1, 5, 0, 2, 3, 4))
-        self.assertEqual(topology.transpose_order, (1, 5, 0, 2, 4, 3))
-
-    def test_owns_immutable_coo_identity(self):
+class GraphTest(unittest.TestCase):
+    def test_owns_ordered_immutable_identity(self):
         source, target = SOURCE.copy(), TARGET.copy()
-        topology = CSRTopology(6, source, target)
+        graph = Graph(6, source, target)
         source[0], target[0] = 0, 0
 
-        self.assertEqual(topology.source, tuple(SOURCE))
-        self.assertEqual(topology.target, tuple(TARGET))
+        self.assertEqual(graph.nodes, 6)
+        self.assertEqual(graph.source, tuple(SOURCE))
+        self.assertEqual(graph.target, tuple(TARGET))
+        self.assertEqual(graph.edges, 6)
+        self.assertEqual(graph, Graph(6, SOURCE, TARGET))
+        self.assertEqual(hash(graph), hash(Graph(6, SOURCE, TARGET)))
+        self.assertNotEqual(graph, Graph(6, list(reversed(SOURCE)), list(reversed(TARGET))))
+        with self.assertRaises(FrozenInstanceError):
+            setattr(graph, "nodes", 7)
 
-    def test_reuses_realized_device_tensors(self):
-        topology = CSRTopology(6, SOURCE, TARGET)
+    def test_rejects_invalid_edges(self):
+        with self.assertRaisesRegex(ValueError, "positive"):
+            Graph(0, [], [])
+        with self.assertRaisesRegex(ValueError, "same length"):
+            Graph(2, [0], [])
+        with self.assertRaisesRegex(ValueError, r"\[0, 2\)"):
+            Graph(2, [0], [2])
 
-        self.assertIs(topology._tensors(Device.DEFAULT), topology._tensors(Device.DEFAULT))
+    def test_reuses_realized_in_degree(self):
+        graph = Graph(6, SOURCE, TARGET)
 
-    def test_reuses_realized_degree(self):
-        topology = CSRTopology(6, SOURCE, TARGET)
+        self.assertIs(graph.in_degree(device=Device.DEFAULT), graph.in_degree(device=Device.DEFAULT))
+        self.assertEqual(graph.in_degree(device=Device.DEFAULT).tolist(), [0, 1, 4, 0, 1, 0])
 
-        self.assertIs(topology._degree(Device.DEFAULT), topology._degree(Device.DEFAULT))
-        self.assertEqual(topology._degree(Device.DEFAULT).tolist(), [0, 1, 4, 0, 1, 0])
+
+class CSRBackendTest(unittest.TestCase):
+    def test_groups_both_directions_without_merging_duplicates(self):
+        csr = Graph(6, SOURCE, TARGET)._csr
+
+        self.assertEqual(csr.row_ptr, (0, 0, 1, 5, 5, 6, 6))
+        self.assertEqual(csr.column, (0, 0, 1, 1, 3, 1))
+        self.assertEqual(csr.transpose_row_ptr, (0, 2, 5, 5, 6, 6, 6))
+        self.assertEqual(csr.transpose_column, (1, 2, 2, 2, 4, 2))
+        self.assertEqual(csr.edge_order, (1, 5, 0, 2, 3, 4))
+        self.assertEqual(csr.transpose_order, (1, 5, 0, 2, 4, 3))
+
+    def test_reuses_realized_connectivity(self):
+        csr = Graph(6, SOURCE, TARGET)._csr
+
+        self.assertIs(csr._tensors(Device.DEFAULT), csr._tensors(Device.DEFAULT))
 
     def test_reuses_realized_edge_maps(self):
-        topology = CSRTopology(6, SOURCE, TARGET)
-        edge_order, transpose_order, source, target = topology._edge_tensors(Device.DEFAULT)
+        csr = Graph(6, SOURCE, TARGET)._csr
+        edge_order, transpose_order, source, target = csr._edge_tensors(Device.DEFAULT)
 
-        self.assertIs(topology._edge_tensors(Device.DEFAULT), topology._edge_tensors(Device.DEFAULT))
+        self.assertIs(csr._edge_tensors(Device.DEFAULT), csr._edge_tensors(Device.DEFAULT))
         self.assertEqual(edge_order.tolist(), [1, 5, 0, 2, 3, 4])
         self.assertEqual(transpose_order.tolist(), [1, 5, 0, 2, 4, 3])
         self.assertEqual(source.tolist(), SOURCE)
         self.assertEqual(target.tolist(), TARGET)
 
-    def test_rejects_invalid_edges(self):
-        with self.assertRaisesRegex(ValueError, "positive"):
-            CSRTopology(0, [], [])
-        with self.assertRaisesRegex(ValueError, "same length"):
-            CSRTopology(2, [0], [])
-        with self.assertRaisesRegex(ValueError, r"\[0, 2\)"):
-            CSRTopology(2, [0], [2])
 
+class GraphSumTest(unittest.TestCase):
+    def test_rejects_incompatible_values(self):
+        graph = Graph(3, [], [])
 
-class CSRAggregationTest(unittest.TestCase):
-    def test_rejects_wrong_node_count(self):
-        topology = CSRTopology(3, [], [])
+        with self.assertRaisesRegex(ValueError, r"shape \[N, H\]"):
+            graph.sum(Tensor.ones(3, device=Device.DEFAULT))
         with self.assertRaisesRegex(ValueError, "3 rows"):
-            csr_edge_sum(Tensor.ones(2, 1, device=Device.DEFAULT), topology)
+            graph.sum(Tensor.ones(2, 1, device=Device.DEFAULT))
 
     def test_empty_graph(self):
-        topology = CSRTopology(3, [], [])
+        graph = Graph(3, [], [])
         state = Tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], device=Device.DEFAULT).realize()
-        output = csr_edge_sum(state, topology)
+        output = graph.sum(state)
         gradient = output.sum().gradient(state)[0]
 
         self.assertEqual(output.tolist(), [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
         self.assertEqual(gradient.tolist(), [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
 
     def test_single_node(self):
-        topology = CSRTopology(1, [0, 0, 0], [0, 0, 0])
+        graph = Graph(1, [0, 0, 0], [0, 0, 0])
         state = Tensor([[2.0, 3.0]], device=Device.DEFAULT).realize()
-        output = csr_edge_sum(state, topology)
+        output = graph.sum(state)
         gradient = output.gradient(
             state,
             gradient=Tensor([[5.0, 7.0]], device=Device.DEFAULT),
@@ -104,9 +115,9 @@ class CSRAggregationTest(unittest.TestCase):
         self.assertEqual(gradient.tolist(), [[15.0, 21.0]])
 
     def test_scalar_feature_empty_rows(self):
-        topology = CSRTopology(4, [0, 0], [0, 0])
+        graph = Graph(4, [0, 0], [0, 0])
         state = Tensor.ones(4, 1, device=Device.DEFAULT).realize()
-        output = csr_edge_sum(state, topology)
+        output = graph.sum(state)
         gradient = output.sum().gradient(state)[0]
         Tensor.realize(output, gradient)
 
@@ -118,20 +129,17 @@ class CSRAggregationTest(unittest.TestCase):
         self.assertEqual(output, EXPECTED)
         self.assertEqual(gradient, EXPECTED_GRADIENT)
 
-    def test_edge_order_does_not_change_result(self):
+    def test_edge_order_does_not_change_sum(self):
         output, gradient = run(list(reversed(SOURCE)), list(reversed(TARGET)))
         self.assertEqual(output, EXPECTED)
         self.assertEqual(gradient, EXPECTED_GRADIENT)
 
-    def test_edge_order_is_canonical_for_float_accumulation(self):
+    def test_canonical_float_accumulation(self):
         values = Tensor([[1e20], [-1e20], [1.0]], device=Device.DEFAULT).realize()
-        forward = CSRTopology(3, [0, 1, 2], [0, 0, 0])
-        reverse = CSRTopology(3, [2, 1, 0], [0, 0, 0])
+        forward = Graph(3, [0, 1, 2], [0, 0, 0])
+        reverse = Graph(3, [2, 1, 0], [0, 0, 0])
 
-        expected = csr_edge_sum(values, forward).tolist()
-        actual = csr_edge_sum(values, reverse).tolist()
-
-        self.assertEqual(actual, expected)
+        self.assertEqual(reverse.sum(values).tolist(), forward.sum(values).tolist())
 
     def test_exact_fixture_is_vertex_permutation_equivariant(self):
         old_to_new = [2, 0, 5, 1, 4, 3]
@@ -154,9 +162,9 @@ class CSRAggregationTest(unittest.TestCase):
     def test_forward_and_backward_have_sparse_structure(self):
         source = [0, 1, 1, 2, 3, 4, 4]
         target = [1, 0, 3, 3, 3, 0, 3]
-        topology = CSRTopology(5, source, target)
+        graph = Graph(5, source, target)
         state = Tensor.ones(5, 3, device=Device.DEFAULT).realize()
-        output = csr_edge_sum(state, topology)
+        output = graph.sum(state)
         gradient = output.gradient(state, gradient=Tensor.ones(5, 3, device=Device.DEFAULT))[0]
 
         self._assert_sparse_kernel(output, nodes=5, edges=7, width=3)

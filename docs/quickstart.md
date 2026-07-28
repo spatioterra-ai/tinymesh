@@ -4,8 +4,9 @@ This guide starts with one directed graph, runs sparse aggregation, follows its
 gradient, and trains two graph layers. It assumes basic Python and tensor
 knowledge.
 
-tinymesh has no stable package API yet. Run this guide from a repository
-checkout with [uv](https://docs.astral.sh/uv/) and Python 3.11 or newer:
+`Graph` is an experimental 0.x API, not a stability promise. Run this guide
+from a repository checkout with [uv](https://docs.astral.sh/uv/) and Python
+3.11 or newer:
 
 ```console
 git clone https://github.com/spatioterra-ai/tinymesh.git
@@ -28,17 +29,12 @@ Each node has one scalar feature:
 
 ```python
 from tinygrad import Tensor
+from tinymesh import Graph
 
-from experiments.csr_aggregation import (
-    CSRTopology,
-    csr_edge_sum,
-    csr_edge_weighted_sum,
-)
-
-topology = CSRTopology(4, source=[1, 0, 1], target=[3, 2, 2])
+graph = Graph(4, source=[1, 0, 1], target=[3, 2, 2])
 state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
 
-output = csr_edge_sum(state, topology)
+output = graph.sum(state)
 print(output.tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
@@ -55,24 +51,29 @@ contains a self-edge.
 
 ## See the sparse representation
 
-The edge list is convenient input. Execution uses compressed sparse row (CSR)
-so each destination can visit only its incoming neighbors:
+`Graph` keeps ordered COO edge identity visible:
 
 ```python
-print(topology.row_ptr)
-# (0, 0, 0, 2, 3)
+print(graph.source, graph.target, graph.edges)
+# ((1, 0, 1), (3, 2, 2), 3)
 
-print(topology.column)
-# (0, 1, 1)
+print(graph.in_degree(device=state.device).tolist())
+# [0, 0, 2, 1]
 ```
 
-The sources for destination `v` occupy:
+Execution privately lowers those edges to compressed sparse row (CSR) so each
+destination visits only its incoming neighbors:
 
-```python
-topology.column[topology.row_ptr[v]:topology.row_ptr[v + 1]]
+```text
+destination  incoming sources
+0            []
+1            []
+2            [0, 1]
+3            [1]
 ```
 
-No `4 x 4` adjacency matrix is constructed. Read
+The integer degree tensor is a cached topology fact. No `4 x 4` adjacency
+matrix is constructed. Read
 [Sparse graph topology](concepts/topology.md) for COO, CSR, transpose, and why
 the current kernel pulls rather than pushes messages.
 
@@ -81,7 +82,7 @@ the current kernel pulls rather than pushes messages.
 Every output contributes a gradient of one:
 
 ```python
-output = csr_edge_sum(state, topology)
+output = graph.sum(state)
 gradient = output.sum().gradient(state)[0]
 print(gradient.tolist())
 # [[1.0], [2.0], [0.0], [0.0]]
@@ -96,12 +97,12 @@ compute `A.T @ dY`. The same sparse sum implements both directions.
 ## Weight individual edges
 
 Scalar edge values follow the `source` and `target` arrays passed to
-`CSRTopology`:
+`Graph`:
 
 ```python
 edge_weight = Tensor([-1.0, 0.5, 2.0], device="CPU").realize()
 
-weighted = csr_edge_weighted_sum(state, topology, edge_weight)
+weighted = graph.sum(state, edge_weight=edge_weight)
 print(weighted.tolist())
 # [[0.0], [0.0], [9.0], [-4.0]]
 ```
@@ -158,9 +159,9 @@ the neighbor weight, and reaches loss `0`:
 
 This proves that a tinygrad parameter can learn through the current sparse
 boundary. It does not prove model quality, generalization, temporal learning,
-or a stable API. Read [Message passing](concepts/message-passing.md) for the
-layer decomposition and [Mean GraphSAGE experiment](research/mean-sage.md) for
-the exact witness.
+or a stable model API. Read [Message passing](concepts/message-passing.md) for
+the layer decomposition and [Mean GraphSAGE experiment](research/mean-sage.md)
+for the exact witness.
 
 ## Reuse the sum in GCN
 
@@ -186,19 +187,23 @@ dense-reference, permutation, and learning evidence.
 
 The implementation is intentionally small:
 
+- [`src/tinymesh/graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/graph.py)
+  owns public graph identity, validation, and methods;
+- [`src/tinymesh/_csr.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/_csr.py)
+  owns private lowering, device caches, sparse forward, and sparse backward;
 - [`experiments/csr_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/csr_aggregation.py)
-  owns topology lowering, sparse forward, and sparse backward;
+  retains the revision-bound CSR benchmark;
 - [`experiments/mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/mean_sage.py)
   composes the first trainable model;
 - [`experiments/gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gcn.py)
   composes the normalized second caller;
 - [`experiments/weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/weighted_aggregation.py)
   records weighted forward and both gradients;
-- [`tests/test_csr_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_csr_aggregation.py)
+- [`tests/test_graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_graph.py)
   with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
   [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
   and [`tests/test_weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_weighted_aggregation.py)
   state the current contracts.
 
-These paths remain experimental. The two callers share topology and CSR sum,
-but the alpha tinygrad execution boundary is not a stable public contract.
+`Graph` is public but experimental. The two model callers remain experiments,
+and the alpha tinygrad execution boundary is not a stable contract.

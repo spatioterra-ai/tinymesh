@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 
 from tinygrad import Context, Device, Tensor, nn
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_sum
+from tinymesh import Graph
 
 
 class MeanSAGE:
@@ -17,12 +17,13 @@ class MeanSAGE:
         self.root = nn.Linear(in_features, out_features, bias=False)
         self.neighbor = nn.Linear(in_features, out_features, bias=False)
 
-    def __call__(self, values: Tensor, topology: CSRTopology) -> Tensor:
+    def __call__(self, values: Tensor, graph: Graph) -> Tensor:
         messages = self.neighbor(values)
         if not isinstance(messages.device, str):
             raise ValueError("mean GraphSAGE requires one device")
-        inverse_degree = topology._degree(messages.device).maximum(1).cast(messages.dtype).reciprocal().reshape(-1, 1)
-        return self.root(values) + csr_edge_sum(messages, topology) * inverse_degree
+        degree = graph.in_degree(device=messages.device)
+        inverse_degree = degree.maximum(1).cast(messages.dtype).reciprocal().reshape(-1, 1)
+        return self.root(values) + graph.sum(messages) * inverse_degree
 
 
 @dataclass(frozen=True)
@@ -36,7 +37,7 @@ class Observation:
 
 
 def fit_one_step(device: str) -> Observation:
-    topology = CSRTopology(4, [0, 1], [2, 3])
+    graph = Graph(4, [0, 1], [2, 3])
     values = Tensor([[1.0], [-1.0], [0.0], [0.0]], device=device).realize()
     target = Tensor([[1.0], [-1.0]], device=device).realize()
     model = MeanSAGE(1, 1)
@@ -45,7 +46,7 @@ def fit_one_step(device: str) -> Observation:
     optimizer = nn.optim.SGD(nn.state.get_parameters(model), lr=0.5, fused=False)
 
     def loss() -> Tensor:
-        return (model(values, topology)[2:] - target).square().mean()
+        return (model(values, graph)[2:] - target).square().mean()
 
     initial_loss = loss().item()
     with Context(TRAINING=1):

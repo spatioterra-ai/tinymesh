@@ -43,11 +43,12 @@ COO connectivity + scalar edge facts
   a neighbor parameter on CPU and Metal.
 - An unweighted GCN experiment composes source and destination degree scaling
   around the same sparse sum.
-- Fixed topology owns and reuses its realized connectivity and degree buffers.
+- Each `Graph` owns and reuses its realized connectivity and degree buffers.
 
-This is research code, not a stable API. The implementation remains under
-`experiments/` because `Tensor.custom_kernel` is alpha and tinygrad's default
-kernel optimization does not yet accept the data-dependent CSR loop.
+`Graph` is Tinymesh's first public API. It is experimental 0.x code, not a
+stability promise: the private CSR backend uses alpha `Tensor.custom_kernel`
+and tinygrad's default kernel optimization does not yet accept its
+data-dependent loop.
 
 ## Run the proof
 
@@ -62,13 +63,12 @@ Then run one sparse aggregation from the repository checkout:
 
 ```python
 from tinygrad import Tensor
+from tinymesh import Graph
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_sum
-
-topology = CSRTopology(4, source=[0, 1, 1], target=[2, 2, 3])
+graph = Graph(4, source=[0, 1, 1], target=[2, 2, 3])
 state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
 
-print(csr_edge_sum(state, topology).tolist())
+print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
@@ -110,11 +110,11 @@ run the [quick start](docs/quickstart.md):
 ## Direction
 
 Unit and scalar-weighted sums now share deterministic topology plus
-destination-CSR execution. Topology caches only topology facts; each layer
-derives its own normalization with ordinary tinygrad operations. The remaining
-package-admission blocker is the alpha kernel and optimizer boundary. Vector
-edge features, attention, batching, changing topology, and temporal recurrence
-remain unimplemented.
+destination-CSR execution. `Graph` exposes only ordered edge identity, the
+proven incoming sum, and in-degree; its private backend owns lowering and
+rebuildable device caches. The alpha kernel and optimizer boundary still block
+stability. Vector edge features, attention, batching, changing topology, and
+temporal recurrence remain unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 time-varying fields remain the wider mesh direction. They enter only when the

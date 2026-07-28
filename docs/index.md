@@ -9,8 +9,8 @@ that structure without replacing the sparse core.
 
 tinymesh is experimental. It currently proves fixed-graph unit and
 scalar-weighted sparse aggregation, plus trainable mean-GraphSAGE and
-unweighted GCN callers, on CPU and Metal. It does not expose a stable public
-API yet.
+unweighted GCN callers, on CPU and Metal. Its one public 0.x type is
+`Graph`; the contract is intentionally narrow and not stable.
 
 ## Try it
 
@@ -22,13 +22,12 @@ uv sync --locked
 
 ```python
 from tinygrad import Tensor
+from tinymesh import Graph
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_sum
-
-topology = CSRTopology(4, source=[0, 1, 1], target=[2, 2, 3])
+graph = Graph(4, source=[0, 1, 1], target=[2, 2, 3])
 state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
 
-print(csr_edge_sum(state, topology).tolist())
+print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
@@ -75,10 +74,12 @@ constructs `[N, N]` or `[E, H]` intermediates.
 - one GCN composition with source and destination degree normalization;
 - CPU and Metal tests.
 
-The implementation remains under `experiments/`. Its custom kernel uses an
-alpha tinygrad surface and disables default kernel optimization for its
-data-dependent CSR loop. Vector edge messages, attention, batching, changing
-topology, higher-order gradients, geometry, cells, and time are not implemented.
+`Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
+backend owns lowering and device caches. Model callers remain experiments.
+The backend uses an alpha tinygrad surface and disables default kernel
+optimization for its data-dependent loop. Vector edge messages, attention,
+batching, changing topology, higher-order gradients, geometry, cells, and time
+are not implemented.
 
 ## Learn how it works
 
