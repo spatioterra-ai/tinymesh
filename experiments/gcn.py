@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 
 from tinygrad import Context, Device, Tensor, nn
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_sum
+from tinymesh import Graph
 
 
 class GCN:
@@ -16,13 +16,13 @@ class GCN:
             raise ValueError("feature counts must be positive")
         self.linear = nn.Linear(in_features, out_features, bias=False)
 
-    def __call__(self, values: Tensor, topology: CSRTopology) -> Tensor:
+    def __call__(self, values: Tensor, graph: Graph) -> Tensor:
         messages = self.linear(values)
         if not isinstance(messages.device, str):
             raise ValueError("GCN requires one device")
-        degree = topology._degree(messages.device)
+        degree = graph.in_degree(device=messages.device)
         scale = (degree != 0).where(degree.maximum(1).cast(messages.dtype).rsqrt(), 0).reshape(-1, 1)
-        return csr_edge_sum(messages * scale, topology) * scale
+        return graph.sum(messages * scale) * scale
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class Observation:
 
 
 def fit_one_step(device: str) -> Observation:
-    topology = CSRTopology(
+    graph = Graph(
         4,
         [0, 1, 2, 3, 0, 2, 1, 3],
         [0, 1, 2, 3, 2, 0, 3, 1],
@@ -47,7 +47,7 @@ def fit_one_step(device: str) -> Observation:
     optimizer = nn.optim.SGD(nn.state.get_parameters(model), lr=2.0, fused=False)
 
     def loss() -> Tensor:
-        return (model(values, topology)[2:] - target).square().mean()
+        return (model(values, graph)[2:] - target).square().mean()
 
     initial_loss = loss().item()
     with Context(TRAINING=1):

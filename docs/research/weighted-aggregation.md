@@ -20,15 +20,15 @@ on CPU and Metal. Forward and `dX` reuse destination-owned CSR traversal. `dw`
 gives one output to each edge and reduces only feature width. None of the three
 paths needs atomics or a materialized `[E, H]` tensor.
 
-The result earns scalar edge multiplication inside the existing experiment. It
-does not earn a stable package API: the implementation still relies on alpha
-`Tensor.custom_kernel`, and the data-dependent CSR loop still disables
+The result earns scalar edge multiplication in the experimental `Graph.sum`
+contract. It does not earn API stability: the implementation still relies on
+alpha `Tensor.custom_kernel`, and the data-dependent CSR loop still disables
 tinygrad's default kernel optimization.
 
 ## Edge order is explicit
 
 Weights arrive in the same order as the `source` and `target` arrays passed to
-`CSRTopology`. Connectivity sorting must not detach them:
+`Graph`. Connectivity sorting must not detach them:
 
 ```text
 raw COO weight

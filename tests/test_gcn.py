@@ -3,8 +3,8 @@ from math import sqrt
 
 from tinygrad import Device, Tensor
 
-from experiments.csr_aggregation import CSRTopology
 from experiments.gcn import GCN, fit_one_step
+from tinymesh import Graph
 
 
 SOURCE = [0, 1, 2, 0, 1, 1, 2]
@@ -44,7 +44,7 @@ def run(
     model.linear.weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
     return model(
         Tensor(values, device=Device.DEFAULT).realize(),
-        CSRTopology(3, source, target),
+        Graph(3, source, target),
     ).tolist()
 
 
@@ -76,19 +76,19 @@ class GCNTest(unittest.TestCase):
     def test_explicit_self_loop_retains_disconnected_node(self) -> None:
         model = GCN(1, 1)
         model.linear.weight = Tensor([[2.0]], device=Device.DEFAULT).realize()
-        topology = CSRTopology(3, [0, 1, 2, 0, 1], [0, 1, 2, 1, 0])
+        graph = Graph(3, [0, 1, 2, 0, 1], [0, 1, 2, 1, 0])
         values = Tensor([[1.0], [3.0], [5.0]], device=Device.DEFAULT).realize()
 
-        for actual, expected in zip(model(values, topology).tolist(), [4.0, 4.0, 10.0]):
+        for actual, expected in zip(model(values, graph).tolist(), [4.0, 4.0, 10.0]):
             self.assertAlmostEqual(actual[0], expected, places=5)
 
     def test_zero_degree_node_returns_zero(self) -> None:
         model = GCN(1, 1)
         model.linear.weight = Tensor([[2.0]], device=Device.DEFAULT).realize()
-        topology = CSRTopology(3, [0, 1, 0, 1], [0, 1, 1, 0])
+        graph = Graph(3, [0, 1, 0, 1], [0, 1, 1, 0])
         values = Tensor([[1.0], [3.0], [5.0]], device=Device.DEFAULT).realize()
 
-        self.assertEqual(model(values, topology).tolist()[2], [0.0])
+        self.assertEqual(model(values, graph).tolist()[2], [0.0])
 
     def test_optimizer_reaches_parameter_through_normalized_csr(self) -> None:
         observation = fit_one_step(Device.DEFAULT)

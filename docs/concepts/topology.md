@@ -10,6 +10,8 @@ edge:       source -> target
 
 `N` is the number of nodes and `H` is the feature width. Topology says which
 rows of `X` may interact; it does not contain the node values themselves.
+Public `Graph` owns ordered COO identity; its replaceable private backend owns
+CSR lowering and device caches.
 
 ## COO: edges as pairs
 

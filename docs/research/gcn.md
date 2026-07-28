@@ -27,9 +27,10 @@ connectivity; the layer owns normalization and its linear map. A later
 multiplication independently. The caller supplies the self-loops required by
 the GCN renormalization rule, keeping topology mutation explicit.
 
-This is the second semantic caller for CSR sum, not evidence for a stable
-runtime API. The implementation still crosses tinygrad's alpha
-`Tensor.custom_kernel` boundary and disables default kernel optimization.
+This is the second semantic caller for `Graph.sum`, not evidence for a stable
+model API. The caller remains an experiment, and the private implementation
+still crosses tinygrad's alpha `Tensor.custom_kernel` boundary with default
+kernel optimization disabled.
 
 ## Evidence
 

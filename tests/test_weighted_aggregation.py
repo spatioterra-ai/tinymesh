@@ -4,7 +4,7 @@ from math import prod
 from tinygrad import Device, Tensor, UOp, dtypes
 from tinygrad.uop.ops import AxisType, Ops
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_weighted_sum
+from tinymesh import Graph
 
 
 SOURCE = [1, 0, 1, 3, 1, 0]
@@ -30,10 +30,10 @@ def reference(source=SOURCE, target=TARGET, weight=WEIGHT):
 
 
 def run(source=SOURCE, target=TARGET, weight=WEIGHT):
-    topology = CSRTopology(6, source, target)
+    graph = Graph(6, source, target)
     values = Tensor(VALUES, device=Device.DEFAULT).realize()
     edge_weight = Tensor(weight, device=Device.DEFAULT).realize()
-    output = csr_edge_weighted_sum(values, topology, edge_weight)
+    output = graph.sum(values, edge_weight=edge_weight)
     gradient = Tensor(GRADIENT, device=Device.DEFAULT).realize()
     values_gradient, weight_gradient = output.gradient(values, edge_weight, gradient=gradient)
     Tensor.realize(output, values_gradient, weight_gradient)
@@ -53,10 +53,10 @@ class WeightedAggregationTest(unittest.TestCase):
         self.assertEqual(list(reversed(actual[2])), reference()[2])
 
     def test_duplicate_edges_keep_distinct_weight_slots(self):
-        topology = CSRTopology(6, SOURCE, TARGET)
+        graph = Graph(6, SOURCE, TARGET)
         edge_weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
         values = Tensor(VALUES, device=Device.DEFAULT).realize()
-        output = csr_edge_weighted_sum(values, topology, edge_weight)
+        output = graph.sum(values, edge_weight=edge_weight)
         weight_gradient = output.gradient(
             edge_weight,
             gradient=Tensor(GRADIENT, device=Device.DEFAULT),
@@ -66,10 +66,10 @@ class WeightedAggregationTest(unittest.TestCase):
         self.assertEqual([weight_gradient.tolist()[edge] for edge in (0, 2)], [50.0, 50.0])
 
     def test_empty_graph(self):
-        topology = CSRTopology(3, [], [])
+        graph = Graph(3, [], [])
         values = Tensor([[1.0], [2.0], [3.0]], device=Device.DEFAULT).realize()
         edge_weight = Tensor([], device=Device.DEFAULT).realize()
-        output = csr_edge_weighted_sum(values, topology, edge_weight)
+        output = graph.sum(values, edge_weight=edge_weight)
         values_gradient, weight_gradient = output.sum().gradient(values, edge_weight)
 
         self.assertEqual(output.tolist(), [[0.0], [0.0], [0.0]])
@@ -77,10 +77,10 @@ class WeightedAggregationTest(unittest.TestCase):
         self.assertEqual(weight_gradient.tolist(), [])
 
     def test_single_node(self):
-        topology = CSRTopology(1, [0, 0, 0], [0, 0, 0])
+        graph = Graph(1, [0, 0, 0], [0, 0, 0])
         values = Tensor([[2.0, 3.0]], device=Device.DEFAULT).realize()
         edge_weight = Tensor([2.0, -1.0, 4.0], device=Device.DEFAULT).realize()
-        output = csr_edge_weighted_sum(values, topology, edge_weight)
+        output = graph.sum(values, edge_weight=edge_weight)
         values_gradient, weight_gradient = output.gradient(
             values,
             edge_weight,
@@ -92,26 +92,26 @@ class WeightedAggregationTest(unittest.TestCase):
         self.assertEqual(weight_gradient.tolist(), [31.0, 31.0, 31.0])
 
     def test_rejects_incompatible_weight_tensors(self):
-        topology = CSRTopology(2, [0], [1])
+        graph = Graph(2, [0], [1])
         values = Tensor.ones(2, 1, device=Device.DEFAULT)
 
         with self.assertRaisesRegex(ValueError, r"shape \[1\]"):
-            csr_edge_weighted_sum(values, topology, Tensor.ones(1, 1, device=Device.DEFAULT))
+            graph.sum(values, edge_weight=Tensor.ones(1, 1, device=Device.DEFAULT))
         with self.assertRaisesRegex(ValueError, r"shape \[1\]"):
-            csr_edge_weighted_sum(values, topology, Tensor.ones(2, device=Device.DEFAULT))
+            graph.sum(values, edge_weight=Tensor.ones(2, device=Device.DEFAULT))
         with self.assertRaisesRegex(ValueError, "same dtype"):
-            csr_edge_weighted_sum(values, topology, Tensor([1], dtype=dtypes.int32, device=Device.DEFAULT))
+            graph.sum(values, edge_weight=Tensor([1], dtype=dtypes.int32, device=Device.DEFAULT))
         other_device = "PYTHON" if Device.DEFAULT != "PYTHON" else "CPU"
         with self.assertRaisesRegex(ValueError, "one shared device"):
-            csr_edge_weighted_sum(values, topology, Tensor([1.0], device=other_device))
+            graph.sum(values, edge_weight=Tensor([1.0], device=other_device))
 
     def test_forward_and_gradients_have_sparse_structure(self):
         source = [0, 1, 1, 2, 3, 4, 4]
         target = [1, 0, 3, 3, 3, 0, 3]
-        topology = CSRTopology(5, source, target)
+        graph = Graph(5, source, target)
         values = Tensor.ones(5, 3, device=Device.DEFAULT).realize()
         edge_weight = Tensor.ones(7, device=Device.DEFAULT).realize()
-        output = csr_edge_weighted_sum(values, topology, edge_weight)
+        output = graph.sum(values, edge_weight=edge_weight)
         values_gradient, weight_gradient = output.gradient(
             values,
             edge_weight,

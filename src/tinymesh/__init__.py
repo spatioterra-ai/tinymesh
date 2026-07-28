@@ -1,1 +1,3 @@
-"""Sparse structure through space and time, in tinygrad."""
+from tinymesh.graph import Graph
+
+__all__ = ["Graph"]

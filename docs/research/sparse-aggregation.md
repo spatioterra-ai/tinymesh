@@ -12,15 +12,15 @@ gradient, and sparse-structure gates on CPU and Metal. Forward computes `A @ X`;
 its custom gradient runs the same kernel over transpose CSR to compute
 `A^T @ dY`. Neither direction uses atomics or materializes `[E, H]` state.
 
-This resolves the implementation boundary without adding a tinygrad primitive,
-but not the public API. The candidate remains in `experiments/`: it relies on
-the alpha `Tensor.custom_kernel` surface and a newly landed data-dependent
-`UOp.loop`. At current revision `0bb36c9`, tinygrad's default kernel
-optimization rewrites this loop into invalid UOps and fails type verification,
-so the kernel pins `opts_to_apply=()`. It covers fixed-topology first-order sum
-aggregation only and serializes each CSR row within one feature lane. Admit it
-to the package only after the alpha kernel and optimization contracts become
-stable enough to own publicly.
+This resolves the implementation boundary without adding a tinygrad primitive.
+The kernel now lives behind experimental `Graph.sum`; the benchmark remains in
+`experiments/`. The backend relies on the alpha `Tensor.custom_kernel` surface
+and a data-dependent `UOp.loop`. At recorded revision `0bb36c9`, tinygrad's
+default kernel optimization rewrites this loop into invalid UOps and fails type
+verification, so the kernel pins `opts_to_apply=()`. It covers fixed-topology
+first-order sum aggregation only and serializes each CSR row within one feature
+lane. Those constraints limit stability even though the narrow operation now
+has a package owner.
 
 ## CSR result
 
@@ -227,8 +227,8 @@ normalization, adjacency conversion, batching, and repeated topology work.
 
 ```console
 uv run python -m unittest tests.test_sparse_aggregation
-DEV=CPU uv run python -m unittest tests.test_csr_aggregation
-DEV=METAL uv run python -m unittest tests.test_csr_aggregation
+DEV=CPU uv run python -m unittest tests.test_graph
+DEV=METAL uv run python -m unittest tests.test_graph
 uv run python experiments/sparse_aggregation.py
 DEV=CPU uv run python experiments/csr_aggregation.py
 DEV=METAL uv run python experiments/csr_aggregation.py
@@ -239,5 +239,5 @@ identity-message, first-order sum aggregation in both directions. More complex
 messages add edge-local costs and require their own proof. Mean GraphSAGE and
 unweighted GCN prove first-order parameter learning through the shared sum
 boundary, but do not make the alpha custom-kernel or dynamic-loop contracts
-stable enough for the package. The rejected public gather-and-scatter
-composition must not be called sparse graph support.
+stable. The rejected public gather-and-scatter composition must not be called
+sparse graph support.

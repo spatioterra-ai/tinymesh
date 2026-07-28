@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 
 from tinygrad import Device, Tensor
 
-from experiments.csr_aggregation import CSRTopology, csr_edge_weighted_sum
+from tinymesh import Graph
 
 
 @dataclass(frozen=True)
@@ -19,10 +19,10 @@ class Observation:
 
 
 def observe(device: str) -> Observation:
-    topology = CSRTopology(3, source=[0, 1, 0], target=[2, 2, 1])
+    graph = Graph(3, source=[0, 1, 0], target=[2, 2, 1])
     values = Tensor([[2.0], [4.0], [8.0]], device=device).realize()
     edge_weight = Tensor([2.0, -1.0, 3.0], device=device).realize()
-    output = csr_edge_weighted_sum(values, topology, edge_weight)
+    output = graph.sum(values, edge_weight=edge_weight)
     node_gradient, edge_weight_gradient = output.gradient(
         values,
         edge_weight,

@@ -127,8 +127,8 @@ The same decomposition identifies capabilities that do not exist yet:
   snapshots.
 
 These remain design probes, not supported architectures. Mean GraphSAGE and
-GCN now expose a shared semantic boundary, but the alpha execution path still
-blocks a stable public composition.
+GCN now use the shared experimental `Graph` boundary, but neither model is a
+public Tinymesh API.
 
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives
