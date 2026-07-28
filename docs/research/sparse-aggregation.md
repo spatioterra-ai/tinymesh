@@ -240,4 +240,5 @@ messages add edge-local costs and require their own proof. Mean GraphSAGE and
 unweighted GCN prove first-order parameter learning through the shared sum
 boundary, but do not make the alpha custom-kernel or dynamic-loop contracts
 stable. The rejected public gather-and-scatter composition must not be called
-sparse graph support.
+sparse graph support. A later [T-GCN experiment](tgcn.md) proves that the same
+fixed `Graph` can be reused across ordered snapshots.

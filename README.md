@@ -45,6 +45,8 @@ COO connectivity + scalar edge facts
   around the same sparse sum.
 - Edge endpoint projection and target-grouped stable softmax compose trainable
   single- and multi-head GAT experiments without an `N * E` axis.
+- A T-GCN experiment reuses one graph across ordered node snapshots and sends a
+  parameter gradient through space and time.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
@@ -75,7 +77,7 @@ print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
-Run the four trainable witnesses:
+Run the five trainable witnesses:
 
 ```console
 DEV=CPU uv run python -m experiments.mean_sage
@@ -86,6 +88,8 @@ DEV=CPU uv run python -m experiments.gat
 DEV=METAL uv run python -m experiments.gat
 DEV=CPU uv run python -m experiments.multi_head_gat
 DEV=METAL uv run python -m experiments.multi_head_gat
+DEV=CPU uv run python -m experiments.tgcn
+DEV=METAL uv run python -m experiments.tgcn
 ```
 
 Inspect weighted forward and both first-order gradients:
@@ -104,6 +108,8 @@ run the [quick start](docs/quickstart.md):
   transpose, lowering, and the push-pull tradeoff.
 - [Message passing](docs/concepts/message-passing.md) explains
   message -> aggregate -> update and the gradient path.
+- [Time](docs/concepts/time.md) separates ordered node fields from fixed,
+  weighted, and changing topology.
 - [Sparse aggregation feasibility](docs/research/sparse-aggregation.md) retains
   the revision-bound scaling and kernel evidence.
 - [Mean GraphSAGE experiment](docs/research/mean-sage.md) retains the exact
@@ -115,6 +121,8 @@ run the [quick start](docs/quickstart.md):
 - [Sparse attention experiment](docs/research/attention.md) follows node
   coefficients into COO edge order, target softmax, weighted aggregation, and
   independently trainable attention heads.
+- [T-GCN experiment](docs/research/tgcn.md) follows hidden state and a parameter
+  gradient through one spatial edge and one temporal transition.
 
 ## Direction
 
@@ -123,13 +131,13 @@ destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
 endpoint projection, target softmax, and in-degree; its private backend owns
 lowering and rebuildable device caches. The alpha kernel and optimizer boundary
 still block stability. Vectorized head execution, external vector edge
-features, batching, changing topology, and temporal recurrence remain
+features, batching, changing topology, and temporal metadata remain
 unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
-time-varying fields remain the wider mesh direction. They enter only when the
-sparse graph core extends naturally; tinymesh is not a GIS, trainer framework,
-application, or model zoo.
+richer temporal fields remain the wider mesh direction. They enter only when
+the sparse graph core extends naturally; tinymesh is not a GIS, trainer
+framework, application, or model zoo.
 
 ## Development
 
