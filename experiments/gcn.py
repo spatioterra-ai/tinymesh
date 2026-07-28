@@ -21,7 +21,10 @@ class GCN:
         if not isinstance(messages.device, str):
             raise ValueError("GCN requires one device")
         degree = graph.in_degree(device=messages.device)
-        scale = (degree != 0).where(degree.maximum(1).cast(messages.dtype).rsqrt(), 0).reshape(-1, 1)
+        scale = (degree != 0).where(
+            degree.maximum(1).cast(messages.dtype).rsqrt(),
+            0,
+        ).reshape((1,) * (messages.ndim - 2) + (graph.nodes, 1))
         return graph.sum(messages * scale) * scale
 
 

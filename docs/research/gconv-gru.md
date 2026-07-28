@@ -167,9 +167,13 @@ regular ordered snapshots without interval metadata, one graph, one device,
 zero initial hidden state, and first-order unrolling. It fixes
 `lambda_max = 2` and supports no alternative Laplacian normalization.
 
-It does not cover directed Chebyshev operators, edge weights, batches,
-changing topology, masks, irregular time, truncated backpropagation,
-long-horizon stability, production performance, or predictive accuracy.
+It does not cover directed Chebyshev operators, edge weights, changing
+topology, masks, irregular time, truncated backpropagation, long-horizon
+stability, or production performance.
+
+The cell now also accepts shared-graph batch axes. The
+[Chickenpox forecast](chickenpox-forecast.md) records the first predictive
+comparison without changing this controlled operator witness.
 
 ## Reproduce
 

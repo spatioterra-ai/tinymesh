@@ -89,3 +89,22 @@ class StaticGraphTemporalSignal(Sequence[tuple[Tensor, Tensor]]):
         if train_steps == 0 or train_steps == len(self):
             raise ValueError("train and test must both be non-empty")
         return self[:train_steps], self[train_steps:]
+
+    def batches(self, *, batch_size: int, history: int) -> Iterator[tuple[Tensor, Tensor]]:
+        """Yield causal sequence-to-one windows as [B, L, N, F] and [B, N, Y]."""
+        for name, value in (("batch_size", batch_size), ("history", history)):
+            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                raise ValueError(f"{name} must be a positive integer")
+        if history > len(self):
+            raise ValueError(f"history must not exceed the {len(self)} time steps")
+
+        windows = len(self) - history + 1
+        for start in range(0, windows, batch_size):
+            stop = min(start + batch_size, windows)
+            yield (
+                Tensor.stack(
+                    *(self.x[start + lag:stop + lag] for lag in range(history)),
+                    dim=1,
+                ),
+                self.y[start + history - 1:stop + history - 1],
+            )

@@ -90,6 +90,37 @@ class TemporalSignalTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "non-empty"):
             dataset[:1].split(0.5)
 
+    def test_batches_causal_windows_without_materializing_topology(self) -> None:
+        dataset = signal()
+        batches = tuple(dataset.batches(batch_size=2, history=2))
+
+        self.assertEqual(len(batches), 1)
+        x, y = batches[0]
+        self.assertEqual(x.shape, (2, 2, 2, 1))
+        self.assertEqual(y.shape, (2, 2, 1))
+        self.assertEqual(
+            x.tolist(),
+            [
+                [[[1.0], [2.0]], [[3.0], [4.0]]],
+                [[[3.0], [4.0]], [[5.0], [6.0]]],
+            ],
+        )
+        self.assertEqual(y.tolist(), [[[4.0], [5.0]], [[6.0], [7.0]]])
+
+    def test_batches_keep_the_final_short_batch(self) -> None:
+        batches = tuple(signal().batches(batch_size=2, history=1))
+
+        self.assertEqual([x.shape for x, _ in batches], [(2, 1, 2, 1), (1, 1, 2, 1)])
+        self.assertEqual([y.shape for _, y in batches], [(2, 2, 1), (1, 2, 1)])
+
+    def test_rejects_invalid_batches(self) -> None:
+        dataset = signal()
+        for field in ({"batch_size": 0, "history": 1}, {"batch_size": 1, "history": 0}):
+            with self.assertRaisesRegex(ValueError, "positive integer"):
+                tuple(dataset.batches(**field))
+        with self.assertRaisesRegex(ValueError, "must not exceed"):
+            tuple(dataset.batches(batch_size=1, history=4))
+
 
 if __name__ == "__main__":
     unittest.main()

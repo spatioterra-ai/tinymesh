@@ -135,9 +135,13 @@ The formulation follows
 The result covers one fixed graph, ordered snapshots without interval metadata,
 zero initial hidden state, explicit first-order unrolling, and one device. It
 does not cover timestamps, irregular intervals, missingness masks, changing
-edge values, changing topology, batches, state detachment, truncated
-backpropagation, multi-step losses, long-horizon stability, or useful predictive
-accuracy.
+edge values, changing topology, state detachment, truncated backpropagation,
+multi-step losses, or long-horizon stability.
+
+The cell now also accepts shared-graph batch axes. The
+[Chickenpox forecast](chickenpox-forecast.md) records that execution and its
+limited predictive evidence; this toy witness still proves only the gradient
+path.
 
 ## Reproduce
 

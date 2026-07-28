@@ -23,24 +23,24 @@ class TGCN:
 
     def __call__(self, values: Tensor, graph: Graph, hidden: Tensor | None = None) -> Tensor:
         graph_state = self.graph_projection(values, graph)
-        update_input = graph_state[:, :self.hidden_features]
-        reset_input = graph_state[:, self.hidden_features:2 * self.hidden_features]
-        candidate_input = graph_state[:, 2 * self.hidden_features:]
+        update_input = graph_state[..., :self.hidden_features]
+        reset_input = graph_state[..., self.hidden_features:2 * self.hidden_features]
+        candidate_input = graph_state[..., 2 * self.hidden_features:]
         hidden = self._hidden(update_input, hidden)
-        update = self.update(update_input.cat(hidden, dim=1)).sigmoid()
-        reset = self.reset(reset_input.cat(hidden, dim=1)).sigmoid()
-        candidate = self.candidate(candidate_input.cat(hidden * reset, dim=1)).tanh()
+        update = self.update(update_input.cat(hidden, dim=-1)).sigmoid()
+        reset = self.reset(reset_input.cat(hidden, dim=-1)).sigmoid()
+        candidate = self.candidate(candidate_input.cat(hidden * reset, dim=-1)).tanh()
         return update * hidden + (1 - update) * candidate
 
     def _hidden(self, reference: Tensor, hidden: Tensor | None) -> Tensor:
         if hidden is None:
             return Tensor.zeros(
-                reference.shape[0],
+                *reference.shape[:-1],
                 self.hidden_features,
                 dtype=reference.dtype,
                 device=reference.device,
             )
-        expected = (reference.shape[0], self.hidden_features)
+        expected = (*reference.shape[:-1], self.hidden_features)
         if hidden.shape != expected:
             raise ValueError(f"hidden must have shape {expected}, got {hidden.shape}")
         if hidden.dtype != reference.dtype or hidden.device != reference.device:

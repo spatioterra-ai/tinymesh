@@ -21,6 +21,34 @@ fixed topology G
 Each `X_t` has shape `[N, F]`. Each hidden state `H_t` has shape `[N, H]`.
 Node identity and row order stay stable across the sequence.
 
+## Batch lanes share one graph
+
+A batch of windows adds leading axes; it does not copy topology:
+
+```text
+values [B, L, N, H]
+             |
+             | node axis stays owned by Graph
+             v
+       [N, B * L * H]
+             |
+             | one destination-CSR sum
+             v
+       [N, B * L * H]
+             |
+             v
+output [B, L, N, H]
+```
+
+`Graph.sum` accepts `[..., N, H]`, moves `N` first, folds every independent
+lane into feature width, runs the existing two-dimensional CSR operation once,
+and restores the original axes. The graph and its device buffers remain shared.
+Static scalar edge weights are also shared; their gradient sums over all lanes.
+
+This is batching tensor fields over one graph. Batching different graphs,
+changing edge weights per batch, and batched attention scores are separate
+contracts and remain unimplemented.
+
 ## Recurrence is causal
 
 One step is:
@@ -36,6 +64,27 @@ autograd graph through both space and time.
 Training and evaluation splits must preserve that direction. A feature attached
 to snapshot `t` must have been observable by `t`; putting future facts into an
 earlier row is leakage even if the recurrent code is causal.
+
+## Windows make history explicit
+
+`StaticGraphTemporalSignal.batches()` converts aligned snapshots into causal
+sequence-to-one windows:
+
+```text
+x [T, N, F] -- history L --> values [B, L, N, F]
+y [T, N, Y] ----------------> target [B, N, Y]
+
+values[b] = x[start:start + L]
+target[b] = y[start + L - 1]
+```
+
+The last target aligns with the last input snapshot's declared label. For the
+Chickenpox loader with `lags=1`, that label is the following week's value.
+Splitting the signal before creating windows prevents any window from crossing
+a split boundary.
+
+The iterator keeps the final short batch. It creates each window batch from
+`L` contiguous tensor slices and never duplicates topology.
 
 ## Resolution belongs to the data
 
@@ -77,13 +126,16 @@ optional edge weight [E]
 ```
 
 `StaticGraphTemporalSignal` validates those axes, keeps topology in one owner,
-and yields `(x_t, y_t)` in order. Contiguous temporal splits reuse the same
-graph and edge facts:
+and yields `(x_t, y_t)` in order or batched windows on request. Contiguous
+temporal splits reuse the same graph and edge facts:
 
 ```python
 train, test = signal.split(0.8)
 for x, y in train:
     hidden = cell(x, train.graph, hidden)
+
+values, target = next(train.batches(batch_size=32, history=8))
+# values [B, L, N, F], target [B, N, Y]
 ```
 
 The container does not claim more than its source. The current public dataset
@@ -108,4 +160,6 @@ question, not a data-container question. Both consume the same explicit
 
 The exact checked result lives in the
 [T-GCN experiment](../research/tgcn.md). The controlled architectural
-comparison lives in the [GConvGRU experiment](../research/gconv-gru.md).
+comparison lives in the [GConvGRU experiment](../research/gconv-gru.md). The
+first real batched forecast lives in the
+[Chickenpox forecast](../research/chickenpox-forecast.md).

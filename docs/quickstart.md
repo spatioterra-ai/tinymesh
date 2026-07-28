@@ -247,7 +247,20 @@ One `Graph` is shared by all `517` snapshots. Each input row holds four
 previous weekly values for one county; each target row holds its following
 value. The loader preserves all `102` source edges, including `20` self-loops.
 Read the [Chickenpox data record](research/chickenpox-data.md) for the source,
-lowering, parity, and batching boundary.
+lowering, parity, and window contract.
+
+Recurrent models can instead expose history as a separate axis:
+
+```python
+sequence = chickenpox(lags=1, device="CPU")
+values, target = next(sequence.batches(batch_size=32, history=8))
+
+print(values.shape, target.shape)
+# (32, 8, 20, 1) (32, 20, 1)
+```
+
+Every leading lane shares the same graph. `Graph.sum` folds those lanes into
+feature width, runs one CSR operation, and restores `[B, ..., N, H]`.
 
 Temporal recurrence reuses one graph while node fields and hidden state change:
 
@@ -304,6 +317,24 @@ ranking because their costs and optimization surfaces differ.
 Read [GConvGRU experiment](research/gconv-gru.md) for the Chebyshev recurrence,
 fusion, exact results, and limits.
 
+## Train a real forecast
+
+Run the controlled Chickenpox experiment:
+
+```console
+DEV=CPU uv run python -m experiments.chickenpox_forecast
+```
+
+It splits time before making eight-week windows, trains a node-local LSTM,
+T-GCN, and GConvGRU with similar parameter counts, and reports MSE plus MAE
+against zero and last-value baselines. Across seeds `0`, `1`, and `2`, LSTM and
+GConvGRU are effectively tied; T-GCN trails both.
+
+That result proves real batched training through the sparse boundary. It does
+not yet show that the graph improves prediction. The exact configuration,
+three-seed table, loop conventions, and data limitations live in the
+[Chickenpox forecast](research/chickenpox-forecast.md).
+
 ## Read the source
 
 The implementation is intentionally small:
@@ -332,6 +363,8 @@ The implementation is intentionally small:
   composes the fixed-graph recurrent cell;
 - [`experiments/gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gconv_gru.py)
   composes Chebyshev filtering and graph-convolutional recurrence;
+- [`experiments/chickenpox_forecast.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/chickenpox_forecast.py)
+  trains the first real temporal comparison;
 - [`tests/test_graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_graph.py)
   with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
   [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
@@ -342,6 +375,7 @@ The implementation is intentionally small:
   [`tests/test_multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_multi_head_gat.py),
   [`tests/test_tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_tgcn.py),
   [`tests/test_gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gconv_gru.py),
+  [`tests/test_chickenpox_forecast.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_chickenpox_forecast.py),
   [`tests/test_temporal.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_temporal.py),
   and [`tests/test_datasets.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_datasets.py)
   state the current contracts.

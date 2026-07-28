@@ -14,16 +14,16 @@ VALUES = [[1.0, 2.0], [3.0, 5.0], [7.0, 11.0], [13.0, 17.0], [19.0, 23.0], [29.0
 GRADIENT = [[1.0, 10.0], [2.0, 3.0], [5.0, 7.0], [11.0, 13.0], [17.0, 19.0], [23.0, 29.0]]
 
 
-def reference(source=SOURCE, target=TARGET, weight=WEIGHT):
-    output = [[0.0, 0.0] for _ in VALUES]
-    values_gradient = [[0.0, 0.0] for _ in VALUES]
+def reference(source=SOURCE, target=TARGET, weight=WEIGHT, values=VALUES, gradient=GRADIENT):
+    output = [[0.0, 0.0] for _ in values]
+    values_gradient = [[0.0, 0.0] for _ in values]
     weight_gradient = []
     for edge_source, edge_target, edge_weight in zip(source, target, weight):
         for feature in range(2):
-            output[edge_target][feature] += edge_weight * VALUES[edge_source][feature]
-            values_gradient[edge_source][feature] += edge_weight * GRADIENT[edge_target][feature]
+            output[edge_target][feature] += edge_weight * values[edge_source][feature]
+            values_gradient[edge_source][feature] += edge_weight * gradient[edge_target][feature]
         weight_gradient.append(sum(
-            VALUES[edge_source][feature] * GRADIENT[edge_target][feature]
+            values[edge_source][feature] * gradient[edge_target][feature]
             for feature in range(2)
         ))
     return output, values_gradient, weight_gradient
@@ -43,6 +43,30 @@ def run(source=SOURCE, target=TARGET, weight=WEIGHT):
 class WeightedAggregationTest(unittest.TestCase):
     def test_forward_and_both_gradients_match_reference(self):
         self.assertEqual(run(), reference())
+
+    def test_shared_weights_accumulate_gradients_across_batches(self):
+        values_data = [VALUES, [[2 * value for value in row] for row in VALUES]]
+        gradient_data = [GRADIENT, [[0.5 * value for value in row] for row in GRADIENT]]
+        graph = Graph(6, SOURCE, TARGET)
+        values = Tensor(values_data, device=Device.DEFAULT).realize()
+        edge_weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
+        output = graph.sum(values, edge_weight=edge_weight)
+        values_gradient, weight_gradient = output.gradient(
+            values,
+            edge_weight,
+            gradient=Tensor(gradient_data, device=Device.DEFAULT),
+        )
+        expected = [
+            reference(values=lane_values, gradient=lane_gradient)
+            for lane_values, lane_gradient in zip(values_data, gradient_data)
+        ]
+
+        self.assertEqual(output.tolist(), [lane[0] for lane in expected])
+        self.assertEqual(values_gradient.tolist(), [lane[1] for lane in expected])
+        self.assertEqual(
+            weight_gradient.tolist(),
+            [sum(lane[2][edge] for lane in expected) for edge in range(len(WEIGHT))],
+        )
 
     def test_edge_order_moves_weights_and_gradients_with_connectivity(self):
         actual = run(list(reversed(SOURCE)), list(reversed(TARGET)), list(reversed(WEIGHT)))

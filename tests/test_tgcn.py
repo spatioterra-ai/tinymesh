@@ -111,6 +111,23 @@ class TGCNTest(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0].src[0].arg.name, "csr_sum")
 
+    def test_batch_axis_matches_independent_hidden_states(self):
+        model = TGCN(1, 2)
+        graph = Graph(3, SOURCE, TARGET)
+        values = Tensor(
+            [
+                [[1.0], [0.0], [-1.0]],
+                [[0.5], [-0.5], [1.0]],
+            ],
+            device=Device.DEFAULT,
+        ).realize()
+
+        expected = Tensor.stack(*(model(lane, graph) for lane in values))
+        for actual_batch, expected_batch in zip(model(values, graph).tolist(), expected.tolist()):
+            for actual_row, expected_row in zip(actual_batch, expected_batch):
+                for actual, expected_value in zip(actual_row, expected_row):
+                    self.assertAlmostEqual(actual, expected_value, places=5)
+
     def test_rejects_incompatible_hidden_state(self):
         model = TGCN(1, 2)
         graph = Graph(3, SOURCE, TARGET)
