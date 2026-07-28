@@ -10,8 +10,9 @@ that structure without replacing the sparse core.
 tinymesh is experimental. It currently proves fixed-graph unit and
 scalar-weighted sparse aggregation, target-normalized sparse attention, and
 trainable mean-GraphSAGE, unweighted GCN, single- and multi-head GAT, T-GCN,
-and Chebyshev GConvGRU callers on CPU and Metal. Its one public 0.x type is
-`Graph`; the contract is intentionally narrow and not stable.
+and Chebyshev GConvGRU callers on CPU and Metal. Its public 0.x surface is
+`Graph` and `StaticGraphTemporalSignal`; the contract is intentionally narrow
+and not stable.
 
 ## Try it
 
@@ -51,6 +52,9 @@ topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
 sparse operation       sum, endpoint projection, target softmax
     |
     v
+temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
+    |
+    v
 model composition      GraphSAGE, GCN, GAT, T-GCN, GConvGRU
 ```
 
@@ -82,14 +86,18 @@ field; no operation constructs an `N * E` axis.
   and time;
 - one GConvGRU composition that applies sparse Chebyshev filters to input and
   hidden state;
+- one fixed-graph temporal signal with causal slicing and aligned node, feature,
+  target, and edge axes;
+- one pinned PyG Temporal chickenpox loader with no PyTorch or NumPy runtime;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
-backend owns lowering and device caches. Model callers remain experiments.
+backend owns lowering and device caches. `StaticGraphTemporalSignal` owns the
+small fixed-topology data boundary. Model callers remain experiments.
 The backend uses an alpha tinygrad surface and disables default kernel
 optimization for its data-dependent loop. Vectorized head execution, external
-vector edge features, batching, changing topology, higher-order gradients,
-temporal metadata, geometry, and cells are not implemented.
+vector edge features, graph batching, changing topology, higher-order
+gradients, timestamps, masks, geometry, and cells are not implemented.
 
 ## Learn how it works
 
@@ -113,6 +121,8 @@ temporal metadata, geometry, and cells are not implemented.
   exact spatial-temporal learning witness.
 - [GConvGRU experiment](research/gconv-gru.md) records the Chebyshev operator,
   fused recurrent cell, and controlled T-GCN comparison.
+- [Chickenpox temporal data](research/chickenpox-data.md) records the first
+  external dataset, its lowering, framework parity, and batching boundary.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and

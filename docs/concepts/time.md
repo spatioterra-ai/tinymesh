@@ -64,20 +64,33 @@ alignment, and cache lifetime.
 
 Proving fixed-topology recurrence does not prove dynamic graphs.
 
-## Why no temporal container yet
+## The fixed-graph signal
 
-For the current witness, one `Graph` plus a tuple of tensors is the complete
-truth:
+The first real dataset caller adds invariants that a tuple cannot carry:
 
-```python
-hidden = cell(snapshots[0], graph)
-for snapshot in snapshots[1:]:
-    hidden = cell(snapshot, graph, hidden)
+```text
+Graph G
+node IDs [N]
+x [T, N, F]
+y [T, N, Y]
+optional edge weight [E]
 ```
 
-A wrapper would not yet enforce timestamps, masks, sampling intervals, labels,
-or provenance, so it would add a name without adding a contract. It should
-exist only when one of those invariants has a real caller.
+`StaticGraphTemporalSignal` validates those axes, keeps topology in one owner,
+and yields `(x_t, y_t)` in order. Contiguous temporal splits reuse the same
+graph and edge facts:
+
+```python
+train, test = signal.split(0.8)
+for x, y in train:
+    hidden = cell(x, train.graph, hidden)
+```
+
+The container does not claim more than its source. The current public dataset
+has ordered weekly positions but no exact dates or missingness mask, so those
+are not fabricated. Read the
+[Chickenpox data record](../research/chickenpox-data.md) for the concrete
+caller and parity evidence.
 
 ## Where spatial mixing happens
 
@@ -90,7 +103,7 @@ GConvGRU    graph-mix X_t and H_(t-1) inside the gates
 
 T-GCN is cheaper. GConvGRU lets a node's remembered state affect neighboring
 nodes before the next update. Whether that extra path helps is a model and data
-question, not a temporal-container question. Both consume the same explicit
+question, not a data-container question. Both consume the same explicit
 `Graph`, snapshots, and hidden tensor.
 
 The exact checked result lives in the

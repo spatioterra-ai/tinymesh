@@ -3,13 +3,14 @@ from pathlib import Path
 
 import tinymesh
 from tinygrad import Tensor
-from tinymesh import Graph
+from tinymesh import Graph, StaticGraphTemporalSignal
 
 
 class PackageTest(unittest.TestCase):
     def test_public_surface(self) -> None:
-        self.assertEqual(tinymesh.__all__, ["Graph"])
+        self.assertEqual(tinymesh.__all__, ["Graph", "StaticGraphTemporalSignal"])
         self.assertIs(tinymesh.Graph, Graph)
+        self.assertIs(tinymesh.StaticGraphTemporalSignal, StaticGraphTemporalSignal)
         self.assertFalse(hasattr(tinymesh, "CSRTopology"))
 
     def test_type_marker_and_runtime(self) -> None:
