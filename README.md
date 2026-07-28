@@ -36,6 +36,8 @@ COO connectivity + scalar edge facts
   private maps connect them to both CSR traversals.
 - Sparse sum stores `O(N + E)` topology and each direction performs
   `O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`.
+- Leading batch and time axes fold into feature width, so `Graph.sum` applies
+  one shared sparse graph to `[..., N, H]` without copying topology.
 - One tinygrad custom kernel implements both `A @ X` and `A.T @ dY`; weighted
   execution reuses it and computes `dw` with one owner per edge. Neither sum
   path constructs `[N, N]` or `[E, H]` intermediates.
@@ -52,6 +54,9 @@ COO connectivity + scalar edge facts
   T-GCN.
 - A fixed-graph temporal signal and pinned PyG Temporal chickenpox loader keep
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
+- Causal window batches feed node-local LSTM, T-GCN, and GConvGRU forecasts.
+  On the first three-seed Chickenpox run, LSTM and GConvGRU are tied; the
+  graph-recurrent cell has no stable quality advantage yet.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
@@ -105,6 +110,12 @@ DEV=CPU uv run python -m experiments.chickenpox_data
 DEV=METAL uv run python -m experiments.chickenpox_data
 ```
 
+Train the controlled Chickenpox forecast:
+
+```console
+DEV=CPU uv run python -m experiments.chickenpox_forecast
+```
+
 Inspect weighted forward and both first-order gradients:
 
 ```console
@@ -140,17 +151,20 @@ run the [quick start](docs/quickstart.md):
   graph-convolutional recurrence under one controlled temporal witness.
 - [Chickenpox temporal data](docs/research/chickenpox-data.md) lowers one
   canonical PyG Temporal dataset into the public fixed-graph signal.
+- [Chickenpox forecast](docs/research/chickenpox-forecast.md) follows causal
+  batches through three recurrent models and retains the inconclusive graph
+  comparison.
 
 ## Direction
 
 Unit and scalar-weighted sums now share deterministic topology plus
 destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
 endpoint projection, target softmax, and in-degree; its private backend owns
-lowering and rebuildable device caches. A fixed-graph temporal signal now owns
-aligned node IDs, features, targets, and edge weights. The alpha kernel and
-optimizer boundary still block stability. Vectorized head execution, external
-vector edge features, graph batching, changing topology, timestamps, and masks
-remain unimplemented.
+lowering and rebuildable device caches. A fixed-graph temporal signal owns
+aligned node IDs, features, targets, edge weights, and causal window batches.
+The alpha kernel and optimizer boundary still block stability. Vectorized
+attention heads, external vector edge features, batching different graphs,
+changing topology, timestamps, and masks remain unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 richer temporal fields remain the wider mesh direction. They enter only when

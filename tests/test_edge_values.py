@@ -74,6 +74,11 @@ class EdgeValuesTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source.*target"):
             graph.edge_values(Tensor.ones(2, 1), endpoint="edge")  # type: ignore[arg-type]
 
+    def test_rejects_batch_axes(self):
+        graph = Graph(2, [0], [1])
+        with self.assertRaisesRegex(ValueError, r"shape \[N, H\]"):
+            graph.edge_values(Tensor.ones(3, 2, 1), endpoint="source")
+
     def test_forward_and_backward_have_sparse_structure(self):
         source = [0, 1, 1, 2, 3, 4, 4]
         target = [1, 0, 3, 3, 3, 0, 3]

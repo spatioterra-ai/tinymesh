@@ -39,17 +39,25 @@ class Graph:
         return len(self.source)
 
     def sum(self, values: Tensor, edge_weight: Tensor | None = None) -> Tensor:
-        """Sum incoming values, optionally weighted in COO edge order."""
+        """Sum incoming values over node axis -2 with optional shared edge weights."""
         self._validate_node_values(values)
-        if edge_weight is None:
-            return self._csr.sum(values)
-        if edge_weight.ndim != 1 or edge_weight.shape[0] != self.edges:
-            raise ValueError(f"edge_weight must have shape [{self.edges}], got {edge_weight.shape}")
-        if values.dtype != edge_weight.dtype:
-            raise ValueError(f"values and edge_weight must have the same dtype, got {values.dtype} and {edge_weight.dtype}")
-        if edge_weight.device != values.device:
-            raise ValueError("weighted graph sum requires one shared device")
-        return self._csr.weighted_sum(values, edge_weight)
+        if edge_weight is not None:
+            if edge_weight.ndim != 1 or edge_weight.shape[0] != self.edges:
+                raise ValueError(f"edge_weight must have shape [{self.edges}], got {edge_weight.shape}")
+            if values.dtype != edge_weight.dtype:
+                raise ValueError(f"values and edge_weight must have the same dtype, got {values.dtype} and {edge_weight.dtype}")
+            if edge_weight.device != values.device:
+                raise ValueError("weighted graph sum requires one shared device")
+
+        shape = values.shape
+        order = (values.ndim - 2, *range(values.ndim - 2), values.ndim - 1)
+        flat = values.permute(order).reshape(self.nodes, -1)
+        output = self._csr.sum(flat) if edge_weight is None else self._csr.weighted_sum(flat, edge_weight)
+        return output.reshape(self.nodes, *shape[:-2], shape[-1]).permute(
+            *range(1, values.ndim - 1),
+            0,
+            values.ndim - 1,
+        )
 
     def edge_values(
         self,
@@ -58,6 +66,8 @@ class Graph:
         endpoint: Literal["source", "target"],
     ) -> Tensor:
         """Gather node values into original COO edge order."""
+        if values.ndim != 2:
+            raise ValueError(f"values must have shape [N, H], got {values.shape}")
         self._validate_node_values(values)
         if endpoint not in ("source", "target"):
             raise ValueError("endpoint must be 'source' or 'target'")
@@ -80,9 +90,9 @@ class Graph:
         return self._csr.in_degree(device)
 
     def _validate_node_values(self, values: Tensor) -> None:
-        if values.ndim != 2:
-            raise ValueError(f"values must have shape [N, H], got {values.shape}")
-        if values.shape[0] != self.nodes:
-            raise ValueError(f"values must have {self.nodes} rows, got {values.shape[0]}")
+        if values.ndim < 2:
+            raise ValueError(f"values must have shape [..., N, H], got {values.shape}")
+        if values.shape[-2] != self.nodes:
+            raise ValueError(f"values must have {self.nodes} node rows, got {values.shape[-2]}")
         if not isinstance(values.device, str):
             raise ValueError("graph values require one device")

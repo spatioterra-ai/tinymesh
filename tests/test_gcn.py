@@ -90,6 +90,18 @@ class GCNTest(unittest.TestCase):
 
         self.assertEqual(model(values, graph).tolist()[2], [0.0])
 
+    def test_batch_axis_matches_independent_graphs(self) -> None:
+        model = GCN(2, 2)
+        model.linear.weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
+        graph = Graph(3, SOURCE, TARGET)
+        values = Tensor(
+            [VALUES, [[2 * value for value in row] for row in VALUES]],
+            device=Device.DEFAULT,
+        ).realize()
+
+        expected = Tensor.stack(*(model(lane, graph) for lane in values))
+        self.assertEqual(model(values, graph).tolist(), expected.tolist())
+
     def test_optimizer_reaches_parameter_through_normalized_csr(self) -> None:
         observation = fit_one_step(Device.DEFAULT)
 

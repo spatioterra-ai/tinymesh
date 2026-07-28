@@ -27,8 +27,8 @@ class ChebConv:
 
     def _project(self, values: Tensor, graph: Graph) -> Tensor:
         expected = (graph.nodes, self.in_features)
-        if values.shape != expected:
-            raise ValueError(f"values must have shape {expected}, got {values.shape}")
+        if values.ndim < 2 or values.shape[-2:] != expected:
+            raise ValueError(f"values must have shape [..., {graph.nodes}, {self.in_features}], got {values.shape}")
         if not isinstance(values.device, str):
             raise ValueError("ChebConv requires one device")
 
@@ -36,13 +36,13 @@ class ChebConv:
         scale = (degree != 0).where(
             degree.maximum(1).cast(values.dtype).rsqrt(),
             0,
-        ).reshape(-1, 1)
+        ).reshape((1,) * (values.ndim - 2) + (graph.nodes, 1))
         states = [values]
         if self.order > 1:
             states.append(_shift(values, graph, scale))
         for _ in range(2, self.order):
             states.append(2 * _shift(states[-1], graph, scale) - states[-2])
-        basis = states[0] if self.order == 1 else states[0].cat(*states[1:], dim=1)
+        basis = states[0] if self.order == 1 else states[0].cat(*states[1:], dim=-1)
         return self.linear(basis)
 
 
@@ -58,27 +58,27 @@ class GConvGRU:
     def __call__(self, values: Tensor, graph: Graph, hidden: Tensor | None = None) -> Tensor:
         _validate_graph(graph)
         expected = (graph.nodes, self.in_features)
-        if values.shape != expected:
-            raise ValueError(f"values must have shape {expected}, got {values.shape}")
+        if values.ndim < 2 or values.shape[-2:] != expected:
+            raise ValueError(f"values must have shape [..., {graph.nodes}, {self.in_features}], got {values.shape}")
         if not isinstance(values.device, str):
             raise ValueError("GConvGRU requires one device")
         hidden = self._hidden(values, hidden)
 
-        gates = self.gates._project(values.cat(hidden, dim=1), graph)
-        update = gates[:, :self.hidden_features].sigmoid()
-        reset = gates[:, self.hidden_features:].sigmoid()
-        candidate = self.candidate._project(values.cat(hidden * reset, dim=1), graph).tanh()
+        gates = self.gates._project(values.cat(hidden, dim=-1), graph)
+        update = gates[..., :self.hidden_features].sigmoid()
+        reset = gates[..., self.hidden_features:].sigmoid()
+        candidate = self.candidate._project(values.cat(hidden * reset, dim=-1), graph).tanh()
         return update * hidden + (1 - update) * candidate
 
     def _hidden(self, values: Tensor, hidden: Tensor | None) -> Tensor:
         if hidden is None:
             return Tensor.zeros(
-                values.shape[0],
+                *values.shape[:-1],
                 self.hidden_features,
                 dtype=values.dtype,
                 device=values.device,
             )
-        expected = (values.shape[0], self.hidden_features)
+        expected = (*values.shape[:-1], self.hidden_features)
         if hidden.shape != expected:
             raise ValueError(f"hidden must have shape {expected}, got {hidden.shape}")
         if hidden.dtype != values.dtype or hidden.device != values.device:

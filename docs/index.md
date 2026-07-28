@@ -55,7 +55,10 @@ sparse operation       sum, endpoint projection, target softmax
 temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
     |
     v
-model composition      GraphSAGE, GCN, GAT, T-GCN, GConvGRU
+causal windows         values[B,L,N,F] + target[B,N,Y]
+    |
+    v
+model composition      GraphSAGE, GCN, GAT, LSTM, T-GCN, GConvGRU
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -88,16 +91,21 @@ field; no operation constructs an `N * E` axis.
   hidden state;
 - one fixed-graph temporal signal with causal slicing and aligned node, feature,
   target, and edge axes;
+- one shared-graph batch path that folds leading tensor lanes into sparse
+  feature width and yields causal sequence-to-one windows;
 - one pinned PyG Temporal chickenpox loader with no PyTorch or NumPy runtime;
+- one three-seed Chickenpox forecast comparing matched LSTM, T-GCN, and
+  GConvGRU models without finding a stable graph advantage;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
 backend owns lowering and device caches. `StaticGraphTemporalSignal` owns the
 small fixed-topology data boundary. Model callers remain experiments.
 The backend uses an alpha tinygrad surface and disables default kernel
-optimization for its data-dependent loop. Vectorized head execution, external
-vector edge features, graph batching, changing topology, higher-order
-gradients, timestamps, masks, geometry, and cells are not implemented.
+optimization for its data-dependent loop. Vectorized attention heads, external
+vector edge features, batching different graphs, changing topology,
+higher-order gradients, timestamps, masks, geometry, and cells are not
+implemented.
 
 ## Learn how it works
 
@@ -122,7 +130,9 @@ gradients, timestamps, masks, geometry, and cells are not implemented.
 - [GConvGRU experiment](research/gconv-gru.md) records the Chebyshev operator,
   fused recurrent cell, and controlled T-GCN comparison.
 - [Chickenpox temporal data](research/chickenpox-data.md) records the first
-  external dataset, its lowering, framework parity, and batching boundary.
+  external dataset, its lowering, framework parity, and window contract.
+- [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
+  training comparison, including the node-local controls and negative result.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and

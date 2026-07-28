@@ -91,10 +91,10 @@ class GraphSumTest(unittest.TestCase):
     def test_rejects_incompatible_values(self):
         graph = Graph(3, [], [])
 
-        with self.assertRaisesRegex(ValueError, r"shape \[N, H\]"):
+        with self.assertRaisesRegex(ValueError, r"shape \[\.\.\., N, H\]"):
             graph.sum(Tensor.ones(3, device=Device.DEFAULT))
-        with self.assertRaisesRegex(ValueError, "3 rows"):
-            graph.sum(Tensor.ones(2, 1, device=Device.DEFAULT))
+        with self.assertRaisesRegex(ValueError, "3 node rows"):
+            graph.sum(Tensor.ones(2, 2, 1, device=Device.DEFAULT))
 
     def test_empty_graph(self):
         graph = Graph(3, [], [])
@@ -131,6 +131,34 @@ class GraphSumTest(unittest.TestCase):
         output, gradient = run()
         self.assertEqual(output, EXPECTED)
         self.assertEqual(gradient, EXPECTED_GRADIENT)
+
+    def test_batch_and_time_axes_share_one_sparse_call(self):
+        graph = Graph(6, SOURCE, TARGET)
+        lanes = [
+            [VALUES, [[2 * value for value in row] for row in VALUES]],
+            [list(reversed(VALUES)), VALUES],
+        ]
+        state = Tensor(lanes, device=Device.DEFAULT).realize()
+        output = graph.sum(state)
+        gradient = output.sum().gradient(state)[0]
+
+        def aggregate(values):
+            result = [[0.0, 0.0] for _ in values]
+            for source, target in zip(SOURCE, TARGET):
+                for feature, value in enumerate(values[source]):
+                    result[target][feature] += value
+            return result
+
+        expected = [[aggregate(values) for values in batch] for batch in lanes]
+        out_degree = [SOURCE.count(node) for node in range(6)]
+        expected_gradient = [
+            [[[float(out_degree[node])] * 2 for node in range(6)] for _ in batch]
+            for batch in lanes
+        ]
+        self._assert_sparse_kernel(output, nodes=6, edges=6, width=8)
+        self._assert_sparse_kernel(gradient, nodes=6, edges=6, width=8)
+        self.assertEqual(output.tolist(), expected)
+        self.assertEqual(gradient.tolist(), expected_gradient)
 
     def test_edge_order_does_not_change_sum(self):
         output, gradient = run(list(reversed(SOURCE)), list(reversed(TARGET)))

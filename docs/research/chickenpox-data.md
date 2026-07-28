@@ -91,16 +91,34 @@ DEV=METAL uv run python -m experiments.chickenpox_data
 }
 ```
 
-## Why there is no generic batch loader yet
+## Causal window batches
 
-PyG's `TemporalDataLoader` batches continuous edge events; this dataset is an
-ordered sequence of node fields. PyG Temporal's newer index batching instead
-emits windows shaped `[B, L, N, F]`.
+For recurrent models, load one feature lag and make temporal history explicit:
 
-Tinymesh `Graph` currently accepts one node field shaped `[N, H]`. Publishing a
-batch loader before a model can consume its output would create a dead API.
-The present sequence supports causal full-signal recurrence. A later batching
-stage must first choose and prove the graph-batch execution contract.
+```python
+signal = chickenpox(lags=1, device="CPU")
+values, target = next(signal.batches(batch_size=32, history=8))
 
-This result proves source lowering, alignment, and framework parity. It does
-not measure forecast quality.
+print(values.shape, target.shape)
+# (32, 8, 20, 1) (32, 20, 1)
+```
+
+Each sample contains eight consecutive node fields and predicts the week after
+the last field. The final short batch is retained. Topology is not repeated:
+every batch reuses `signal.graph`.
+
+PyG's `TemporalDataLoader` batches continuous edge events, not ordered fields
+over one fixed graph. At the pinned revision, PyG Temporal's `IndexDataset`
+uses a PyTorch `DataLoader` to gather an input sequence and an equally long
+future target sequence. Tinymesh instead exposes sequence-to-one windows
+directly from the signal because that is the first current model caller:
+
+```text
+PyG Temporal IndexDataset   input [B, L, N, F] -> target [B, L, N, F]
+Tinymesh batches            input [B, L, N, F] -> target [B, N, Y]
+```
+
+This is not a generic worker, shuffle, prefetch, or multiple-graph loader. It
+is the smallest deterministic window contract over resident tinygrad tensors.
+The [Chickenpox forecast](chickenpox-forecast.md) records the first end-to-end
+training result and its limits.

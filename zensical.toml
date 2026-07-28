@@ -21,6 +21,7 @@ nav = [
     "research/tgcn.md",
     "research/gconv-gru.md",
     "research/chickenpox-data.md",
+    "research/chickenpox-forecast.md",
   ]},
 ]
 
