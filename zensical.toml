@@ -16,6 +16,7 @@ nav = [
     "research/mean-sage.md",
     "research/gcn.md",
     "research/weighted-aggregation.md",
+    "research/attention.md",
   ]},
 ]
 

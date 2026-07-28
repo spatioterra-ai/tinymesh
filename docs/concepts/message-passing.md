@@ -74,6 +74,23 @@ one edge owner and reduces only feature width `H`, so it needs neither atomics
 nor a materialized `[E, H]` message tensor. Edge-order maps keep the scalar
 attached to the same COO edge through both traversals.
 
+## Graph attention
+
+A single attention head composes node transforms, endpoint projection, target
+softmax, and weighted sum:
+
+```text
+z_v       = W x_v
+score_uv  = LeakyReLU(dot(a_source, z_u) + dot(a_target, z_v))
+alpha_uv  = softmax(score_uv over every edge ending at v)
+y_v       = sum(alpha_uv z_u for every edge u -> v)
+```
+
+`Graph.edge_values` projects node coefficients to source or target positions in
+COO edge order. `Graph.softmax` normalizes scalar edge scores among each
+target's incoming edges. `Graph.sum` then consumes those coefficients as scalar
+edge weights. Ordinary tinygrad operations own every learned transform.
+
 ## Gradient path
 
 The layer's forward flow is:
@@ -121,14 +138,13 @@ or training on a real graph.
 The same decomposition identifies capabilities that do not exist yet:
 
 - GIN keeps sum aggregation and adds a learned update.
-- Attention requires edge scores and a sparse normalization such as segment
-  softmax.
+- Multi-head attention repeats scalar sparse normalization and combines heads.
 - Temporal graph models repeat or evolve spatial state across ordered
   snapshots.
 
-These remain design probes, not supported architectures. Mean GraphSAGE and
-GCN now use the shared experimental `Graph` boundary, but neither model is a
-public Tinymesh API.
+GIN, multi-head attention, and temporal layers remain design probes. Mean
+GraphSAGE, GCN, and single-head GAT use the shared experimental `Graph`
+boundary, but none is a public Tinymesh model API.
 
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives
@@ -136,3 +152,5 @@ in [Mean GraphSAGE experiment](../research/mean-sage.md). The normalized second
 caller lives in [GCN experiment](../research/gcn.md). Scalar edge evidence
 lives in
 [Weighted aggregation experiment](../research/weighted-aggregation.md).
+Endpoint projection, segment softmax, and the attention witness live in
+[Sparse attention experiment](../research/attention.md).

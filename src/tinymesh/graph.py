@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
+from typing import Literal
 
-from tinygrad import Tensor
+from tinygrad import Tensor, dtypes
 
 from tinymesh._csr import _CSR
 
@@ -39,12 +40,7 @@ class Graph:
 
     def sum(self, values: Tensor, edge_weight: Tensor | None = None) -> Tensor:
         """Sum incoming values, optionally weighted in COO edge order."""
-        if values.ndim != 2:
-            raise ValueError(f"values must have shape [N, H], got {values.shape}")
-        if values.shape[0] != self.nodes:
-            raise ValueError(f"values must have {self.nodes} rows, got {values.shape[0]}")
-        if not isinstance(values.device, str):
-            raise ValueError("graph sum requires one device")
+        self._validate_node_values(values)
         if edge_weight is None:
             return self._csr.sum(values)
         if edge_weight.ndim != 1 or edge_weight.shape[0] != self.edges:
@@ -55,8 +51,38 @@ class Graph:
             raise ValueError("weighted graph sum requires one shared device")
         return self._csr.weighted_sum(values, edge_weight)
 
+    def edge_values(
+        self,
+        values: Tensor,
+        *,
+        endpoint: Literal["source", "target"],
+    ) -> Tensor:
+        """Gather node values into original COO edge order."""
+        self._validate_node_values(values)
+        if endpoint not in ("source", "target"):
+            raise ValueError("endpoint must be 'source' or 'target'")
+        return self._csr.edge_values(values, source=endpoint == "source")
+
+    def softmax(self, edge_score: Tensor) -> Tensor:
+        """Normalize scalar edge scores over each target's incoming edges."""
+        if edge_score.ndim != 1 or edge_score.shape[0] != self.edges:
+            raise ValueError(f"edge_score must have shape [{self.edges}], got {edge_score.shape}")
+        if not dtypes.is_float(edge_score.dtype):
+            raise ValueError(f"edge_score must have a floating dtype, got {edge_score.dtype}")
+        if not isinstance(edge_score.device, str):
+            raise ValueError("graph softmax requires one device")
+        return self._csr.softmax(edge_score)
+
     def in_degree(self, *, device: str) -> Tensor:
         """Return incoming degree on one device."""
         if not isinstance(device, str):
             raise ValueError("in_degree requires one device")
         return self._csr.in_degree(device)
+
+    def _validate_node_values(self, values: Tensor) -> None:
+        if values.ndim != 2:
+            raise ValueError(f"values must have shape [N, H], got {values.shape}")
+        if values.shape[0] != self.nodes:
+            raise ValueError(f"values must have {self.nodes} rows, got {values.shape[0]}")
+        if not isinstance(values.device, str):
+            raise ValueError("graph values require one device")

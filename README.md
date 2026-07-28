@@ -22,12 +22,12 @@ COO connectivity + scalar edge facts
                   v
        CSR(A) + CSR(A.T) + edge maps
                   |
-          +-------+--------+
-          |                |
-          v                v
-      unit sum        weighted sum
-      A @ X           A_w @ X
-      A.T @ dY        A_w.T @ dY + dw
+          +-------+--------+--------------------+
+          |                |                    |
+          v                v                    v
+      unit sum        weighted sum       endpoint values
+      A @ X           A_w @ X            + target softmax
+      A.T @ dY        A_w.T @ dY + dw    + weighted sum
 ```
 
 - An unordered directed edge list lowers deterministically into destination CSR
@@ -37,12 +37,14 @@ COO connectivity + scalar edge facts
 - Sparse sum stores `O(N + E)` topology and each direction performs
   `O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`.
 - One tinygrad custom kernel implements both `A @ X` and `A.T @ dY`; weighted
-  execution reuses it and computes `dw` with one owner per edge. No path
-  constructs `[N, N]` or `[E, H]` intermediates.
+  execution reuses it and computes `dw` with one owner per edge. Neither sum
+  path constructs `[N, N]` or `[E, H]` intermediates.
 - A mean-GraphSAGE experiment sends gradients through the sparse boundary into
   a neighbor parameter on CPU and Metal.
 - An unweighted GCN experiment composes source and destination degree scaling
   around the same sparse sum.
+- Edge endpoint projection and target-grouped stable softmax compose one
+  trainable single-head GAT experiment without an `N * E` axis.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
@@ -73,14 +75,15 @@ print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
-Both trainable witnesses start with loss `1`, take one SGD step, and reach loss
-`0` through graph propagation:
+Run the three trainable witnesses:
 
 ```console
 DEV=CPU uv run python -m experiments.mean_sage
 DEV=METAL uv run python -m experiments.mean_sage
 DEV=CPU uv run python -m experiments.gcn
 DEV=METAL uv run python -m experiments.gcn
+DEV=CPU uv run python -m experiments.gat
+DEV=METAL uv run python -m experiments.gat
 ```
 
 Inspect weighted forward and both first-order gradients:
@@ -107,15 +110,18 @@ run the [quick start](docs/quickstart.md):
   symmetric degree normalization.
 - [Weighted aggregation experiment](docs/research/weighted-aggregation.md)
   follows scalar edge identity through lowering, forward, and both gradients.
+- [Sparse attention experiment](docs/research/attention.md) follows node
+  coefficients into COO edge order, target softmax, weighted aggregation, and
+  a trainable attention parameter.
 
 ## Direction
 
 Unit and scalar-weighted sums now share deterministic topology plus
-destination-CSR execution. `Graph` exposes only ordered edge identity, the
-proven incoming sum, and in-degree; its private backend owns lowering and
-rebuildable device caches. The alpha kernel and optimizer boundary still block
-stability. Vector edge features, attention, batching, changing topology, and
-temporal recurrence remain unimplemented.
+destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
+endpoint projection, target softmax, and in-degree; its private backend owns
+lowering and rebuildable device caches. The alpha kernel and optimizer boundary
+still block stability. Multi-head attention, external vector edge features,
+batching, changing topology, and temporal recurrence remain unimplemented.
 
 Coordinates, coordinate-reference metadata, higher-dimensional cells, and
 time-varying fields remain the wider mesh direction. They enter only when the

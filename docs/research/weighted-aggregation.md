@@ -108,10 +108,12 @@ tinymesh currently proves one fixed weighted topology only.
 ## Limits
 
 The experiment covers scalar weights, one device, fixed topology, and
-first-order gradients. Vector edge features, learned attention scores, segment
-normalization, batching, topology changes, higher-order gradients, temporal
-snapshots, and model quality remain unproven. The edge-weight kernel reduces
-feature width serially per edge; degree skew still affects the CSR directions.
+first-order gradients. A later
+[sparse attention experiment](attention.md) composes learned scalar scores and
+target normalization over this operation. External vector edge features,
+batching, topology changes, higher-order gradients, temporal snapshots, and
+model quality remain unproven. The edge-weight kernel reduces feature width
+serially per edge; degree skew still affects the CSR directions.
 
 ## Reproduce
 

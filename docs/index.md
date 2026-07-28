@@ -8,9 +8,10 @@ nodes may interact. Coordinates, higher-dimensional cells, and time can extend
 that structure without replacing the sparse core.
 
 tinymesh is experimental. It currently proves fixed-graph unit and
-scalar-weighted sparse aggregation, plus trainable mean-GraphSAGE and
-unweighted GCN callers, on CPU and Metal. Its one public 0.x type is
-`Graph`; the contract is intentionally narrow and not stable.
+scalar-weighted sparse aggregation, target-normalized sparse attention, and
+trainable mean-GraphSAGE, unweighted GCN, and single-head GAT callers on CPU and
+Metal. Its one public 0.x type is `Graph`; the contract is intentionally narrow
+and not stable.
 
 ## Try it
 
@@ -36,7 +37,7 @@ from node `1`. The other nodes have no incoming edges, so their aggregate is
 zero.
 
 The [quick start](quickstart.md) follows this value through topology lowering,
-sparse execution, backward propagation, and two trainable layers.
+sparse execution, backward propagation, and three trainable layers.
 
 ## The stack
 
@@ -47,10 +48,10 @@ edge facts             source -> target, optional COO-aligned scalar value
 topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
     |
     v
-sparse operation       unit or weighted forward, dX, and dw
+sparse operation       sum, endpoint projection, target softmax
     |
     v
-model composition      mean GraphSAGE, unweighted GCN
+model composition      mean GraphSAGE, unweighted GCN, single-head GAT
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -58,9 +59,10 @@ compilation, and device execution. tinymesh owns sparse topology, mesh
 semantics, and the model compositions that need them. It is not a PyTorch
 Geometric compatibility layer.
 
-The current operation stores `O(N + E)` topology and performs
-`O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`. It never
-constructs `[N, N]` or `[E, H]` intermediates.
+The current core stores `O(N + E)` topology. Sum performs `O((N + E)H)` work for
+`N` nodes, `E` edges, and feature width `H` without an `[N, N]` or `[E, H]`
+carrier. Endpoint projection intentionally returns its declared `[E, H]` edge
+field; no operation constructs an `N * E` axis.
 
 ## What works
 
@@ -68,18 +70,22 @@ constructs `[N, N]` or `[E, H]` intermediates.
 - destination-owned sparse sum with no atomic writes;
 - the same operation over transpose CSR for first-order backward;
 - COO-ordered scalar edge weights with one gradient owner per edge;
+- COO-ordered source and target projection with sparse backward;
+- stable target-grouped softmax over scalar edge scores;
 - fixed-topology device-buffer reuse;
 - one mean-GraphSAGE composition whose neighbor parameter learns through the
   sparse boundary;
 - one GCN composition with source and destination degree normalization;
+- one single-head GAT composition whose attention parameter learns through
+  endpoint projection, softmax, and weighted sum;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
 backend owns lowering and device caches. Model callers remain experiments.
 The backend uses an alpha tinygrad surface and disables default kernel
-optimization for its data-dependent loop. Vector edge messages, attention,
-batching, changing topology, higher-order gradients, geometry, cells, and time
-are not implemented.
+optimization for its data-dependent loop. Multi-head attention, external vector
+edge features, batching, changing topology, higher-order gradients, geometry,
+cells, and time are not implemented.
 
 ## Learn how it works
 
@@ -95,6 +101,8 @@ are not implemented.
   the shared boundary it exposes.
 - [Weighted aggregation experiment](research/weighted-aggregation.md) records
   scalar edge identity and both first-order gradients.
+- [Sparse attention experiment](research/attention.md) records endpoint
+  projection, target softmax, and the trainable GAT witness.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and
