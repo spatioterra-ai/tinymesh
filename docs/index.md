@@ -9,9 +9,9 @@ that structure without replacing the sparse core.
 
 tinymesh is experimental. It currently proves fixed-graph unit and
 scalar-weighted sparse aggregation, target-normalized sparse attention, and
-trainable mean-GraphSAGE, unweighted GCN, and single- and multi-head GAT callers
-plus fixed-topology T-GCN recurrence on CPU and Metal. Its one public 0.x type
-is `Graph`; the contract is intentionally narrow and not stable.
+trainable mean-GraphSAGE, unweighted GCN, single- and multi-head GAT, T-GCN,
+and Chebyshev GConvGRU callers on CPU and Metal. Its one public 0.x type is
+`Graph`; the contract is intentionally narrow and not stable.
 
 ## Try it
 
@@ -37,7 +37,7 @@ from node `1`. The other nodes have no incoming edges, so their aggregate is
 zero.
 
 The [quick start](quickstart.md) follows this value through topology lowering,
-sparse execution, backward propagation, and four trainable layer families.
+sparse execution, backward propagation, and five trainable layer families.
 
 ## The stack
 
@@ -51,7 +51,7 @@ topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
 sparse operation       sum, endpoint projection, target softmax
     |
     v
-model composition      mean GraphSAGE, unweighted GCN, GAT heads, T-GCN
+model composition      GraphSAGE, GCN, GAT, T-GCN, GConvGRU
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -80,6 +80,8 @@ field; no operation constructs an `N * E` axis.
   through endpoint projection, softmax, and weighted sum;
 - one T-GCN composition whose hidden state and parameter gradient cross space
   and time;
+- one GConvGRU composition that applies sparse Chebyshev filters to input and
+  hidden state;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
@@ -109,6 +111,8 @@ temporal metadata, geometry, and cells are not implemented.
   projection, target softmax, and independently trainable heads.
 - [T-GCN experiment](research/tgcn.md) records fixed-graph recurrence and the
   exact spatial-temporal learning witness.
+- [GConvGRU experiment](research/gconv-gru.md) records the Chebyshev operator,
+  fused recurrent cell, and controlled T-GCN comparison.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and

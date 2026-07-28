@@ -1,7 +1,7 @@
 # Quick start
 
 This guide starts with one directed graph, runs sparse aggregation, follows its
-gradient, and trains four graph-layer families. It assumes basic Python and
+gradient, and trains five graph-layer families. It assumes basic Python and
 tensor knowledge.
 
 `Graph` is an experimental 0.x API, not a stability promise. Run this guide
@@ -257,6 +257,31 @@ final prediction also requires temporal memory. One SGD step lowers loss from
 `0.718740` to `0.686385`. Read [Time](concepts/time.md) for the data model and
 [T-GCN experiment](research/tgcn.md) for the exact evidence.
 
+## Move hidden state over the graph
+
+T-GCN graph-mixes current input but keeps its recurrent gates node-local.
+GConvGRU applies Chebyshev graph filters to both current input and hidden state:
+
+```text
+[update, reset] = Cheb_K([input, hidden])
+candidate       = Cheb_K([input, reset * hidden])
+```
+
+Run the controlled comparison:
+
+```console
+DEV=CPU uv run python -m experiments.gconv_gru
+```
+
+Both cells see the same symmetric graph, two snapshots, hidden width, target,
+and one full-model SGD step. With `K = 2`, T-GCN has `12` parameters and one
+sparse call per step; GConvGRU has `15` parameters and two sparse calls. They
+start at the same loss. Both learn, but their final toy losses are not a quality
+ranking because their costs and optimization surfaces differ.
+
+Read [GConvGRU experiment](research/gconv-gru.md) for the Chebyshev recurrence,
+fusion, exact results, and limits.
+
 ## Read the source
 
 The implementation is intentionally small:
@@ -279,6 +304,8 @@ The implementation is intentionally small:
   records the two-head learning witness;
 - [`experiments/tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/tgcn.py)
   composes the fixed-graph recurrent cell;
+- [`experiments/gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gconv_gru.py)
+  composes Chebyshev filtering and graph-convolutional recurrence;
 - [`tests/test_graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_graph.py)
   with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
   [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
@@ -287,7 +314,8 @@ The implementation is intentionally small:
   [`tests/test_softmax.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_softmax.py),
   [`tests/test_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gat.py),
   [`tests/test_multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_multi_head_gat.py),
-  and [`tests/test_tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_tgcn.py)
+  [`tests/test_tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_tgcn.py),
+  and [`tests/test_gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gconv_gru.py)
   state the current contracts.
 
 `Graph` is public but experimental. Model callers remain experiments, and the

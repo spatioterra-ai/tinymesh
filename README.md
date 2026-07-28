@@ -47,6 +47,9 @@ COO connectivity + scalar edge facts
   single- and multi-head GAT experiments without an `N * E` axis.
 - A T-GCN experiment reuses one graph across ordered node snapshots and sends a
   parameter gradient through space and time.
+- A GConvGRU experiment adds sparse Chebyshev filtering over both input and
+  hidden state and reports its extra parameter and sparse-call cost against
+  T-GCN.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
@@ -77,7 +80,7 @@ print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
-Run the five trainable witnesses:
+Run the six trainable witnesses:
 
 ```console
 DEV=CPU uv run python -m experiments.mean_sage
@@ -90,6 +93,8 @@ DEV=CPU uv run python -m experiments.multi_head_gat
 DEV=METAL uv run python -m experiments.multi_head_gat
 DEV=CPU uv run python -m experiments.tgcn
 DEV=METAL uv run python -m experiments.tgcn
+DEV=CPU uv run python -m experiments.gconv_gru
+DEV=METAL uv run python -m experiments.gconv_gru
 ```
 
 Inspect weighted forward and both first-order gradients:
@@ -123,6 +128,8 @@ run the [quick start](docs/quickstart.md):
   independently trainable attention heads.
 - [T-GCN experiment](docs/research/tgcn.md) follows hidden state and a parameter
   gradient through one spatial edge and one temporal transition.
+- [GConvGRU experiment](docs/research/gconv-gru.md) compares node-local and
+  graph-convolutional recurrence under one controlled temporal witness.
 
 ## Direction
 

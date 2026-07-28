@@ -26,9 +26,9 @@ PyTorch Geometric Temporal offers two adjacent gated designs:
   ([source](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/fe555bc30ee197755c4b58a89407033a5f383415/torch_geometric_temporal/nn/recurrent/gconv_gru.py#L55-L170)).
 
 T-GCN is the smaller standard test of the temporal boundary because the
-existing experimental GCN caller is sufficient. This decision does not reject
-GConvGRU; it postpones extra spatial propagation until an architecture
-comparison needs it.
+existing experimental GCN caller is sufficient. The subsequent
+[GConvGRU experiment](gconv-gru.md) adds hidden-state propagation and compares
+its parameter and sparse-call cost on the same temporal fixture.
 
 The reference expresses its three input projections as separate GCN calls.
 They share node input, topology, and normalization and differ only in output
