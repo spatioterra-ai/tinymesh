@@ -9,9 +9,9 @@ that structure without replacing the sparse core.
 
 tinymesh is experimental. It currently proves fixed-graph unit and
 scalar-weighted sparse aggregation, target-normalized sparse attention, and
-trainable mean-GraphSAGE, unweighted GCN, and single-head GAT callers on CPU and
-Metal. Its one public 0.x type is `Graph`; the contract is intentionally narrow
-and not stable.
+trainable mean-GraphSAGE, unweighted GCN, and single- and multi-head GAT callers
+on CPU and Metal. Its one public 0.x type is `Graph`; the contract is
+intentionally narrow and not stable.
 
 ## Try it
 
@@ -51,7 +51,7 @@ topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
 sparse operation       sum, endpoint projection, target softmax
     |
     v
-model composition      mean GraphSAGE, unweighted GCN, single-head GAT
+model composition      mean GraphSAGE, unweighted GCN, GAT heads
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -76,16 +76,16 @@ field; no operation constructs an `N * E` axis.
 - one mean-GraphSAGE composition whose neighbor parameter learns through the
   sparse boundary;
 - one GCN composition with source and destination degree normalization;
-- one single-head GAT composition whose attention parameter learns through
-  endpoint projection, softmax, and weighted sum;
+- single- and multi-head GAT compositions whose attention parameters learn
+  through endpoint projection, softmax, and weighted sum;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
 backend owns lowering and device caches. Model callers remain experiments.
 The backend uses an alpha tinygrad surface and disables default kernel
-optimization for its data-dependent loop. Multi-head attention, external vector
-edge features, batching, changing topology, higher-order gradients, geometry,
-cells, and time are not implemented.
+optimization for its data-dependent loop. Vectorized head execution, external
+vector edge features, batching, changing topology, higher-order gradients,
+geometry, cells, and time are not implemented.
 
 ## Learn how it works
 
@@ -102,7 +102,7 @@ cells, and time are not implemented.
 - [Weighted aggregation experiment](research/weighted-aggregation.md) records
   scalar edge identity and both first-order gradients.
 - [Sparse attention experiment](research/attention.md) records endpoint
-  projection, target softmax, and the trainable GAT witness.
+  projection, target softmax, and independently trainable heads.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements. Source and

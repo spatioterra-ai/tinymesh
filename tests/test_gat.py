@@ -45,8 +45,8 @@ def reference(source=SOURCE, target=TARGET, values=VALUES):
 def run(source=SOURCE, target=TARGET, values=VALUES):
     model = GAT(2, 2)
     model.linear.weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
-    model.source_attention = Tensor(SOURCE_ATTENTION, device=Device.DEFAULT).realize()
-    model.target_attention = Tensor(TARGET_ATTENTION, device=Device.DEFAULT).realize()
+    model.source_attention = Tensor([SOURCE_ATTENTION], device=Device.DEFAULT).realize()
+    model.target_attention = Tensor([TARGET_ATTENTION], device=Device.DEFAULT).realize()
     return model(
         Tensor(values, device=Device.DEFAULT).realize(),
         Graph(3, source, target),

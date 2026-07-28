@@ -92,6 +92,8 @@ trainable caller. Run
 edge identity, scalar weighting, or edge gradients.
 Run `DEV=<device> uv run python -m experiments.gat` when changing endpoint
 projection, target normalization, or attention composition.
+Run `DEV=<device> uv run python -m experiments.multi_head_gat` when changing
+head composition.
 
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.

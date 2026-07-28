@@ -1,4 +1,4 @@
-"""Prove one trainable graph-attention caller over sparse Graph primitives."""
+"""Prove trainable graph attention over sparse Graph primitives."""
 
 from __future__ import annotations
 
@@ -12,27 +12,37 @@ from tinymesh import Graph
 
 
 class GAT:
-    def __init__(self, in_features: int, out_features: int, negative_slope: float = 0.2) -> None:
-        if in_features <= 0 or out_features <= 0:
-            raise ValueError("feature counts must be positive")
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        heads: int = 1,
+        negative_slope: float = 0.2,
+    ) -> None:
+        if in_features <= 0 or out_features <= 0 or heads <= 0:
+            raise ValueError("feature and head counts must be positive")
         if negative_slope < 0:
             raise ValueError("negative_slope must be non-negative")
-        self.linear = nn.Linear(in_features, out_features, bias=False)
+        self.linear = nn.Linear(in_features, heads * out_features, bias=False)
         bound = 1 / sqrt(out_features)
-        self.source_attention = Tensor.uniform(out_features, low=-bound, high=bound)
-        self.target_attention = Tensor.uniform(out_features, low=-bound, high=bound)
+        self.source_attention = Tensor.uniform(heads, out_features, low=-bound, high=bound)
+        self.target_attention = Tensor.uniform(heads, out_features, low=-bound, high=bound)
+        self.heads, self.out_features = heads, out_features
         self.negative_slope = negative_slope
 
     def __call__(self, values: Tensor, graph: Graph) -> Tensor:
-        state = self.linear(values)
-        source_score = (state * self.source_attention).sum(axis=1, keepdim=True)
-        target_score = (state * self.target_attention).sum(axis=1, keepdim=True)
+        state = self.linear(values).reshape(values.shape[0], self.heads, self.out_features)
+        source_score = (state * self.source_attention).sum(axis=2)
+        target_score = (state * self.target_attention).sum(axis=2)
         edge_score = (
             graph.edge_values(source_score, endpoint="source")
             + graph.edge_values(target_score, endpoint="target")
-        ).reshape(-1)
-        attention = graph.softmax(edge_score.leaky_relu(self.negative_slope))
-        return graph.sum(state, attention)
+        ).leaky_relu(self.negative_slope)
+        output = [
+            graph.sum(state[:, head], graph.softmax(edge_score[:, head]))
+            for head in range(self.heads)
+        ]
+        return Tensor.cat(*output, dim=1)
 
 
 @dataclass(frozen=True)
@@ -52,8 +62,8 @@ def fit_one_step(device: str) -> Observation:
     target = Tensor([[1.0]], device=device).realize()
     model = GAT(1, 1)
     model.linear.weight = Tensor([[1.0]], device=device).realize()
-    model.source_attention = Tensor([1.0], device=device).realize()
-    model.target_attention = Tensor([0.0], device=device).realize()
+    model.source_attention = Tensor([[1.0]], device=device).realize()
+    model.target_attention = Tensor([[0.0]], device=device).realize()
     optimizer = nn.optim.SGD(nn.state.get_parameters(model), lr=0.1, fused=False)
 
     def loss() -> Tensor:
