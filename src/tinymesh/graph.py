@@ -56,7 +56,7 @@ class Graph:
         return self._csr.weighted_sum(values, edge_weight)
 
     def in_degree(self, *, device: str) -> Tensor:
-        """Return cached incoming degree on one device."""
+        """Return incoming degree on one device."""
         if not isinstance(device, str):
             raise ValueError("in_degree requires one device")
         return self._csr.in_degree(device)

@@ -72,8 +72,8 @@ destination  incoming sources
 3            [1]
 ```
 
-The integer degree tensor is a cached topology fact. No `4 x 4` adjacency
-matrix is constructed. Read
+The integer degree tensor is derived lazily from cached CSR row pointers. No
+`4 x 4` adjacency matrix is constructed. Read
 [Sparse graph topology](concepts/topology.md) for COO, CSR, transpose, and why
 the current kernel pulls rather than pushes messages.
 

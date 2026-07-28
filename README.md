@@ -43,7 +43,8 @@ COO connectivity + scalar edge facts
   a neighbor parameter on CPU and Metal.
 - An unweighted GCN experiment composes source and destination degree scaling
   around the same sparse sum.
-- Each `Graph` owns and reuses its realized connectivity and degree buffers.
+- Each `Graph` owns and reuses private realized connectivity; incoming degree
+  stays a lazy difference of its CSR row pointers.
 
 `Graph` is Tinymesh's first public API. It is experimental 0.x code, not a
 stability promise: the private CSR backend uses alpha `Tensor.custom_kernel`

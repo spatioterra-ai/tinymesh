@@ -56,10 +56,11 @@ Metal reproduce those values to float32 precision.
 ## Limits
 
 The experiment covers unit edges, fixed topology, and first-order gradients.
-Topology caches integer degree, while each call derives inverse square root
-with ordinary tinygrad operations. Scalar weighted sum is proven separately,
-but weighted GCN normalization semantics are not selected. Implicit self-loop
-insertion, batching, depth, nonlinearities, and model quality remain unproven.
+Topology derives integer degree from cached row pointers, while each call
+derives inverse square root with ordinary tinygrad operations. Scalar weighted
+sum is proven separately, but weighted GCN normalization semantics are not
+selected. Implicit self-loop insertion, batching, depth, nonlinearities, and
+model quality remain unproven.
 
 The formulation follows Kipf and Welling's
 [paper](https://arxiv.org/abs/1609.02907); the
