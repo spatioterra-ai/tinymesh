@@ -21,7 +21,7 @@ Read [README.md](README.md) and the relevant path from
 - Benchmark performance claims on named hardware with fixed shapes, revisions,
   and setup.
 - Keep topology sparse: network-scale paths must not create node-pair or
-  node-edge products.
+  node-edge Cartesian products.
 - Do not mix dependency pins, behavior, refactors, generated churn, or
   whitespace unless they are inseparable.
 
@@ -90,6 +90,8 @@ named by a CSR, gradient, or degree-skew claim. Run
 trainable caller. Run
 `DEV=<device> uv run python -m experiments.weighted_aggregation` when changing
 edge identity, scalar weighting, or edge gradients.
+Run `DEV=<device> uv run python -m experiments.gat` when changing endpoint
+projection, target normalization, or attention composition.
 
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.

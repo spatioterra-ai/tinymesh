@@ -1,7 +1,7 @@
 # Quick start
 
 This guide starts with one directed graph, runs sparse aggregation, follows its
-gradient, and trains two graph layers. It assumes basic Python and tensor
+gradient, and trains three graph layers. It assumes basic Python and tensor
 knowledge.
 
 `Graph` is an experimental 0.x API, not a stability promise. Run this guide
@@ -128,6 +128,24 @@ The edge-weight gradient follows the same COO order as `edge_weight`. Read
 [Weighted aggregation experiment](research/weighted-aggregation.md) for the
 formula, duplicate-edge evidence, and sparse-structure checks.
 
+## Normalize attention over incoming edges
+
+Node values can be projected to either endpoint in original COO order, then
+normalized among edges with the same target:
+
+```python
+edge_score = graph.edge_values(state, endpoint="source").reshape(-1)
+attention = graph.softmax(edge_score)
+print(attention.tolist())
+# [1.0, 0.11920292, 0.88079703]
+
+attended = graph.sum(state, edge_weight=attention)
+```
+
+The first edge is the only edge ending at node `3`, so its attention is `1`.
+The other two end at node `2` and normalize together. Both tensors retain the
+original edge order: `1 -> 3`, `0 -> 2`, `1 -> 2`.
+
 ## Train mean GraphSAGE
 
 The first model caller is mean GraphSAGE:
@@ -183,6 +201,19 @@ operations. The existing CSR operation still owns only the sum; GCN owns its
 normalization and linear map. Read [GCN experiment](research/gcn.md) for the
 dense-reference, permutation, and learning evidence.
 
+## Train graph attention
+
+The third caller computes scalar source and target coefficients at nodes,
+projects them to edges, normalizes by target, and reuses weighted sum:
+
+```console
+DEV=CPU uv run python -m experiments.gat
+```
+
+One SGD step lowers loss from `0.214323` to `0.126819` and updates the shared
+attention parameter. Read [Sparse attention experiment](research/attention.md)
+for the exact composition, gradient evidence, and limits.
+
 ## Read the source
 
 The implementation is intentionally small:
@@ -199,11 +230,16 @@ The implementation is intentionally small:
   composes the normalized second caller;
 - [`experiments/weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/weighted_aggregation.py)
   records weighted forward and both gradients;
+- [`experiments/gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gat.py)
+  composes the single-head attention caller;
 - [`tests/test_graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_graph.py)
   with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
   [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
-  and [`tests/test_weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_weighted_aggregation.py)
+  [`tests/test_weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_weighted_aggregation.py),
+  [`tests/test_edge_values.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_edge_values.py),
+  [`tests/test_softmax.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_softmax.py),
+  and [`tests/test_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gat.py)
   state the current contracts.
 
-`Graph` is public but experimental. The two model callers remain experiments,
+`Graph` is public but experimental. The three model callers remain experiments,
 and the alpha tinygrad execution boundary is not a stable contract.
