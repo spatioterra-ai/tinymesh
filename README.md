@@ -77,6 +77,11 @@ COO connectivity + scalar edge facts
   True-topology DiffusionGRU reduces validation one-step RMSE by 80.2% and
   four-step rollout RMSE by 79.3% against a degree-matched false graph, winning
   both comparisons in all three seeds.
+- The same frozen DiffusionGRU transfers to unseen 32- and 48-node graphs. It
+  beats permuted topology, self-only topology, a node-local LSTM, and
+  persistence in all three seeds across dense and localized fields; its
+  16-step rollout improvement over the strongest alternative is 20.1% to
+  30.4%.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
@@ -180,6 +185,9 @@ run the [quick start](docs/quickstart.md):
 - [Chickenpox forecast](docs/research/chickenpox-forecast.md) follows causal
   batches through three recurrent models and retains the inconclusive graph
   comparison.
+- [Controlled transport transfer](docs/research/transport-transfer.md) tests
+  one frozen local operator on unseen graph sizes, localized fields, structural
+  controls, and longer rollouts.
 
 ## Direction
 
@@ -204,9 +212,10 @@ naturally; tinymesh is not a GIS, trainer framework, application, or model zoo.
 The first matched directed real-data forecast found no stable value from fixed
 scalar distance. A later temporal study found a much stronger hour-of-week
 floor, and the first delayed-edge residual test did not beat that floor or
-structural controls. The controlled transport caller now distinguishes the
-existing sparse diffusion path; the next claim needs confirmation on a real
-physical sensor network.
+structural controls. Controlled transport now distinguishes the existing
+sparse diffusion path and shows size transfer under one known law. Further
+synthetic tuning has diminishing value; the next claim needs the same controls
+on a real physical sensor network.
 
 ## Development
 

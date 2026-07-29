@@ -46,7 +46,6 @@ CATALOG = {
             "HISTORY",
             "LR",
             "MODEL",
-            "NODES",
             "SEED",
         ),
     ),
