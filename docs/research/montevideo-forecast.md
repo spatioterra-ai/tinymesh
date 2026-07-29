@@ -3,6 +3,9 @@
 This record fixes the causal evaluation boundary and compares one node-local
 forecast with three matched directed-diffusion forecasts.
 
+The later [seasonal-floor study](montevideo-seasonal.md) finds a stronger
+train-only temporal control. The learned comparison below predates that floor.
+
 ## Decision
 
 At tinygrad revision

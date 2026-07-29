@@ -66,6 +66,9 @@ COO connectivity + scalar edge facts
 - A Montevideo forecast protocol preserves target time, fits per-node
   normalization on training rows, and reports raw-unit zero, persistence, and
   train-mean baselines.
+- A validation-selected, train-only hour-of-week baseline improves Montevideo
+  validation RMSE by 27.1% and test RMSE by 32.8% over persistence without
+  using topology.
 - A fused bidirectional diffusion GRU trains with unit, coordinate-distance,
   and road-distance affinity. In the frozen three-seed Montevideo comparison,
   neither geometry variant beats unit diffusion and every learned model loses
@@ -139,6 +142,13 @@ Inspect the causal Montevideo forecast protocol and baselines:
 DEV=CPU uv run python -m experiments.montevideo_forecast
 ```
 
+Select the causal Montevideo seasonal floor:
+
+```console
+DEV=CPU uv run python -m experiments.montevideo_seasonal
+DEV=METAL uv run python -m experiments.montevideo_seasonal
+```
+
 Run the frozen Montevideo comparison:
 
 ```console
@@ -210,6 +220,8 @@ run the [quick start](docs/quickstart.md):
   real directed topology, position, distance, and hourly node fields.
 - [Montevideo forecast](docs/research/montevideo-forecast.md) fixes target-time
   splits and retains the negative matched geometry comparison.
+- [Montevideo seasonal floor](docs/research/montevideo-seasonal.md) selects the
+  temporal control a later graph experiment must beat.
 - [Chickenpox forecast](docs/research/chickenpox-forecast.md) follows causal
   batches through three recurrent models and retains the inconclusive graph
   comparison.
@@ -233,7 +245,9 @@ naturally; tinymesh is not a GIS, trainer framework, application, or model zoo.
 
 The first matched directed forecast found no stable value from fixed scalar
 distance. That evidence closes the current geometry stage without a public
-helper; new spatial machinery needs a caller that can distinguish it.
+helper. A later temporal study found a much stronger hour-of-week floor; the
+next graph experiment must explain residual signal beyond it before new spatial
+machinery is justified.
 
 ## Development
 
