@@ -59,6 +59,9 @@ metric composition     position -> displacement -> distance -> edge weight
 sparse aggregation     unit or scalar-weighted sum
     |
     v
+directed diffusion     source-normalized forward + reverse propagation
+    |
+    v
 temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
     |
     v
@@ -88,6 +91,8 @@ field; no operation constructs an `N * E` axis.
 - stable target-grouped softmax over scalar edge scores;
 - metric displacement, distance, and radial weighting composed without a new
   public type or geo dependency;
+- source-normalized scalar affinity propagated sparsely in both graph
+  directions;
 - fixed-topology device-buffer reuse;
 - one mean-GraphSAGE composition whose neighbor parameter learns through the
   sparse boundary;
@@ -131,6 +136,8 @@ machinery, geodesy, and cells are not implemented.
 - [Spatial geometry experiment](research/spatial-geometry.md) records the
   zero-geo-dependency metric composition, symmetries, gradients, and sparse
   UOps.
+- [Directed diffusion experiment](research/directed-diffusion.md) records
+  source normalization, reverse-edge identity, gradients, and sparse work.
 - [Sparse aggregation feasibility](research/sparse-aggregation.md) records the
   revision-bound implementation and scaling evidence.
 - [Mean GraphSAGE experiment](research/mean-sage.md) records the exact learning
