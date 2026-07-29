@@ -137,6 +137,9 @@ field; no operation constructs an `N * E` axis.
   persistence;
 - one three-seed Chickenpox forecast comparing matched LSTM, T-GCN, and
   GConvGRU models without finding a stable graph advantage;
+- one controlled three-seed transport forecast where true-topology
+  DiffusionGRU reduces validation one-step RMSE by 80.2% and four-step rollout
+  RMSE by 79.3% against a degree-matched false graph;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
@@ -194,6 +197,9 @@ machinery, geodesy, and cells are not implemented.
   controlled negative graph-signal result and sparse execution path.
 - [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
   training comparison, including the node-local controls and negative result.
+- [Controlled transport forecast](research/transport-forecast.md) isolates
+  identifiable spatial propagation behind held-out trajectories and false
+  topology.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements.

@@ -73,6 +73,10 @@ COO connectivity + scalar edge facts
 - Causal window batches feed node-local LSTM, T-GCN, and GConvGRU forecasts.
   On the first three-seed Chickenpox run, LSTM and GConvGRU are tied; the
   graph-recurrent cell has no stable quality advantage yet.
+- A controlled 24-node transport witness isolates known spatial propagation.
+  True-topology DiffusionGRU reduces validation one-step RMSE by 80.2% and
+  four-step rollout RMSE by 79.3% against a degree-matched false graph, winning
+  both comparisons in all three seeds.
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
@@ -197,11 +201,12 @@ machinery, geodesy, higher-dimensional cells, and richer temporal fields remain
 the wider mesh direction. They enter only when the sparse graph core extends
 naturally; tinymesh is not a GIS, trainer framework, application, or model zoo.
 
-The first matched directed forecast found no stable value from fixed scalar
-distance. That evidence closes the current geometry stage without a public
-helper. A later temporal study found a much stronger hour-of-week floor; the
-first delayed-edge residual test did not beat that floor or structural
-controls. New spatial machinery still needs a caller that can distinguish it.
+The first matched directed real-data forecast found no stable value from fixed
+scalar distance. A later temporal study found a much stronger hour-of-week
+floor, and the first delayed-edge residual test did not beat that floor or
+structural controls. The controlled transport caller now distinguishes the
+existing sparse diffusion path; the next claim needs confirmation on a real
+physical sensor network.
 
 ## Development
 

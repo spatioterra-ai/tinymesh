@@ -51,5 +51,20 @@ CATALOG = {
     ),
     "montevideo_seasonal": Experiment("forecast", "research-only"),
     "montevideo_delayed_edges": Experiment("forecast", "research-only"),
+    "transport_forecast": Experiment(
+        "forecast",
+        "research-only",
+        (
+            "DEV",
+            "BS",
+            "EPOCHS",
+            "HIDDEN",
+            "HISTORY",
+            "HORIZON",
+            "LR",
+            "MODEL",
+            "SEED",
+            "TOPOLOGY",
+        ),
+    ),
 }
-
