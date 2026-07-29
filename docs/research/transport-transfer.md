@@ -31,9 +31,10 @@ Repeat with `INITIAL=pulse` and model seeds 1 and 2. Each process trains once
 and evaluates all three node sizes for one initial-condition family, remaining
 below the shared 600-second limit.
 
-The node-local LSTM uses the same settings with `MODEL=lstm` and one explicit
-`NODES=32` or `NODES=48` scope per run; its all-size evaluation exceeds that
-limit.
+The node-local LSTM uses the same settings with `MODEL=lstm NODES=unseen
+INITIAL=both`. This trains once per seed and evaluates the two held-out sizes
+and both initial families from the same frozen state. Including the 24-node
+source scope exceeds the limit and is unnecessary for the transfer gate.
 
 The transfer claim passes only if true-topology DiffusionGRU beats its permuted
 and self-only controls plus the node-local LSTM on validation-selected,

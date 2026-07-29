@@ -35,6 +35,7 @@ TRAIN_HORIZON = 4
 TRANSFER_SEED = DATA_SEED + 100
 TRANSFER_TRAJECTORIES = 8
 TARGET_NODES = (24, 32, 48)
+INITIALS = ("dense", "pulse")
 
 
 @dataclass(frozen=True)
@@ -147,13 +148,14 @@ def study(
         model,
         model_name,
         nodes,
-        initial,
+        condition,
         device,
         history=history,
         horizon=horizon,
       ),
     )
     for nodes in _nodes(target_nodes)
+    for condition in _initials(initial)
   )
   if _state(model) != state:
     raise RuntimeError("transfer evaluation mutated frozen model state")
@@ -277,8 +279,7 @@ def _validate(model: str, **settings: int | float | str) -> None:
   if model not in ("lstm", "diffusion_gru"):
     raise ValueError("model must be 'lstm' or 'diffusion_gru'")
   _nodes(settings["target_nodes"])
-  if settings["initial"] not in ("dense", "pulse"):
-    raise ValueError("initial must be 'dense' or 'pulse'")
+  _initials(settings["initial"])
   for name in ("seed", "epochs", "history", "horizon", "batch_size", "hidden_features"):
     value = settings[name]
     if not isinstance(value, int) or isinstance(value, bool) or value <= (0 if name != "seed" else -1):
@@ -290,13 +291,23 @@ def _validate(model: str, **settings: int | float | str) -> None:
 def _nodes(value: int | float | str) -> tuple[int, ...]:
   if value == "all":
     return TARGET_NODES
+  if value == "unseen":
+    return TARGET_NODES[1:]
   try:
     nodes = int(value)
   except (TypeError, ValueError):
-    raise ValueError(f"target_nodes must be 'all' or one of {TARGET_NODES}") from None
+    raise ValueError(f"target_nodes must be 'all', 'unseen', or one of {TARGET_NODES}") from None
   if str(nodes) != str(value) or nodes not in TARGET_NODES:
-    raise ValueError(f"target_nodes must be 'all' or one of {TARGET_NODES}")
+    raise ValueError(f"target_nodes must be 'all', 'unseen', or one of {TARGET_NODES}")
   return (nodes,)
+
+
+def _initials(value: int | float | str) -> tuple[str, ...]:
+  if value == "both":
+    return INITIALS
+  if value not in INITIALS:
+    raise ValueError(f"initial must be 'both' or one of {INITIALS}")
+  return (value,)
 
 
 def main() -> None:
