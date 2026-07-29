@@ -7,3 +7,6 @@
 [submodule "submodules/pytorch-geometric-temporal"]
 	path = submodules/pytorch-geometric-temporal
 	url = https://github.com/benedekrozemberczki/pytorch_geometric_temporal.git
+[submodule "submodules/torchgeo"]
+	path = submodules/torchgeo
+	url = https://github.com/torchgeo/torchgeo.git
