@@ -7,7 +7,7 @@ from dataclasses import asdict, dataclass
 
 from tinygrad import Context, Device, Tensor, nn
 
-from experiments.gat import GAT
+from tinymesh.nn import GATConv
 from tinymesh import Graph
 
 
@@ -25,7 +25,7 @@ def fit_one_step(device: str) -> Observation:
     graph = Graph(3, [0, 1], [2, 2])
     values = Tensor([[1.0], [-1.0], [0.0]], device=device).realize()
     target = Tensor([[1.0, -1.0]], device=device).realize()
-    model = GAT(1, 1, heads=2)
+    model = GATConv(1, 1, heads=2, bias=False)
     model.linear.weight = Tensor([[1.0], [1.0]], device=device).realize()
     model.source_attention = Tensor([[1.0], [-1.0]], device=device).realize()
     model.target_attention = Tensor.zeros(2, 1, device=device).realize()

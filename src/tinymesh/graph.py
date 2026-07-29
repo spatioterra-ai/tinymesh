@@ -59,6 +59,16 @@ class Graph:
             values.ndim - 1,
         )
 
+    def mean(self, values: Tensor) -> Tensor:
+        """Mean incoming values over node axis -2, with zero for empty rows."""
+        self._validate_node_values(values)
+        if not dtypes.is_float(values.dtype):
+            raise ValueError(f"mean values must have a floating dtype, got {values.dtype}")
+        assert isinstance(values.device, str)
+        degree = self.in_degree(device=values.device).maximum(1).cast(values.dtype)
+        degree = degree.reshape((1,) * (values.ndim - 2) + (self.nodes, 1))
+        return self.sum(values) / degree
+
     def edge_values(
         self,
         values: Tensor,

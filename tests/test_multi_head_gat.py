@@ -3,9 +3,9 @@ from math import exp
 
 from tinygrad import Device, Tensor
 
-from experiments.gat import GAT
 from experiments.multi_head_gat import fit_one_step
 from tinymesh import Graph
+from tinymesh.nn import GATConv
 
 
 SOURCE = [0, 1, 2, 0, 1]
@@ -50,7 +50,7 @@ def run(
     source_attention=SOURCE_ATTENTION,
     target_attention=TARGET_ATTENTION,
 ):
-    model = GAT(1, 1, heads=2)
+    model = GATConv(1, 1, heads=2, bias=False)
     model.linear.weight = Tensor([[value] for value in weight], device=Device.DEFAULT).realize()
     model.source_attention = Tensor([[value] for value in source_attention], device=Device.DEFAULT).realize()
     model.target_attention = Tensor([[value] for value in target_attention], device=Device.DEFAULT).realize()
@@ -90,7 +90,7 @@ class MultiHeadGATTest(unittest.TestCase):
 
     def test_rejects_non_positive_head_count(self):
         with self.assertRaisesRegex(ValueError, "head"):
-            GAT(1, 1, heads=0)
+            GATConv(1, 1, heads=0)
 
 
 if __name__ == "__main__":

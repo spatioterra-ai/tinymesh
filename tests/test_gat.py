@@ -3,8 +3,9 @@ from math import exp
 
 from tinygrad import Device, Tensor
 
-from experiments.gat import GAT, fit_one_step
+from experiments.gat import fit_one_step
 from tinymesh import Graph
+from tinymesh.nn import GATConv
 
 
 SOURCE = [0, 1, 2, 0, 1]
@@ -43,7 +44,7 @@ def reference(source=SOURCE, target=TARGET, values=VALUES):
 
 
 def run(source=SOURCE, target=TARGET, values=VALUES):
-    model = GAT(2, 2)
+    model = GATConv(2, 2, bias=False)
     model.linear.weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
     model.source_attention = Tensor([SOURCE_ATTENTION], device=Device.DEFAULT).realize()
     model.target_attention = Tensor([TARGET_ATTENTION], device=Device.DEFAULT).realize()
@@ -75,6 +76,16 @@ class GATTest(unittest.TestCase):
         for old, new in enumerate(old_to_new):
             for actual_value, expected_value in zip(actual[new], expected[old]):
                 self.assertAlmostEqual(actual_value, expected_value, places=5)
+
+    def test_bias_is_applied_after_head_concatenation(self):
+        model = GATConv(1, 1, heads=2)
+        model.linear.weight = Tensor.zeros(2, 1, device=Device.DEFAULT).realize()
+        model.bias = Tensor([2.0, 3.0], device=Device.DEFAULT).realize()
+
+        self.assertEqual(
+            model(Tensor.zeros(2, 1), Graph(2, [], [])).tolist(),
+            [[2.0, 3.0], [2.0, 3.0]],
+        )
 
     def test_optimizer_updates_attention_through_sparse_softmax(self):
         observation = fit_one_step(Device.DEFAULT)

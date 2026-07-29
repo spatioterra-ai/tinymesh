@@ -7,15 +7,15 @@ from dataclasses import asdict, dataclass
 
 from tinygrad import Context, Device, Tensor, nn
 
-from experiments.gcn import GCN
 from tinymesh import Graph
+from tinymesh.nn import GCNConv
 
 
 class TGCN:
     def __init__(self, in_features: int, hidden_features: int) -> None:
         if in_features <= 0 or hidden_features <= 0:
             raise ValueError("feature counts must be positive")
-        self.graph_projection = GCN(in_features, 3 * hidden_features)
+        self.graph_projection = GCNConv(in_features, 3 * hidden_features, bias=False)
         self.update = nn.Linear(2 * hidden_features, hidden_features)
         self.reset = nn.Linear(2 * hidden_features, hidden_features)
         self.candidate = nn.Linear(2 * hidden_features, hidden_features)

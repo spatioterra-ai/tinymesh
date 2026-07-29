@@ -2,7 +2,7 @@ import unittest
 from dataclasses import FrozenInstanceError
 from math import prod
 
-from tinygrad import Device, Tensor, UOp
+from tinygrad import Device, Tensor, UOp, dtypes
 from tinygrad.uop.ops import Ops
 
 from tinymesh import Graph
@@ -225,6 +225,39 @@ class GraphSumTest(unittest.TestCase):
             for uop in body.toposort()
             if uop._shape is not None
         ))
+
+
+class GraphMeanTest(unittest.TestCase):
+    def test_leading_axes_empty_rows_and_gradient(self):
+        graph = Graph(4, [0, 1, 1], [2, 2, 3])
+        values = Tensor(
+            [
+                [[2.0], [4.0], [8.0], [16.0]],
+                [[4.0], [8.0], [16.0], [32.0]],
+            ],
+            device=Device.DEFAULT,
+        ).realize()
+        output = graph.mean(values)
+        gradient = output.sum().gradient(values)[0]
+
+        self.assertEqual(
+            output.tolist(),
+            [
+                [[0.0], [0.0], [3.0], [4.0]],
+                [[0.0], [0.0], [6.0], [8.0]],
+            ],
+        )
+        self.assertEqual(
+            gradient.tolist(),
+            [
+                [[0.5], [1.5], [0.0], [0.0]],
+                [[0.5], [1.5], [0.0], [0.0]],
+            ],
+        )
+
+    def test_rejects_integer_values(self):
+        with self.assertRaisesRegex(ValueError, "floating"):
+            Graph(2, [0], [1]).mean(Tensor.ones(2, 1, dtype=dtypes.int32))
 
 
 if __name__ == "__main__":

@@ -14,6 +14,14 @@ class PackageTest(unittest.TestCase):
         self.assertIs(tinymesh.StaticGraphTemporalSignal, StaticGraphTemporalSignal)
         self.assertFalse(hasattr(tinymesh, "CSRTopology"))
 
+    def test_nn_surface_is_direct(self) -> None:
+        from tinymesh import nn
+
+        self.assertEqual(
+            {name for name in vars(nn) if name.endswith("Conv")},
+            {"GATConv", "GCNConv", "SAGEConv"},
+        )
+
     def test_type_marker_and_runtime(self) -> None:
         self.assertTrue(Path(tinymesh.__file__).with_name("py.typed").is_file())
         self.assertEqual((Tensor([1, 2]) + 1).tolist(), [2, 3])
