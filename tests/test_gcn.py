@@ -113,7 +113,7 @@ class GCNTest(unittest.TestCase):
         expected = Tensor.stack(*(model(lane, graph) for lane in values))
         self.assertEqual(model(values, graph).tolist(), expected.tolist())
 
-    def test_optimizer_reaches_parameter_through_normalized_csr(self) -> None:
+    def test_optimizer_updates_parameter_from_normalized_sum(self) -> None:
         observation = fit_one_step(Device.DEFAULT)
 
         self.assertAlmostEqual(observation.initial_loss, 1.0)

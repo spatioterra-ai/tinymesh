@@ -162,9 +162,9 @@ evidence of parity or improvement.
 ## Reproduce
 
 ```console
-DEV=CPU SEED=0 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01 uv run python -m experiments.chickenpox_forecast
-DEV=CPU SEED=1 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01 uv run python -m experiments.chickenpox_forecast
-DEV=CPU SEED=2 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01 uv run python -m experiments.chickenpox_forecast
+uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU SEED=0 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01
+uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU SEED=1 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01
+uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU SEED=2 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01
 ```
 
 Forecast unrolling, readouts, and training remain under `experiments/`.

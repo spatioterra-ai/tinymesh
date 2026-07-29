@@ -104,11 +104,10 @@ field; no operation constructs an `N * E` axis.
 - stable target-grouped softmax over scalar edge scores;
 - metric displacement, distance, and radial weighting composed without a new
   public type or geo dependency;
-- source-normalized scalar affinity propagated sparsely in both graph
+- caller-validated positive scalar affinity propagated sparsely in both graph
   directions;
 - fixed-topology device-buffer reuse;
-- `SAGEConv`, whose neighbor parameter learns through the
-  sparse boundary;
+- `SAGEConv`, whose neighbor parameter learns from a sparse mean;
 - `GCNConv` with source and destination degree normalization;
 - `GATConv` with independently normalized heads whose attention parameters learn
   through endpoint projection, softmax, and weighted sum;

@@ -179,8 +179,8 @@ comparison without changing this controlled operator witness.
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_gconv_gru
-DEV=METAL uv run python -m unittest tests.test_gconv_gru
-DEV=CPU uv run python -m experiments.gconv_gru
-DEV=METAL uv run python -m experiments.gconv_gru
+DEV=CPU uv run --locked python -m unittest tests.test_gconv_gru
+DEV=METAL uv run --locked python -m unittest tests.test_gconv_gru
+uv run --locked python -m experiments.run gconv_gru DEV=CPU
+uv run --locked python -m experiments.run gconv_gru DEV=METAL
 ```

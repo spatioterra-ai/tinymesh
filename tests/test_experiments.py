@@ -1,4 +1,5 @@
 import json
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -36,6 +37,29 @@ class CatalogTest(unittest.TestCase):
             _settings(experiment, ["SEED=0", "SEED=1"])
         with self.assertRaisesRegex(SystemExit, "not a setting"):
             _settings(experiment, ["TOKEN=secret"])
+
+    def test_documented_runs_use_the_locked_runner(self) -> None:
+        paths = [
+            ROOT / "README.md",
+            ROOT / "CONTRIBUTING.md",
+            ROOT / "experiments" / "README.md",
+            *(ROOT / "docs").rglob("*.md"),
+        ]
+        documented = set()
+        for path in paths:
+            for number, line in enumerate(path.read_text().splitlines(), start=1):
+                with self.subTest(path=path.relative_to(ROOT), line=number):
+                    if "uv run" in line:
+                        self.assertIn("uv run --locked", line)
+                    if "python -m experiments." in line or "python experiments/" in line:
+                        self.assertIn("python -m experiments.run", line)
+                    prefix = "uv run --locked python -m experiments.run "
+                    if prefix in line and "--list" not in line and "<experiment>" not in line:
+                        name, *settings = shlex.split(line)[6:]
+                        self.assertIn(name, CATALOG)
+                        _settings(CATALOG[name], settings)
+                        documented.add(name)
+        self.assertEqual(documented, set(CATALOG))
 
 
 class RunnerTest(unittest.TestCase):

@@ -78,7 +78,7 @@ dL/dX = [[ 1.576005, -0.576854],
 ```
 
 An independent Python edge loop computes displacement, distance, output, and
-all four gradients. Tinygrad matches that host reference; neither PyTorch nor
+all four gradients. tinygrad matches that host reference; neither PyTorch nor
 NumPy is used as an oracle.
 
 ## Sparse work
@@ -141,8 +141,8 @@ an owner.
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_spatial_geometry
-DEV=METAL uv run python -m unittest tests.test_spatial_geometry
-DEV=CPU uv run python -m experiments.spatial_geometry
-DEV=METAL uv run python -m experiments.spatial_geometry
+DEV=CPU uv run --locked python -m unittest tests.test_spatial_geometry
+DEV=METAL uv run --locked python -m unittest tests.test_spatial_geometry
+uv run --locked python -m experiments.run spatial_geometry DEV=CPU
+uv run --locked python -m experiments.run spatial_geometry DEV=METAL
 ```

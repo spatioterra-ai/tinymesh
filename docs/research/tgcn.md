@@ -39,9 +39,11 @@ weights, so linearity gives:
 [GCN_z(X), GCN_r(X), GCN_h(X)] = GCN_[W_z | W_r | W_h](X)
 ```
 
-Tinymesh therefore makes one width-`3H` sparse call and slices its output into
-the three gates. The model has the same three independent weight blocks without
-repeating topology traversal.
+At the recorded revision Tinymesh made one width-`3H` sparse call and sliced
+its output into the three gates. The public `GCNConv` now commutes the shared
+linear map after normalized aggregation: it makes one width-`F` sparse call,
+then one linear map to `3H`. Both factorizations retain three independent
+weight blocks without repeating topology traversal.
 
 ## Cell
 
@@ -76,7 +78,7 @@ X_t [N, F]
               H_t [N, H]
 ```
 
-The graph caller uses `D^-1/2 A D^-1/2 XW`. Self-loops are explicit edges;
+The graph caller uses `(D^-1/2 A D^-1/2 X)W`. Self-loops are explicit edges;
 the cell does not silently change topology.
 
 ## Temporal data boundary
@@ -102,7 +104,8 @@ lowered CSR buffers.
 An independent host implementation evaluates all three gates over two
 snapshots. Tinymesh matches it on CPU and Metal. Reversing the snapshots changes
 the final state, which rejects order-insensitive aggregation. A UOp check sees
-one `csr_sum` call in one cell step, enforcing the fused graph projection.
+one input-width `csr_sum` call in one cell step, enforcing the fused graph
+projection.
 
 The learning witness is narrower:
 
@@ -147,8 +150,8 @@ path.
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_tgcn
-DEV=METAL uv run python -m unittest tests.test_tgcn
-DEV=CPU uv run python -m experiments.tgcn
-DEV=METAL uv run python -m experiments.tgcn
+DEV=CPU uv run --locked python -m unittest tests.test_tgcn
+DEV=METAL uv run --locked python -m unittest tests.test_tgcn
+uv run --locked python -m experiments.run tgcn DEV=CPU
+uv run --locked python -m experiments.run tgcn DEV=METAL
 ```

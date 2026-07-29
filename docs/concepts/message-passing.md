@@ -24,34 +24,37 @@ tinygrad tensor operations can own most model-specific transformations.
 tinymesh's first caller uses:
 
 ```text
-message:    m(u -> v) = W_neighbor x_u
+message:    m(u -> v) = x_u
 aggregate:  a_v       = sum(m(u -> v)) / max(1, d_v)
-update:     y_v       = W_root x_v + a_v
+update:     y_v       = W_neighbor a_v + b_neighbor + W_root x_v
 ```
 
-`d_v` is the incoming degree of node `v`. An isolated node receives zero
-neighborhood state and keeps only its root path.
+`d_v` is the incoming degree of node `v`. `Graph.mean` returns zero for an
+isolated node. `SAGEConv` then applies its neighbor linear map, so an enabled
+neighbor bias also reaches isolated nodes.
 
-The neighbor transform runs before aggregation. For a bias-free linear map,
-transforming before or after a mean gives the same forward value, but placing it
-before aggregation proves that its parameter gradient crosses the sparse
-backward boundary.
+A shared bias-free linear map commutes with mean. The original experiment put
+that map before aggregation; the public class aggregates first so its optional
+bias is applied exactly once after the mean. The checked bias-free witness has
+the same values and parameter gradient under either factorization.
 
 ## GCN composition
 
 The second caller uses the same sum with symmetric degree normalization:
 
 ```text
-message:    m(u -> v) = W x_u / sqrt(d_u)
+message:    m(u -> v) = x_u / sqrt(d_u)
 aggregate:  a_v       = sum(m(u -> v) for each edge u -> v)
-update:     y_v       = a_v / sqrt(d_v)
+update:     y_v       = W(a_v / sqrt(d_v)) + b
 ```
 
-For unit edges this is `D^-1/2 A D^-1/2 XW`. Source and destination
-normalization are ordinary node-wise tensor operations, so they compose around
-the existing CSR sum. The experiment requires the caller to include self-loops
-explicitly. Integer degree is a topology fact; reciprocal and inverse square
-root are model semantics.
+For unit edges this is `(D^-1/2 A D^-1/2 X)W + b`. A bias-free shared linear
+map commutes with the normalized sum, so this is the same equation as
+`D^-1/2 A D^-1/2 XW`. The public class aggregates at input width and applies
+the optional bias last. Source and destination normalization are ordinary
+node-wise tensor operations, so they compose around the existing CSR sum. The
+caller includes self-loops explicitly. Integer degree is a topology fact;
+reciprocal and inverse square root are model semantics.
 
 ## Scalar weighted messages
 
@@ -120,11 +123,11 @@ previous H_t-1 -----> update, reset, candidate gates
 ```
 
 The three projections share input, topology, and normalization, so Tinymesh
-computes their concatenated `3H` channels with one GCN call and then slices
-them. The gates retain or replace node-local hidden state. Calling the same cell
-over an ordered tensor sequence creates a gradient path through both graph
-propagation and earlier hidden state. Read [Time](time.md) for the temporal data
-contract.
+performs one sparse reduction at input width `F`, applies one linear map to
+`3H` channels, and then slices them. The gates retain or replace node-local
+hidden state. Calling the same cell over an ordered tensor sequence creates a
+gradient path through both graph propagation and earlier hidden state. Read
+[Time](time.md) for the temporal data contract.
 
 GConvGRU moves hidden state over the graph too:
 
@@ -144,22 +147,25 @@ model capacity and cost; it does not change `Graph`.
 The layer's forward flow is:
 
 ```text
-X -- W_neighbor --> messages -- A @ messages -- inverse degree --+
-                                                                 +--> Y
-X -- W_root -----------------------------------------------------+
+X -- A @ X -- inverse degree -- W_neighbor --+
+                                             +--> Y
+X ----------------------------- W_root ------+
 ```
 
 Reverse-mode differentiation follows the graph in reverse:
 
 ```text
 dY
- |--> gradient of W_root
- +--> inverse degree --> A.T @ gradient --> gradient of W_neighbor
+ |--> gradient of W_root -------------------------------> dX
+ +--> gradient of W_neighbor --> W_neighbor.T
+                                  |
+                                  +--> inverse degree --> A.T @ gradient --> dX
 ```
 
 The transpose CSR is not a second graph algorithm. It lets the same sparse sum
 return destination gradients to the source states that produced their
-messages.
+messages. The layer-parameter gradient consumes the sparse aggregate directly;
+the value gradient traverses transpose CSR.
 
 ## What one witness proves
 
@@ -176,10 +182,11 @@ distinguish them. Neighbor information can. Starting both linear weights at
 zero gives loss `1` and neighbor gradient `-2`; one SGD step sets the neighbor
 weight to `1` and reaches loss `0`.
 
-That proves first-order parameter learning through the checked-in sparse
-boundary. The separate CSR record proves its scaling structure. The witness
-does not prove generalization, useful model quality, depth, temporal learning,
-or training on a real graph.
+That proves first-order parameter learning from the checked-in sparse
+aggregate. Separate gradient tests prove the transpose-CSR path, and the CSR
+record proves its scaling structure. The witness does not prove
+generalization, useful model quality, depth, temporal learning, or training on
+a real graph.
 
 ## Where other layers differ
 

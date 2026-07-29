@@ -87,7 +87,7 @@ Train-only normalization belongs to forecasting, after a forward split.
 ## Full-source witness
 
 ```console
-uv run --locked python -m experiments.montevideo_source [path]
+uv run --locked python -m experiments.run montevideo_source
 ```
 
 At the pinned revision:
@@ -110,8 +110,8 @@ This establishes source structure, not model quality or framework parity.
 ## Tensor witness
 
 ```console
-DEV=CPU uv run --locked python -m experiments.montevideo_data [path]
-DEV=METAL uv run --locked python -m experiments.montevideo_data [path]
+uv run --locked python -m experiments.run montevideo_data DEV=CPU
+uv run --locked python -m experiments.run montevideo_data DEV=METAL
 ```
 
 Both devices report the aligned shapes above. For the first source edge, the

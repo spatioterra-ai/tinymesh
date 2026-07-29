@@ -160,7 +160,7 @@ class GConvGRU:
 
 
 class DirectedDiffusion:
-    """Source-normalized forward and reverse propagation over fixed edges."""
+    """Bidirectional propagation for caller-validated positive affinity."""
 
     def __init__(self, graph: Graph, affinity: Tensor) -> None:
         if affinity.ndim != 1 or affinity.shape[0] != graph.edges:

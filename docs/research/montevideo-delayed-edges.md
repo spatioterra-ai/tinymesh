@@ -174,8 +174,8 @@ caller demonstrates it.
 ## Reproduce
 
 ```console
-DEV=CPU uv run --locked python -m experiments.montevideo_delayed_edges
-DEV=METAL uv run --locked python -m experiments.montevideo_delayed_edges
 DEV=CPU uv run --locked python -m unittest tests.test_montevideo_delayed_edges
 DEV=METAL uv run --locked python -m unittest tests.test_montevideo_delayed_edges
+uv run --locked python -m experiments.run montevideo_delayed_edges DEV=CPU
+uv run --locked python -m experiments.run montevideo_delayed_edges DEV=METAL
 ```

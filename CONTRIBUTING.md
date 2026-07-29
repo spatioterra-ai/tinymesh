@@ -89,44 +89,16 @@ Any observation cited in a pull request or research record must be rerun from a
 clean commit through `python -m experiments.run`; the
 [experiment guide](docs/experiments.md) defines that envelope.
 
-Run `uv run --locked python experiments/sparse_aggregation.py` when changing
-the rejected native lowering or its scaling evidence. Run
-`DEV=<device> uv run --locked python experiments/csr_aggregation.py` on every backend
-named by a CSR, gradient, or degree-skew claim. Run
-`DEV=<device> uv run --locked python -m experiments.mean_sage` when changing the first
-trainable caller. Run
-`DEV=<device> uv run --locked python -m experiments.weighted_aggregation` when changing
-edge identity, scalar weighting, or edge gradients.
-Run `DEV=<device> uv run --locked python -m experiments.spatial_geometry` when changing
-endpoint geometry, metric weighting, or position gradients.
-Run `DEV=<device> uv run --locked python -m experiments.directed_diffusion` when changing
-source-normalized forward or reverse propagation.
-Run `uv run --locked python -m experiments.montevideo_source` when changing the bounded
-Montevideo source or its validation contract.
-Run `DEV=<device> uv run --locked python -m experiments.montevideo_data` when changing
-Montevideo tensor lowering or its node, edge, geometry, and time alignment.
-Run `DEV=<device> uv run --locked python -m experiments.montevideo_forecast` when
-changing target-time splits, train-only normalization, or raw-unit baselines.
-Run `DEV=<device> uv run --locked python -m experiments.montevideo_seasonal` when
-changing periodic phases, causal lag controls, or validation-only selection.
-Run `DEV=<device> uv run --locked python -m experiments.montevideo_delayed_edges` when
-changing residual lagging, structural controls, or the graph-signal gate.
-Run `DEV=<device> uv run --locked python -m unittest tests.test_directed_gru` when
-changing directed recurrence. Run the frozen forecast with
-`DEV=CPU EPOCHS=10 uv run --locked python -m experiments.montevideo_forecast` only when
-a change can affect its result.
-Run `DEV=<device> uv run --locked python -m experiments.gat` when changing endpoint
-projection, target normalization, or attention composition.
-Run `DEV=<device> uv run --locked python -m experiments.multi_head_gat` when changing
-head composition.
-Run `DEV=<device> uv run --locked python -m experiments.tgcn` when changing temporal
-recurrence or hidden-state flow.
-Run `DEV=<device> uv run --locked python -m experiments.gconv_gru` when changing
-Chebyshev filtering or graph-convolutional recurrence.
-Run `DEV=<device> uv run --locked python -m experiments.chickenpox_data` when changing
-the fixed-graph temporal signal or public dataset lowering.
-Run `DEV=CPU uv run --locked python -m experiments.chickenpox_forecast` when changing
-shared-graph batch execution, causal windows, or the real forecast comparison.
+Run focused tests for the touched contract, then use the catalog to find every
+affected evidence owner:
+
+```console
+uv run --locked python -m experiments.run --list
+uv run --locked python -m experiments.run <experiment> KEY=VALUE
+```
+
+Name every claimed backend explicitly. Use the frozen settings recorded in the
+relevant research page when a change can affect a model comparison.
 
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.

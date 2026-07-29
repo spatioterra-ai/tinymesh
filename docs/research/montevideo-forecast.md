@@ -234,7 +234,7 @@ and `DiffusionGRU` now live in `tinymesh.nn`.
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m experiments.montevideo_forecast
-DEV=CPU MODEL=all SEED=-1 EPOCHS=10 HISTORY=24 BS=32 HIDDEN=4 LR=0.01 CHECKPOINT_EVERY=5 uv run python -m experiments.montevideo_forecast
-DEV=METAL uv run python -m unittest tests.test_montevideo_forecast tests.test_directed_gru
+uv run --locked python -m experiments.run montevideo_forecast DEV=CPU
+uv run --locked python -m experiments.run montevideo_forecast DEV=CPU MODEL=all SEED=-1 EPOCHS=10 HISTORY=24 BS=32 HIDDEN=4 LR=0.01 CHECKPOINT_EVERY=5
+DEV=METAL uv run --locked python -m unittest tests.test_montevideo_forecast tests.test_directed_gru
 ```

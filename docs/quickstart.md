@@ -170,8 +170,8 @@ Run its one-step learning witness:
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 ```
 
-It starts with loss `1`, sends the gradient through transpose CSR, updates only
-the neighbor weight, and reaches loss `0`:
+It starts with loss `1`, uses the sparse mean to distinguish the two target
+nodes, updates only the neighbor weight, and reaches loss `0`:
 
 ```json
 {
@@ -184,9 +184,10 @@ the neighbor weight, and reaches loss `0`:
 }
 ```
 
-This proves that a tinygrad parameter can learn through the current sparse
-boundary. It does not prove model quality, generalization, or temporal
-learning. `tinymesh.nn` is still an experimental 0.x API. Read
+This proves that a tinygrad parameter can learn from the current sparse
+aggregate. Dedicated `Graph.sum` gradient tests prove the transpose-CSR path.
+It does not prove model quality, generalization, or temporal learning.
+`tinymesh.nn` is still an experimental 0.x API. Read
 [Message passing](concepts/message-passing.md) for the layer decomposition and
 [Mean GraphSAGE experiment](research/mean-sage.md) for the exact witness.
 
@@ -196,7 +197,7 @@ The second caller adds symmetric degree normalization around the same sparse
 sum:
 
 ```text
-output = D^-1/2 A D^-1/2 XW
+output = (D^-1/2 A D^-1/2 X)W + b
 ```
 
 Run its one-step witness:
@@ -288,9 +289,10 @@ for snapshot in snapshots[1:]:
     hidden = cell(snapshot, temporal_graph, hidden)
 ```
 
-The topology and its CSR buffers stay fixed. One width-`3H` GCN call computes
-the update, reset, and candidate graph projections together. Run the checked
-two-snapshot learning witness:
+The topology and its CSR buffers stay fixed. One sparse reduction at input
+width `F`, followed by one linear map to `3H` channels, computes the update,
+reset, and candidate graph projections together. Run the checked two-snapshot
+learning witness:
 
 ```console
 uv run --locked python -m experiments.run tgcn DEV=CPU

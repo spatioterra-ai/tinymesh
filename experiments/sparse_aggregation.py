@@ -1,4 +1,4 @@
-"""Measure Tinygrad's native edge-list aggregation against Tinymesh's sparse gate."""
+"""Measure tinygrad's native edge-list aggregation against Tinymesh's sparse gate."""
 
 from __future__ import annotations
 

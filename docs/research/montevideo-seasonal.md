@@ -120,8 +120,8 @@ topology value, geometry value, or production accuracy.
 ## Reproduce
 
 ```console
-DEV=CPU uv run --locked python -m experiments.montevideo_seasonal
-DEV=METAL uv run --locked python -m experiments.montevideo_seasonal
 DEV=CPU uv run --locked python -m unittest tests.test_montevideo_seasonal
 DEV=METAL uv run --locked python -m unittest tests.test_montevideo_seasonal
+uv run --locked python -m experiments.run montevideo_seasonal DEV=CPU
+uv run --locked python -m experiments.run montevideo_seasonal DEV=METAL
 ```

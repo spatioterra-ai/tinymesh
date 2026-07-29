@@ -73,8 +73,8 @@ weights match in source order. The full pinned-source witness reports the same
 contract on CPU and Metal:
 
 ```console
-DEV=CPU uv run python -m experiments.chickenpox_data
-DEV=METAL uv run python -m experiments.chickenpox_data
+uv run --locked python -m experiments.run chickenpox_data DEV=CPU
+uv run --locked python -m experiments.run chickenpox_data DEV=METAL
 ```
 
 ```json

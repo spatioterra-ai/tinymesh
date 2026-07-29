@@ -226,19 +226,20 @@ normalization, adjacency conversion, batching, and repeated topology work.
 ## Reproduce
 
 ```console
-uv run python -m unittest tests.test_sparse_aggregation
-DEV=CPU uv run python -m unittest tests.test_graph
-DEV=METAL uv run python -m unittest tests.test_graph
-uv run python experiments/sparse_aggregation.py
-DEV=CPU uv run python experiments/csr_aggregation.py
-DEV=METAL uv run python experiments/csr_aggregation.py
+uv run --locked python -m unittest tests.test_sparse_aggregation
+DEV=CPU uv run --locked python -m unittest tests.test_graph
+DEV=METAL uv run --locked python -m unittest tests.test_graph
+uv run --locked python -m experiments.run sparse_aggregation DEV=CPU
+uv run --locked python -m experiments.run csr_aggregation DEV=CPU
+uv run --locked python -m experiments.run csr_aggregation DEV=METAL
 ```
 
 The CSR experiment satisfies the structural gate for fixed-topology,
 identity-message, first-order sum aggregation in both directions. More complex
 messages add edge-local costs and require their own proof. Mean GraphSAGE and
-unweighted GCN prove first-order parameter learning through the shared sum
-boundary, but do not make the alpha custom-kernel or dynamic-loop contracts
-stable. The rejected public gather-and-scatter composition must not be called
-sparse graph support. A later [T-GCN experiment](tgcn.md) proves that the same
-fixed `Graph` can be reused across ordered snapshots.
+unweighted GCN learn from the shared sum output; dedicated graph tests own its
+transpose-gradient evidence. Neither makes the alpha custom-kernel or
+dynamic-loop contracts stable. The rejected public gather-and-scatter
+composition must not be called sparse graph support. A later
+[T-GCN experiment](tgcn.md) proves that the same fixed `Graph` can be reused
+across ordered snapshots.

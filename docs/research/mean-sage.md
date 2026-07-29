@@ -13,7 +13,7 @@ tinymesh's CSR aggregation and trains on CPU and Metal.
 The result proves composition and first-order parameter learning, not useful
 model quality. At that revision the caller remained under `experiments/`.
 After independent GCN, GAT, temporal, gradient, shape, and sparse-work
-evidence established one reusable owner, the same contract became
+evidence established one reusable owner, the equation became
 `tinymesh.nn.SAGEConv`; this experiment retains the learning witness.
 
 ## Learning witness
@@ -38,9 +38,15 @@ Starting both weights at zero gives loss `1` and neighbor gradient `-2`. One SGD
 step at learning rate `0.5` sets the neighbor weight to `1` and the loss to `0`;
 the root weight remains `0`.
 
-The output gradient begins at nodes `2` and `3`. Transpose CSR returns it to
-nodes `0` and `1`, then tinygrad differentiates their linear messages into
-`W_neighbor`.
+At the recorded revision, the linear map ran before the mean. The output
+gradient began at nodes `2` and `3`; transpose CSR returned it to nodes `0` and
+`1`, then tinygrad differentiated those messages into `W_neighbor`.
+
+The public class now computes the mean before the linear map so an optional bias
+is applied once after aggregation. The witness disables bias, so its values and
+parameter gradient are unchanged. On the current path the parameter gradient
+consumes the sparse aggregate directly; dedicated `Graph.sum` tests retain the
+transpose-CSR gradient evidence.
 
 Fixed topology reuses realized CSR buffers per device. Integer degree remains a
 lazy difference of cached row pointers. The layer derives inverse degree with
@@ -63,8 +69,8 @@ The GraphSAGE paper is available as
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_mean_sage
-DEV=METAL uv run python -m unittest tests.test_mean_sage
-DEV=CPU uv run python -m experiments.mean_sage
-DEV=METAL uv run python -m experiments.mean_sage
+DEV=CPU uv run --locked python -m unittest tests.test_mean_sage
+DEV=METAL uv run --locked python -m unittest tests.test_mean_sage
+uv run --locked python -m experiments.run mean_sage DEV=CPU
+uv run --locked python -m experiments.run mean_sage DEV=METAL
 ```
