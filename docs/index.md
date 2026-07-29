@@ -112,6 +112,9 @@ field; no operation constructs an `N * E` axis.
   signals, projected position, road distance, and one fixed coordinate frame;
 - one Montevideo protocol with target-time splits, train-only per-node
   normalization, and raw-unit zero, persistence, and train-mean baselines;
+- one validation-selected, train-only hour-of-week baseline that improves
+  Montevideo validation RMSE by 27.1% and test RMSE by 32.8% over persistence
+  without using topology;
 - one matched three-seed Montevideo forecast where coordinate and road
   diffusion do not beat unit diffusion and all learned models lose to
   persistence;
@@ -163,6 +166,8 @@ machinery, geodesy, and cells are not implemented.
   bounded real source and its topology, geometry, edge, and time contracts.
 - [Montevideo forecast](research/montevideo-forecast.md) records target-time
   splits, a fused directed recurrent cell, and the negative geometry result.
+- [Montevideo seasonal floor](research/montevideo-seasonal.md) records the
+  temporal control a later graph experiment must beat.
 - [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
   training comparison, including the node-local controls and negative result.
 
