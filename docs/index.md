@@ -194,6 +194,9 @@ machinery, geodesy, and cells are not implemented.
   controlled negative graph-signal result and sparse execution path.
 - [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
   training comparison, including the node-local controls and negative result.
+- [Controlled transport forecast](research/transport-forecast.md) isolates
+  identifiable spatial propagation behind held-out trajectories and false
+  topology.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements.
