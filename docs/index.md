@@ -115,6 +115,8 @@ implemented.
   message -> aggregate -> update and the gradient path.
 - [Time](concepts/time.md) explains fixed-topology snapshots, causal recurrence,
   temporal resolution, and why missingness is not zero.
+- [Spatial structure](research/spatial-structure.md) separates physical
+  connectivity, coordinate frames, node positions, and derived edge geometry.
 - [Sparse aggregation feasibility](research/sparse-aggregation.md) records the
   revision-bound implementation and scaling evidence.
 - [Mean GraphSAGE experiment](research/mean-sage.md) records the exact learning

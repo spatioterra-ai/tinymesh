@@ -136,6 +136,8 @@ run the [quick start](docs/quickstart.md):
   message -> aggregate -> update and the gradient path.
 - [Time](docs/concepts/time.md) separates ordered node fields from fixed,
   weighted, and changing topology.
+- [Spatial structure](docs/research/spatial-structure.md) separates physical
+  connectivity, coordinate frames, node positions, and derived edge geometry.
 - [Sparse aggregation feasibility](docs/research/sparse-aggregation.md) retains
   the revision-bound scaling and kernel evidence.
 - [Mean GraphSAGE experiment](docs/research/mean-sage.md) retains the exact
@@ -189,7 +191,7 @@ uv run --locked --only-group docs zensical serve
 ```
 
 The pinned submodules are optional, reference-only source for studying tinygrad,
-PyTorch Geometric, and PyTorch Geometric Temporal:
+PyTorch Geometric, PyTorch Geometric Temporal, TorchGeo, and TerraTorch:
 
 ```console
 git submodule update --init
