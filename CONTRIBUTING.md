@@ -104,6 +104,8 @@ Run `DEV=<device> uv run python -m experiments.montevideo_forecast` when
 changing target-time splits, train-only normalization, or raw-unit baselines.
 Run `DEV=<device> uv run python -m experiments.montevideo_seasonal` when
 changing periodic phases, causal lag controls, or validation-only selection.
+Run `DEV=<device> uv run python -m experiments.montevideo_delayed_edges` when
+changing residual lagging, structural controls, or the graph-signal gate.
 Run `DEV=<device> uv run python -m unittest tests.test_directed_gru` when
 changing directed recurrence. Run the frozen forecast with
 `DEV=CPU EPOCHS=10 uv run python -m experiments.montevideo_forecast` only when

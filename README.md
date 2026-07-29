@@ -69,6 +69,9 @@ COO connectivity + scalar edge facts
 - A validation-selected, train-only hour-of-week baseline improves Montevideo
   validation RMSE by 27.1% and test RMSE by 32.8% over persistence without
   using topology.
+- A delayed-residual study finds no metric-consistent advantage for real
+  directed edges over the seasonal floor, reversed edges, or permuted node
+  fields; it adds no new API.
 - A fused bidirectional diffusion GRU trains with unit, coordinate-distance,
   and road-distance affinity. In the frozen three-seed Montevideo comparison,
   neither geometry variant beats unit diffusion and every learned model loses
@@ -149,6 +152,13 @@ DEV=CPU uv run python -m experiments.montevideo_seasonal
 DEV=METAL uv run python -m experiments.montevideo_seasonal
 ```
 
+Test delayed residuals on the real graph and structural controls:
+
+```console
+DEV=CPU uv run python -m experiments.montevideo_delayed_edges
+DEV=METAL uv run python -m experiments.montevideo_delayed_edges
+```
+
 Run the frozen Montevideo comparison:
 
 ```console
@@ -222,6 +232,8 @@ run the [quick start](docs/quickstart.md):
   splits and retains the negative matched geometry comparison.
 - [Montevideo seasonal floor](docs/research/montevideo-seasonal.md) selects the
   temporal control a later graph experiment must beat.
+- [Montevideo delayed edges](docs/research/montevideo-delayed-edges.md) tests
+  causal graph residuals against reversed-edge and permuted-field controls.
 - [Chickenpox forecast](docs/research/chickenpox-forecast.md) follows causal
   batches through three recurrent models and retains the inconclusive graph
   comparison.
@@ -246,8 +258,8 @@ naturally; tinymesh is not a GIS, trainer framework, application, or model zoo.
 The first matched directed forecast found no stable value from fixed scalar
 distance. That evidence closes the current geometry stage without a public
 helper. A later temporal study found a much stronger hour-of-week floor; the
-next graph experiment must explain residual signal beyond it before new spatial
-machinery is justified.
+first delayed-edge residual test did not beat that floor or structural
+controls. New spatial machinery still needs a caller that can distinguish it.
 
 ## Development
 
