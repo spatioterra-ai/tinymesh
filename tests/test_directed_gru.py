@@ -4,9 +4,9 @@ from math import exp, tanh
 from tinygrad import Context, Device, Tensor, nn
 from tinygrad.uop.ops import Ops
 
-from experiments.directed_diffusion import DirectedDiffusion
-from experiments.directed_gru import DiffusionForecast, DiffusionGRU
+from experiments.directed_gru import DiffusionForecast
 from tinymesh import Graph
+from tinymesh.nn import DiffusionGRU, DirectedDiffusion
 
 
 SOURCE = [0, 0, 1, 2]

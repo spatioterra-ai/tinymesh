@@ -3,9 +3,8 @@ import unittest
 from tinygrad import Device, Tensor
 
 from experiments.chickenpox_forecast import Forecast, LSTMForecast, _without_self_loops
-from experiments.gconv_gru import GConvGRU
-from experiments.tgcn import TGCN
 from tinymesh import Graph
+from tinymesh.nn import GConvGRU, TGCN
 
 
 class ChickenpoxForecastTest(unittest.TestCase):

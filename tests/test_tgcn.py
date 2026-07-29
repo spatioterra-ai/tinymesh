@@ -4,8 +4,9 @@ from math import exp, sqrt, tanh
 from tinygrad import Device, Tensor
 from tinygrad.uop.ops import Ops
 
-from experiments.tgcn import TGCN, fit_one_step
+from experiments.tgcn import fit_one_step
 from tinymesh import Graph
+from tinymesh.nn import TGCN
 
 
 SOURCE = [0, 1, 2, 0, 1, 1, 2]

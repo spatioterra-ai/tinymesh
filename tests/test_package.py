@@ -19,8 +19,14 @@ class PackageTest(unittest.TestCase):
 
         self.assertEqual(
             {name for name in vars(nn) if name.endswith("Conv")},
-            {"GATConv", "GCNConv", "SAGEConv"},
+            {"ChebConv", "GATConv", "GCNConv", "SAGEConv"},
         )
+        self.assertTrue(all(hasattr(nn, name) for name in (
+            "DiffusionGRU",
+            "DirectedDiffusion",
+            "GConvGRU",
+            "TGCN",
+        )))
 
     def test_type_marker_and_runtime(self) -> None:
         self.assertTrue(Path(tinymesh.__file__).with_name("py.typed").is_file())

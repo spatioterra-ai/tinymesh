@@ -4,8 +4,9 @@ from math import exp, sqrt, tanh
 from tinygrad import Device, Tensor
 from tinygrad.uop.ops import Ops
 
-from experiments.gconv_gru import ChebConv, GConvGRU, compare
+from experiments.gconv_gru import compare
 from tinymesh import Graph
+from tinymesh.nn import ChebConv, GConvGRU
 
 
 SOURCE = [0, 1, 1, 2, 2, 0]

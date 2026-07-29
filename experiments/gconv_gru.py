@@ -3,87 +3,13 @@
 from __future__ import annotations
 
 import json
-from collections import Counter
 from dataclasses import asdict, dataclass
 
 from tinygrad import Context, Device, Tensor, nn
 from tinygrad.uop.ops import Ops
 
-from experiments.tgcn import TGCN
 from tinymesh import Graph
-
-
-class ChebConv:
-    def __init__(self, in_features: int, out_features: int, order: int) -> None:
-        if in_features <= 0 or out_features <= 0 or order <= 0:
-            raise ValueError("feature counts and order must be positive")
-        self.linear = nn.Linear(order * in_features, out_features)
-        self.in_features = in_features
-        self.order = order
-
-    def __call__(self, values: Tensor, graph: Graph) -> Tensor:
-        _validate_graph(graph)
-        return self._project(values, graph)
-
-    def _project(self, values: Tensor, graph: Graph) -> Tensor:
-        expected = (graph.nodes, self.in_features)
-        if values.ndim < 2 or values.shape[-2:] != expected:
-            raise ValueError(f"values must have shape [..., {graph.nodes}, {self.in_features}], got {values.shape}")
-        if not isinstance(values.device, str):
-            raise ValueError("ChebConv requires one device")
-
-        degree = graph.in_degree(device=values.device)
-        scale = (degree != 0).where(
-            degree.maximum(1).cast(values.dtype).rsqrt(),
-            0,
-        ).reshape((1,) * (values.ndim - 2) + (graph.nodes, 1))
-        states = [values]
-        if self.order > 1:
-            states.append(_shift(values, graph, scale))
-        for _ in range(2, self.order):
-            states.append(2 * _shift(states[-1], graph, scale) - states[-2])
-        basis = states[0] if self.order == 1 else states[0].cat(*states[1:], dim=-1)
-        return self.linear(basis)
-
-
-class GConvGRU:
-    def __init__(self, in_features: int, hidden_features: int, order: int) -> None:
-        if in_features <= 0 or hidden_features <= 0:
-            raise ValueError("feature counts must be positive")
-        self.gates = ChebConv(in_features + hidden_features, 2 * hidden_features, order)
-        self.candidate = ChebConv(in_features + hidden_features, hidden_features, order)
-        self.in_features = in_features
-        self.hidden_features = hidden_features
-
-    def __call__(self, values: Tensor, graph: Graph, hidden: Tensor | None = None) -> Tensor:
-        _validate_graph(graph)
-        expected = (graph.nodes, self.in_features)
-        if values.ndim < 2 or values.shape[-2:] != expected:
-            raise ValueError(f"values must have shape [..., {graph.nodes}, {self.in_features}], got {values.shape}")
-        if not isinstance(values.device, str):
-            raise ValueError("GConvGRU requires one device")
-        hidden = self._hidden(values, hidden)
-
-        gates = self.gates._project(values.cat(hidden, dim=-1), graph)
-        update = gates[..., :self.hidden_features].sigmoid()
-        reset = gates[..., self.hidden_features:].sigmoid()
-        candidate = self.candidate._project(values.cat(hidden * reset, dim=-1), graph).tanh()
-        return update * hidden + (1 - update) * candidate
-
-    def _hidden(self, values: Tensor, hidden: Tensor | None) -> Tensor:
-        if hidden is None:
-            return Tensor.zeros(
-                *values.shape[:-1],
-                self.hidden_features,
-                dtype=values.dtype,
-                device=values.device,
-            )
-        expected = (*values.shape[:-1], self.hidden_features)
-        if hidden.shape != expected:
-            raise ValueError(f"hidden must have shape {expected}, got {hidden.shape}")
-        if hidden.dtype != values.dtype or hidden.device != values.device:
-            raise ValueError("hidden and values must share dtype and device")
-        return hidden
+from tinymesh.nn import GConvGRU, TGCN
 
 
 @dataclass(frozen=True)
@@ -143,19 +69,6 @@ def compare(device: str) -> Observation:
         tgcn_final_loss=tgcn_final,
         gconv_gru_final_loss=gconv_final,
     )
-
-
-def _shift(values: Tensor, graph: Graph, scale: Tensor) -> Tensor:
-    return -graph.sum(values * scale) * scale
-
-
-def _validate_graph(graph: Graph) -> None:
-    if any(source == target for source, target in zip(graph.source, graph.target)):
-        raise ValueError("Chebyshev graphs must not contain self-loops")
-    edges = Counter(zip(graph.source, graph.target))
-    reverse = Counter((target, source) for source, target in zip(graph.source, graph.target))
-    if edges != reverse:
-        raise ValueError("Chebyshev graphs must be symmetric")
 
 
 def _fit(
