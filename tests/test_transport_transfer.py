@@ -9,11 +9,17 @@ from experiments.transport_forecast import (
   _topology,
   _trajectories,
 )
-from experiments.transport_transfer import _state, _validate
+from experiments.transport_transfer import _nodes, _state, _validate
 from tinymesh.nn import DirectedDiffusion
 
 
 class TransportTransferTest(unittest.TestCase):
+  def test_target_scope_is_explicit(self) -> None:
+    self.assertEqual(_nodes("all"), (24, 32, 48))
+    self.assertEqual(_nodes("32"), (32,))
+    with self.assertRaisesRegex(ValueError, "target_nodes"):
+      _nodes("31")
+
   def test_pulse_fields_are_sparse_zero_mean_and_deterministic(self) -> None:
     topology = _topology(24)
 
@@ -74,6 +80,7 @@ class TransportTransferTest(unittest.TestCase):
     with self.assertRaisesRegex(ValueError, "lstm.*diffusion_gru"):
       _validate(
         "gconv_gru",
+        target_nodes="all",
         initial="dense",
         seed=0,
         epochs=1,

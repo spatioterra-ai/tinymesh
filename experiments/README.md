@@ -35,7 +35,7 @@ Pass experiment settings explicitly:
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
 uv run --locked python -m experiments.run transport_forecast DEV=CPU MODEL=diffusion_gru TOPOLOGY=true SEED=0
-uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru INITIAL=dense SEED=0
+uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru NODES=all INITIAL=dense SEED=0
 ```
 
 The runner refuses dirty tracked work, executes only cataloged modules, clears

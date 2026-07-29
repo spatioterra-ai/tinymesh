@@ -24,12 +24,16 @@ The exact settings, three-seed results, promotion audit, and limits will be
 frozen here after the matched study.
 
 ```console
-uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru INITIAL=dense SEED=0 EPOCHS=30 HISTORY=4 HORIZON=16 BS=64 HIDDEN=8 LR=0.01
+uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru NODES=all INITIAL=dense SEED=0 EPOCHS=30 HISTORY=4 HORIZON=16 BS=64 HIDDEN=8 LR=0.01
 ```
 
 Repeat with `INITIAL=pulse` and model seeds 1 and 2. Each process trains once
 and evaluates all three node sizes for one initial-condition family, remaining
 below the shared 600-second limit.
+
+The node-local LSTM uses the same settings with `MODEL=lstm` and one explicit
+`NODES=32` or `NODES=48` scope per run; its all-size evaluation exceeds that
+limit.
 
 The transfer claim passes only if true-topology DiffusionGRU beats its permuted
 and self-only controls plus the node-local LSTM on validation-selected,

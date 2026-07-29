@@ -89,6 +89,7 @@ def study(
   device: str,
   *,
   model_name: str = "diffusion_gru",
+  target_nodes: str = "all",
   initial: str = "dense",
   seed: int = 0,
   epochs: int = 30,
@@ -100,6 +101,7 @@ def study(
 ) -> Observation:
   _validate(
     model_name,
+    target_nodes=target_nodes,
     initial=initial,
     seed=seed,
     epochs=epochs,
@@ -151,7 +153,7 @@ def study(
         horizon=horizon,
       ),
     )
-    for nodes in TARGET_NODES
+    for nodes in _nodes(target_nodes)
   )
   if _state(model) != state:
     raise RuntimeError("transfer evaluation mutated frozen model state")
@@ -274,6 +276,7 @@ def _state(model: Model) -> str:
 def _validate(model: str, **settings: int | float | str) -> None:
   if model not in ("lstm", "diffusion_gru"):
     raise ValueError("model must be 'lstm' or 'diffusion_gru'")
+  _nodes(settings["target_nodes"])
   if settings["initial"] not in ("dense", "pulse"):
     raise ValueError("initial must be 'dense' or 'pulse'")
   for name in ("seed", "epochs", "history", "horizon", "batch_size", "hidden_features"):
@@ -284,10 +287,23 @@ def _validate(model: str, **settings: int | float | str) -> None:
     raise ValueError("learning_rate must be positive")
 
 
+def _nodes(value: int | float | str) -> tuple[int, ...]:
+  if value == "all":
+    return TARGET_NODES
+  try:
+    nodes = int(value)
+  except (TypeError, ValueError):
+    raise ValueError(f"target_nodes must be 'all' or one of {TARGET_NODES}") from None
+  if str(nodes) != str(value) or nodes not in TARGET_NODES:
+    raise ValueError(f"target_nodes must be 'all' or one of {TARGET_NODES}")
+  return (nodes,)
+
+
 def main() -> None:
   observation = study(
     Device.DEFAULT,
     model_name=getenv("MODEL", "diffusion_gru"),
+    target_nodes=getenv("NODES", "all"),
     initial=getenv("INITIAL", "dense"),
     seed=getenv("SEED", 0),
     epochs=getenv("EPOCHS", 30),
