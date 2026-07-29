@@ -26,7 +26,7 @@ class MeanSAGETest(unittest.TestCase):
 
         self.assertEqual(model(Tensor.zeros(3, 1), graph).tolist(), [[2.0], [2.0], [2.0]])
 
-    def test_optimizer_reaches_neighbor_parameter_through_csr_backward(self) -> None:
+    def test_optimizer_updates_neighbor_parameter_from_sparse_mean(self) -> None:
         observation = fit_one_step(Device.DEFAULT)
 
         self.assertAlmostEqual(observation.initial_loss, 1.0)

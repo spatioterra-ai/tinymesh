@@ -33,6 +33,17 @@ experiment retains its dense reference and learning witness. The private graph
 implementation still crosses tinygrad's alpha `Tensor.custom_kernel` boundary
 with default kernel optimization disabled.
 
+The public class commutes the shared linear map after normalized aggregation
+and applies its optional bias last:
+
+```text
+X -- source scale --> A @ (...) -- destination scale --> linear --> Y
+```
+
+The recorded witness disables bias, so this factorization has the same values
+and weight gradient as the historical path. Its sparse call carries input
+feature width rather than output feature width.
+
 ## Evidence
 
 A three-node path with self-loops has degrees `2, 3, 2`. The experiment matches
@@ -71,8 +82,8 @@ The formulation follows Kipf and Welling's
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_gcn
-DEV=METAL uv run python -m unittest tests.test_gcn
-DEV=CPU uv run python -m experiments.gcn
-DEV=METAL uv run python -m experiments.gcn
+DEV=CPU uv run --locked python -m unittest tests.test_gcn
+DEV=METAL uv run --locked python -m unittest tests.test_gcn
+uv run --locked python -m experiments.run gcn DEV=CPU
+uv run --locked python -m experiments.run gcn DEV=METAL
 ```

@@ -24,6 +24,10 @@ not a framework inside a framework. `tinymesh.nn` contains only components
 already used by current experiments. Sequence unrolling, task heads, trainers,
 datasets, and evaluation policy stay outside those classes.
 
+At the pinned tinygrad revision, `Linear` and `LSTMCell` are ordinary classes
+with Tensor state and `__call__`; there is no module base class or `forward`
+protocol. Tinymesh keeps that shape. Stateful graph compositions are direct
+classes, while stateless math remains Tensor and `Graph` operations.
+
 Gitlinks move only for an intentional study. A pin update records its upstream
 delta and compatibility evidence; it never silently changes runtime behavior.
-

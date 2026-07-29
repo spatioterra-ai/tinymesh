@@ -8,7 +8,7 @@ from tinymesh._csr import _CSR
 
 @dataclass(frozen=True, init=False)
 class Graph:
-    """An immutable directed graph over ordinary Tinygrad tensors."""
+    """An immutable directed graph over ordinary tinygrad tensors."""
 
     nodes: int
     source: tuple[int, ...]

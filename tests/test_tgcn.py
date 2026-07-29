@@ -104,13 +104,14 @@ class TGCNTest(unittest.TestCase):
         self.assertAlmostEqual(observation.final_loss, 0.686385, places=5)
         self.assertAlmostEqual(observation.candidate_weight, 1.188622, places=5)
 
-    def test_gate_graph_projections_share_one_sparse_call(self):
-        model = TGCN(1, 1)
+    def test_gate_projections_share_one_input_width_sparse_call(self):
+        model = TGCN(2, 3)
         graph = Graph(3, SOURCE, TARGET)
-        output = model(Tensor.zeros(3, 1, device=Device.DEFAULT), graph)
+        output = model(Tensor.zeros(3, 2, device=Device.DEFAULT), graph)
         calls = [uop for uop in output.uop.toposort() if uop.op is Ops.CALL]
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0].src[0].arg.name, "csr_sum")
+        self.assertEqual(calls[0].src[1]._shape, (3, 2))
 
     def test_batch_axis_matches_independent_hidden_states(self):
         model = TGCN(1, 2)

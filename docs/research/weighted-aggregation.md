@@ -118,8 +118,8 @@ serially per edge; degree skew still affects the CSR directions.
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_weighted_aggregation
-DEV=METAL uv run python -m unittest tests.test_weighted_aggregation
-DEV=CPU uv run python -m experiments.weighted_aggregation
-DEV=METAL uv run python -m experiments.weighted_aggregation
+DEV=CPU uv run --locked python -m unittest tests.test_weighted_aggregation
+DEV=METAL uv run --locked python -m unittest tests.test_weighted_aggregation
+uv run --locked python -m experiments.run weighted_aggregation DEV=CPU
+uv run --locked python -m experiments.run weighted_aggregation DEV=METAL
 ```

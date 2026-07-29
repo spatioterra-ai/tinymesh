@@ -1,7 +1,7 @@
 [project]
 site_name = "tinymesh"
 site_url = "https://spatioterra-ai.github.io/tinymesh/"
-site_description = "Tinygrad-native learning over sparse structures through space and time"
+site_description = "tinygrad-native learning over sparse structures through space and time"
 repo_url = "https://github.com/spatioterra-ai/tinymesh"
 repo_name = "spatioterra-ai/tinymesh"
 nav = [

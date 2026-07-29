@@ -7,7 +7,8 @@ source-normalized propagation in both directions of one directed graph.
 
 At tinygrad revision
 [`dd16d5a`](https://github.com/tinygrad/tinygrad/tree/dd16d5aead62e0207c0c3c50c19bc8b67e176c55),
-Tinymesh composes bidirectional diffusion without a new kernel or public API:
+Tinymesh composed bidirectional diffusion without a new kernel or `Graph`
+operation:
 
 ```text
 positive affinity[E]
@@ -41,6 +42,10 @@ Each edge has a positive affinity and therefore belongs to a row with a
 positive denominator. Isolated nodes own no edge, require no division
 convention, and return zero.
 
+`DirectedDiffusion` validates shape, floating dtype, and device without
+realizing the affinity tensor. The caller or data boundary owns the positive
+value invariant.
+
 ## Composition
 
 The current public operations are sufficient:
@@ -71,7 +76,7 @@ and weights.
 
 An independent Python edge loop computes both normalized fields, both
 directions, and gradients with respect to node values and raw affinity. The
-Tinygrad result matches it within `1e-5` on CPU and Metal.
+tinygrad matches that reference within `1e-5` on CPU and Metal.
 
 The fixture contains asymmetric degrees, duplicate edges, and two isolated
 nodes. Reordering COO edges reorders the two weight fields and affinity
@@ -111,8 +116,8 @@ changing topology, vector edge messages, or recurrent model quality.
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_directed_diffusion
-DEV=METAL uv run python -m unittest tests.test_directed_diffusion
-DEV=CPU uv run python -m experiments.directed_diffusion
-DEV=METAL uv run python -m experiments.directed_diffusion
+DEV=CPU uv run --locked python -m unittest tests.test_directed_diffusion
+DEV=METAL uv run --locked python -m unittest tests.test_directed_diffusion
+uv run --locked python -m experiments.run directed_diffusion DEV=CPU
+uv run --locked python -m experiments.run directed_diffusion DEV=METAL
 ```

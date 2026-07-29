@@ -220,12 +220,12 @@ should project to the smallest edge field they need.
 ## Reproduce
 
 ```console
-DEV=CPU uv run python -m unittest tests.test_edge_values tests.test_softmax tests.test_gat
-DEV=METAL uv run python -m unittest tests.test_edge_values tests.test_softmax tests.test_gat
-DEV=CPU uv run python -m experiments.gat
-DEV=METAL uv run python -m experiments.gat
-DEV=CPU uv run python -m unittest tests.test_multi_head_gat
-DEV=METAL uv run python -m unittest tests.test_multi_head_gat
-DEV=CPU uv run python -m experiments.multi_head_gat
-DEV=METAL uv run python -m experiments.multi_head_gat
+DEV=CPU uv run --locked python -m unittest tests.test_edge_values tests.test_softmax tests.test_gat
+DEV=METAL uv run --locked python -m unittest tests.test_edge_values tests.test_softmax tests.test_gat
+DEV=CPU uv run --locked python -m unittest tests.test_multi_head_gat
+DEV=METAL uv run --locked python -m unittest tests.test_multi_head_gat
+uv run --locked python -m experiments.run gat DEV=CPU
+uv run --locked python -m experiments.run gat DEV=METAL
+uv run --locked python -m experiments.run multi_head_gat DEV=CPU
+uv run --locked python -m experiments.run multi_head_gat DEV=METAL
 ```

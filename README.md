@@ -54,8 +54,9 @@ COO connectivity + scalar edge facts
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
 - A pinned Montevideo loader adds raw hourly values, projected node positions,
   observed road distance, and a fixed coordinate frame without a geo runtime.
-- `DirectedDiffusion` and `DiffusionGRU` source-normalize scalar affinity in
-  both graph directions and keep recurrent propagation sparse.
+- `DirectedDiffusion` and `DiffusionGRU` source-normalize caller-validated
+  positive scalar affinity in both graph directions and keep recurrent
+  propagation sparse.
 - A Montevideo forecast protocol preserves target time, fits per-node
   normalization on training rows, and reports raw-unit zero, persistence, and
   train-mean baselines.
@@ -180,9 +181,10 @@ run the [quick start](docs/quickstart.md):
 
 Unit and scalar-weighted sums now share deterministic topology plus
 destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
-incoming mean, endpoint projection, target softmax, and in-degree; its private backend owns
-lowering and rebuildable device caches. A fixed-graph temporal signal owns
-aligned node IDs, features, targets, edge weights, and causal window batches.
+incoming mean, endpoint projection, target softmax, and in-degree; its private
+backend owns lowering and rebuildable device caches. A fixed-graph temporal
+signal owns aligned node IDs, features, targets, edge weights, and causal
+window batches.
 `tinymesh.nn` owns equations and parameters; experiments own data policy,
 unrolling, training, controls, and claims.
 The alpha kernel and optimizer boundary still block stability. Vectorized
