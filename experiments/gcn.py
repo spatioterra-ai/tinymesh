@@ -8,24 +8,7 @@ from dataclasses import asdict, dataclass
 from tinygrad import Context, Device, Tensor, nn
 
 from tinymesh import Graph
-
-
-class GCN:
-    def __init__(self, in_features: int, out_features: int) -> None:
-        if in_features <= 0 or out_features <= 0:
-            raise ValueError("feature counts must be positive")
-        self.linear = nn.Linear(in_features, out_features, bias=False)
-
-    def __call__(self, values: Tensor, graph: Graph) -> Tensor:
-        messages = self.linear(values)
-        if not isinstance(messages.device, str):
-            raise ValueError("GCN requires one device")
-        degree = graph.in_degree(device=messages.device)
-        scale = (degree != 0).where(
-            degree.maximum(1).cast(messages.dtype).rsqrt(),
-            0,
-        ).reshape((1,) * (messages.ndim - 2) + (graph.nodes, 1))
-        return graph.sum(messages * scale) * scale
+from tinymesh.nn import GCNConv
 
 
 @dataclass(frozen=True)
@@ -45,7 +28,7 @@ def fit_one_step(device: str) -> Observation:
     )
     values = Tensor([[1.0], [-1.0], [0.0], [0.0]], device=device).realize()
     target = Tensor([[1.0], [-1.0]], device=device).realize()
-    model = GCN(1, 1)
+    model = GCNConv(1, 1, bias=False)
     model.linear.weight = Tensor.zeros(1, 1, device=device).realize()
     optimizer = nn.optim.SGD(nn.state.get_parameters(model), lr=2.0, fused=False)
 

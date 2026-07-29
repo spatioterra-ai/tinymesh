@@ -268,8 +268,7 @@ def _finish(
 
 
 def _incoming_mean(graph: Graph, field: Tensor) -> Tensor:
-    degree = graph.in_degree(device=field.device).reshape(1, graph.nodes, 1)
-    return graph.sum(field) / (degree != 0).where(degree, 1)
+    return graph.mean(field)
 
 
 def _fit(aggregate: Tensor, residual: Tensor, lag: int, train_end: int) -> float:

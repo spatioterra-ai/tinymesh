@@ -3,8 +3,9 @@ from math import sqrt
 
 from tinygrad import Device, Tensor
 
-from experiments.gcn import GCN, fit_one_step
+from experiments.gcn import fit_one_step
 from tinymesh import Graph
+from tinymesh.nn import GCNConv
 
 
 SOURCE = [0, 1, 2, 0, 1, 1, 2]
@@ -40,7 +41,7 @@ def run(
     target: list[int] = TARGET,
     values: list[list[float]] = VALUES,
 ) -> list[list[float]]:
-    model = GCN(2, 2)
+    model = GCNConv(2, 2, bias=False)
     model.linear.weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
     return model(
         Tensor(values, device=Device.DEFAULT).realize(),
@@ -74,7 +75,7 @@ class GCNTest(unittest.TestCase):
                 self.assertAlmostEqual(actual_value, expected_value, places=5)
 
     def test_explicit_self_loop_retains_disconnected_node(self) -> None:
-        model = GCN(1, 1)
+        model = GCNConv(1, 1, bias=False)
         model.linear.weight = Tensor([[2.0]], device=Device.DEFAULT).realize()
         graph = Graph(3, [0, 1, 2, 0, 1], [0, 1, 2, 1, 0])
         values = Tensor([[1.0], [3.0], [5.0]], device=Device.DEFAULT).realize()
@@ -83,15 +84,25 @@ class GCNTest(unittest.TestCase):
             self.assertAlmostEqual(actual[0], expected, places=5)
 
     def test_zero_degree_node_returns_zero(self) -> None:
-        model = GCN(1, 1)
+        model = GCNConv(1, 1, bias=False)
         model.linear.weight = Tensor([[2.0]], device=Device.DEFAULT).realize()
         graph = Graph(3, [0, 1, 0, 1], [0, 1, 1, 0])
         values = Tensor([[1.0], [3.0], [5.0]], device=Device.DEFAULT).realize()
 
         self.assertEqual(model(values, graph).tolist()[2], [0.0])
 
+    def test_bias_is_applied_after_propagation(self) -> None:
+        model = GCNConv(1, 1)
+        model.linear.weight = Tensor.zeros(1, 1, device=Device.DEFAULT).realize()
+        model.linear.bias = Tensor([2.0], device=Device.DEFAULT).realize()
+
+        self.assertEqual(
+            model(Tensor.zeros(2, 1), Graph(2, [], [])).tolist(),
+            [[2.0], [2.0]],
+        )
+
     def test_batch_axis_matches_independent_graphs(self) -> None:
-        model = GCN(2, 2)
+        model = GCNConv(2, 2, bias=False)
         model.linear.weight = Tensor(WEIGHT, device=Device.DEFAULT).realize()
         graph = Graph(3, SOURCE, TARGET)
         values = Tensor(

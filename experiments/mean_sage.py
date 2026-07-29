@@ -8,22 +8,7 @@ from dataclasses import asdict, dataclass
 from tinygrad import Context, Device, Tensor, nn
 
 from tinymesh import Graph
-
-
-class MeanSAGE:
-    def __init__(self, in_features: int, out_features: int) -> None:
-        if in_features <= 0 or out_features <= 0:
-            raise ValueError("feature counts must be positive")
-        self.root = nn.Linear(in_features, out_features, bias=False)
-        self.neighbor = nn.Linear(in_features, out_features, bias=False)
-
-    def __call__(self, values: Tensor, graph: Graph) -> Tensor:
-        messages = self.neighbor(values)
-        if not isinstance(messages.device, str):
-            raise ValueError("mean GraphSAGE requires one device")
-        degree = graph.in_degree(device=messages.device)
-        inverse_degree = degree.maximum(1).cast(messages.dtype).reciprocal().reshape(-1, 1)
-        return self.root(values) + graph.sum(messages) * inverse_degree
+from tinymesh.nn import SAGEConv
 
 
 @dataclass(frozen=True)
@@ -40,7 +25,7 @@ def fit_one_step(device: str) -> Observation:
     graph = Graph(4, [0, 1], [2, 3])
     values = Tensor([[1.0], [-1.0], [0.0], [0.0]], device=device).realize()
     target = Tensor([[1.0], [-1.0]], device=device).realize()
-    model = MeanSAGE(1, 1)
+    model = SAGEConv(1, 1, bias=False)
     model.root.weight = Tensor.zeros(1, 1, device=device).realize()
     model.neighbor.weight = Tensor.zeros(1, 1, device=device).realize()
     optimizer = nn.optim.SGD(nn.state.get_parameters(model), lr=0.5, fused=False)
