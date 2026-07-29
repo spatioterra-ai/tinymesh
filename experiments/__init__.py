@@ -29,6 +29,7 @@ CATALOG = {
     "chickenpox_data": Experiment("data", "tinymesh.datasets"),
     "montevideo_source": Experiment("data", "tinymesh.datasets", ()),
     "montevideo_data": Experiment("data", "tinymesh.datasets"),
+    "metr_la_data": Experiment("data", "tinymesh.datasets"),
     "chickenpox_forecast": Experiment(
         "forecast",
         "research-only",

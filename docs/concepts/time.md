@@ -94,7 +94,9 @@ An application must retain the timestamp or interval represented by every
 position and must define how irregular gaps affect features and loss.
 
 Missing state is not numeric zero. A future temporal data contract needs
-explicit masks when observations may be absent.
+explicit masks when observations may be absent. METR-LA is one concrete caller:
+its reference protocol declares zero a missing-value sentinel, so
+`METRLA.observed` exposes `speed != 0` while retaining the raw reading tensor.
 
 ## Fixed and changing graphs differ
 
@@ -138,11 +140,13 @@ values, target = next(train.batches(batch_size=32, history=8))
 # values [B, L, N, F], target [B, N, Y]
 ```
 
-The container does not claim more than its source. The current public dataset
-has ordered weekly positions but no exact dates or missingness mask, so those
-are not fabricated. Read the
-[Chickenpox data record](../research/chickenpox-data.md) for the concrete
-caller and parity evidence.
+The container does not claim more than its source. Chickenpox has ordered
+weekly positions but no exact dates or missingness mask, so those are not
+fabricated. METR-LA instead retains its exact timestamps and source-defined
+missingness in a dataset-specific record; that evidence is not yet broad
+enough to enlarge `StaticGraphTemporalSignal`. Read the
+[Chickenpox data record](../research/chickenpox-data.md) and
+[METR-LA data record](../research/metr-la-data.md) for the concrete boundaries.
 
 ## Where spatial mixing happens
 
