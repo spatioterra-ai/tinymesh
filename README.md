@@ -1,3 +1,12 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="/docs/assets/logo_mesh_light.svg">
+  <img alt="tinymesh" src="/docs/assets/logo_mesh_dark.svg" width="50%" height="50%">
+</picture>
+
+</div>
+
 # tinymesh
 
 **Sparse structure through space and time, in tinygrad.**
