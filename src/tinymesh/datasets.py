@@ -1,11 +1,14 @@
+import csv
 import hashlib
 import json
 import math
+from array import array
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from tinygrad import Tensor
+from tinygrad import Tensor, dtypes
 from tinygrad.helpers import fetch
 
 from tinymesh.graph import Graph
@@ -25,6 +28,34 @@ _MONTEVIDEO_URL = (
 _MONTEVIDEO_SHA256 = "37d9c6286d474077b5c05173c1570c4da42c387013116daa8862c7a6cab86a75"
 _MONTEVIDEO_MAX_BYTES = 4 * 1024 * 1024
 _MONTEVIDEO_TIMEOUT = 10
+_METR_LA_TRAFFIC = (
+    "METR-LA.csv",
+    "https://zenodo.org/api/records/5724362/files/METR-LA.csv/content",
+    72_467_662,
+    "8d67a35472db1719d7d4be851f2bf64cb21d9c52577c8a6b4b873d43205af381",
+)
+_DCRNN_REVISION = "602afd9d767d3aa1c9b3eac51710d6aeee12c227"
+_METR_LA_SENSOR_IDS = (
+    "graph_sensor_ids.txt",
+    f"https://raw.githubusercontent.com/liyaguang/DCRNN/{_DCRNN_REVISION}/"
+    "data/sensor_graph/graph_sensor_ids.txt",
+    1_448,
+    "3ba026caa2e6263ab0ea54b0fa1b125dbfa7216544cd05313b555e826292b990",
+)
+_METR_LA_DISTANCES = (
+    "distances_la_2012.csv",
+    f"https://raw.githubusercontent.com/liyaguang/DCRNN/{_DCRNN_REVISION}/"
+    "data/sensor_graph/distances_la_2012.csv",
+    6_393_348,
+    "a576a2a3e28dbb959be6da22688e24dd1b246b81264595e129147c256cd53de5",
+)
+_METR_LA_MAX_BYTES = {
+    "METR-LA.csv": 80 * 1024 * 1024,
+    "graph_sensor_ids.txt": 4 * 1024,
+    "distances_la_2012.csv": 8 * 1024 * 1024,
+}
+_METR_LA_STEP = timedelta(minutes=5)
+_METR_LA_THRESHOLD = 0.1
 
 
 @dataclass(frozen=True, eq=False)
@@ -49,6 +80,54 @@ class MontevideoBus:
         for name, value in (("position", self.position), ("road_distance", self.road_distance)):
             if value.dtype != self.signal.x.dtype or value.device != self.signal.x.device:
                 raise ValueError(f"{name} must share signal dtype and device")
+
+
+@dataclass(frozen=True, eq=False)
+class METRLA:
+    """Raw METR-LA traffic speed aligned with the directed DCRNN graph."""
+
+    graph: Graph
+    sensor_ids: tuple[str, ...]
+    timestamps: tuple[datetime, ...]
+    speed: Tensor
+    affinity: Tensor
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "sensor_ids", tuple(self.sensor_ids))
+        object.__setattr__(self, "timestamps", tuple(self.timestamps))
+        if self.speed.ndim != 2:
+            raise ValueError(f"speed must have shape [T, N], got {self.speed.shape}")
+        if self.speed.shape[1] != self.graph.nodes:
+            raise ValueError(f"speed must have {self.graph.nodes} node columns, got {self.speed.shape[1]}")
+        if len(self.sensor_ids) != self.graph.nodes:
+            raise ValueError(f"expected {self.graph.nodes} sensor IDs, got {len(self.sensor_ids)}")
+        if any(not sensor_id for sensor_id in self.sensor_ids):
+            raise ValueError("sensor IDs must be non-empty")
+        if len(set(self.sensor_ids)) != len(self.sensor_ids):
+            raise ValueError("sensor IDs must be unique")
+        if len(self.timestamps) != self.speed.shape[0]:
+            raise ValueError(f"expected {self.speed.shape[0]} timestamps, got {len(self.timestamps)}")
+        if any(not isinstance(timestamp, datetime) or timestamp.tzinfo is not None for timestamp in self.timestamps):
+            raise ValueError("timestamps must be naive datetimes")
+        if any(right - left != _METR_LA_STEP for left, right in zip(self.timestamps, self.timestamps[1:])):
+            raise ValueError("timestamps must be five minutes apart")
+        if not dtypes.is_float(self.speed.dtype):
+            raise ValueError(f"speed must have a floating dtype, got {self.speed.dtype}")
+        if self.affinity.ndim != 1 or self.affinity.shape[0] != self.graph.edges:
+            raise ValueError(f"affinity must have shape [{self.graph.edges}], got {self.affinity.shape}")
+        if not dtypes.is_float(self.affinity.dtype):
+            raise ValueError(f"affinity must have a floating dtype, got {self.affinity.dtype}")
+        if self.speed.dtype != self.affinity.dtype or self.speed.device != self.affinity.device:
+            raise ValueError("speed and affinity must share dtype and device")
+
+    @property
+    def observed(self) -> Tensor:
+        """Mask the zero sentinel used by the reference METR-LA protocol."""
+        return self.speed != 0
+
+    @property
+    def sample_minutes(self) -> int:
+        return 5
 
 
 @dataclass(frozen=True)
@@ -124,6 +203,131 @@ def montevideo_bus(
     position = Tensor(source.position, dtype=x.dtype, device=x.device).realize()
     road_distance = Tensor(source.road_distance, dtype=x.dtype, device=x.device).realize()
     return MontevideoBus(signal, position, road_distance)
+
+
+def metr_la(
+    path: str | Path | None = None,
+    *,
+    device: str | None = None,
+) -> METRLA:
+    """Load raw METR-LA speed and reproduce the directed DCRNN affinity."""
+    traffic_path, sensor_path, distance_path = _metr_la_sources(path)
+    sensor_ids = _read_sensor_ids(sensor_path)
+    timestamps, values = _read_traffic(traffic_path, sensor_ids)
+    graph, affinity_values = _read_road_graph(distance_path, sensor_ids)
+    speed = _float_tensor(values, (len(timestamps), len(sensor_ids)), device)
+    if not isinstance(speed.device, str):
+        raise ValueError("METR-LA requires one device")
+    affinity = _float_tensor(affinity_values, (graph.edges,), speed.device)
+    return METRLA(graph, sensor_ids, timestamps, speed, affinity)
+
+
+def _metr_la_sources(path: str | Path | None) -> tuple[Path, Path, Path]:
+    if path is not None:
+        root = Path(path)
+        if not root.is_dir():
+            raise ValueError("METR-LA path must be a directory")
+        sources = root / _METR_LA_TRAFFIC[0], root / _METR_LA_SENSOR_IDS[0], root / _METR_LA_DISTANCES[0]
+        for source in sources:
+            if source.stat().st_size > _METR_LA_MAX_BYTES[source.name]:
+                raise ValueError(f"{source.name} exceeds {_METR_LA_MAX_BYTES[source.name]} bytes")
+        return sources
+    return _fetch_source(_METR_LA_TRAFFIC), _fetch_source(_METR_LA_SENSOR_IDS), _fetch_source(_METR_LA_DISTANCES)
+
+
+def _fetch_source(source: tuple[str, str, int, str]) -> Path:
+    name, url, size, sha256 = source
+    path = fetch(url, name=f"{sha256[:12]}-{name}", subdir="tinymesh", sha256=sha256)
+    if path.stat().st_size != size:
+        raise RuntimeError(f"{name} must contain {size} bytes")
+    return path
+
+
+def _read_sensor_ids(path: Path) -> tuple[str, ...]:
+    sensor_ids = tuple(path.read_text().strip().split(","))
+    if not sensor_ids or any(not sensor_id for sensor_id in sensor_ids):
+        raise ValueError("sensor IDs must be non-empty")
+    if len(set(sensor_ids)) != len(sensor_ids):
+        raise ValueError("sensor IDs must be unique")
+    return sensor_ids
+
+
+def _read_traffic(path: Path, sensor_ids: tuple[str, ...]) -> tuple[tuple[datetime, ...], array[float]]:
+    timestamps: list[datetime] = []
+    values = array("f")
+    with path.open(newline="") as stream:
+        rows = csv.reader(stream)
+        try:
+            header = next(rows)
+        except StopIteration as error:
+            raise ValueError("METR-LA traffic CSV must not be empty") from error
+        if not header or header[0] or tuple(header[1:]) != sensor_ids:
+            raise ValueError("traffic columns must match sensor ID order")
+        for index, row in enumerate(rows, start=2):
+            if len(row) != len(sensor_ids) + 1:
+                raise ValueError(f"traffic row {index} must have {len(sensor_ids) + 1} columns")
+            try:
+                timestamp = datetime.fromisoformat(row[0])
+            except ValueError as error:
+                raise ValueError(f"traffic row {index} has an invalid timestamp") from error
+            if timestamp.tzinfo is not None:
+                raise ValueError(f"traffic row {index} timestamp must be naive")
+            if timestamps and timestamp - timestamps[-1] != _METR_LA_STEP:
+                raise ValueError(f"traffic row {index} must be five minutes after the previous row")
+            timestamps.append(timestamp)
+            for column, raw in enumerate(row[1:], start=2):
+                try:
+                    value = float(raw)
+                except ValueError as error:
+                    raise ValueError(f"traffic row {index} column {column} must be numeric") from error
+                if not math.isfinite(value) or value < 0:
+                    raise ValueError(f"traffic row {index} column {column} must be finite and non-negative")
+                values.append(value)
+    if len(timestamps) < 2:
+        raise ValueError("METR-LA traffic CSV must contain at least two rows")
+    return tuple(timestamps), values
+
+
+def _read_road_graph(path: Path, sensor_ids: tuple[str, ...]) -> tuple[Graph, array[float]]:
+    node_index = {sensor_id: index for index, sensor_id in enumerate(sensor_ids)}
+    distances: dict[tuple[int, int], float] = {}
+    with path.open(newline="") as stream:
+        rows = csv.DictReader(stream)
+        if rows.fieldnames != ["from", "to", "cost"]:
+            raise ValueError("distance columns must be from,to,cost")
+        for index, row in enumerate(rows, start=2):
+            if row["from"] not in node_index or row["to"] not in node_index:
+                continue
+            edge = node_index[row["from"]], node_index[row["to"]]
+            if edge in distances:
+                raise ValueError(f"distance row {index} duplicates an earlier edge")
+            try:
+                distance = float(row["cost"])
+            except ValueError as error:
+                raise ValueError(f"distance row {index} cost must be numeric") from error
+            if not math.isfinite(distance) or distance < 0:
+                raise ValueError(f"distance row {index} cost must be finite and non-negative")
+            distances[edge] = distance
+    if any(distances.get((node, node)) != 0 for node in range(len(sensor_ids))):
+        raise ValueError("every sensor must have a zero-distance self edge")
+
+    mean = math.fsum(distances.values()) / len(distances)
+    scale = math.sqrt(math.fsum((distance - mean) ** 2 for distance in distances.values()) / len(distances))
+    if scale == 0:
+        raise ValueError("road distances must have non-zero variance")
+    edges = []
+    for (source, target), distance in sorted(distances.items()):
+        affinity = math.exp(-(distance / scale) ** 2)
+        if affinity >= _METR_LA_THRESHOLD:
+            edges.append((source, target, affinity))
+    graph = Graph(len(sensor_ids), [source for source, _, _ in edges], [target for _, target, _ in edges])
+    return graph, array("f", (affinity for _, _, affinity in edges))
+
+
+def _float_tensor(values: array[float], shape: tuple[int, ...], device: str | None) -> Tensor:
+    if values.itemsize != 4:
+        raise RuntimeError("native float storage must be four bytes")
+    return Tensor(values.tobytes(), dtype=dtypes.float32, device=device).reshape(*shape).realize()
 
 
 def _read_montevideo(path: str | Path | None = None) -> _MontevideoSource:
