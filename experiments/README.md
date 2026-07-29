@@ -23,6 +23,10 @@ An owner beginning with `tinymesh.` names the promoted component. An owner of
 Negative model quality can reject a claim without invalidating a layer whose
 equation, gradients, shapes, and sparse work remain correct.
 
+Every stage follows the repository
+[closure gate](../docs/experiments.md#close-a-stage) before another dataset or
+architecture begins.
+
 ## Record a run
 
 Pass experiment settings explicitly:

@@ -56,3 +56,24 @@ No result creates an API automatically. Dataset policy, task readouts,
 train/validation/test rules, checkpoint selection, and claims remain
 experiment-owned.
 
+## Close a stage
+
+An experiment stage is complete only when all five boundaries are explicit:
+
+1. **Evidence:** freeze the revision, settings, splits, controls, seeds,
+   metrics, and result.
+2. **Review:** state exactly what the result proves, does not prove, and what
+   evidence would change the decision.
+3. **Promotion:** move only repeated, stable mathematical contracts with live
+   callers into `src/tinymesh/`; record why everything else remains
+   research-only or is deleted.
+4. **Distillation:** synchronize the research record, experiment catalog,
+   README capability claims, documentation index, and navigation without
+   copying local run envelopes into Git.
+5. **Delivery:** run the complete relevant verification, merge the coherent
+   change, confirm main-branch CI and documentation deployment, then remove the
+   branch and worktree.
+
+Do not begin a new dataset or architecture stage while one of these is
+unfinished. A negative result closes a claim as completely as a positive one
+when its controls and limits are preserved.
