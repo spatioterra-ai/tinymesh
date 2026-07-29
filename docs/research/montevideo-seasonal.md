@@ -105,10 +105,10 @@ primitive.
 ## Consequence
 
 The previous recurrent models were compared against a floor that was too weak.
-The next experiment should first subtract this selected temporal prediction,
-then ask whether causally delayed residuals arriving on real directed edges
-beat reverse-edge and permuted-field controls. Until that test succeeds,
-Tinymesh adds no edge-field API or model.
+The follow-up [delayed-edge study](montevideo-delayed-edges.md) subtracts this
+prediction and tests real directed edges against reverse-edge and
+permuted-field controls. It fails the promotion gate, so Tinymesh adds no
+edge-field API or model.
 
 ## Limits
 

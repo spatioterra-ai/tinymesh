@@ -115,6 +115,9 @@ field; no operation constructs an `N * E` axis.
 - one validation-selected, train-only hour-of-week baseline that improves
   Montevideo validation RMSE by 27.1% and test RMSE by 32.8% over persistence
   without using topology;
+- one delayed-residual study where real directed edges fail the
+  metric-and-block gate against the seasonal floor, reversed edges, and
+  permuted node fields;
 - one matched three-seed Montevideo forecast where coordinate and road
   diffusion do not beat unit diffusion and all learned models lose to
   persistence;
@@ -168,6 +171,8 @@ machinery, geodesy, and cells are not implemented.
   splits, a fused directed recurrent cell, and the negative geometry result.
 - [Montevideo seasonal floor](research/montevideo-seasonal.md) records the
   temporal control a later graph experiment must beat.
+- [Montevideo delayed edges](research/montevideo-delayed-edges.md) records the
+  controlled negative graph-signal result and sparse execution path.
 - [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
   training comparison, including the node-local controls and negative result.
 
