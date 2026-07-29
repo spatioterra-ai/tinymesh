@@ -303,11 +303,15 @@ def _trajectories(
   steps: int,
   seed: int,
   device: str,
+  *,
+  initial: str = "dense",
 ) -> Trajectories:
+  if initial not in ("dense", "pulse"):
+    raise ValueError("initial must be 'dense' or 'pulse'")
   random = Random(seed)
   trajectories = []
   for _ in range(count):
-    values = [random.uniform(-1, 1) for _ in range(topology.nodes)]
+    values = _initial(topology.nodes, random, pulse=initial == "pulse")
     mean = sum(values) / topology.nodes
     values = [value - mean for value in values]
     trajectory = [[[value] for value in values]]
@@ -316,6 +320,17 @@ def _trajectories(
       trajectory.append([[value] for value in values])
     trajectories.append(trajectory)
   return Trajectories(Tensor(trajectories, device=device).realize())
+
+
+def _initial(nodes: int, random: Random, *, pulse: bool) -> list[float]:
+  if not pulse:
+    return [random.uniform(-1, 1) for _ in range(nodes)]
+  values = [0.0] * nodes
+  selected = random.sample(range(nodes), 4)
+  for first, second in zip(selected[::2], selected[1::2]):
+    amplitude = random.uniform(0.5, 1)
+    values[first], values[second] = amplitude, -amplitude
+  return values
 
 
 def _step(values: list[float], topology: Topology) -> list[float]:
@@ -346,9 +361,27 @@ def _model(
   hidden_features: int,
   device: str,
 ) -> tuple[Model, Operator, int]:
+  model: Model
   if model_name == "lstm":
-    return LocalForecast(hidden_features), None, 0
+    model = LocalForecast(hidden_features)
+  elif model_name == "gconv_gru":
+    model = GConvForecast(hidden_features)
+  elif model_name == "diffusion_linear":
+    model = LinearDiffusionForecast()
+  else:
+    model = DiffusionForecast(1, hidden_features)
+  operator, edges = _operator(model_name, topology_name, topology, device)
+  return model, operator, edges
 
+
+def _operator(
+  model_name: str,
+  topology_name: str,
+  topology: Topology,
+  device: str,
+) -> tuple[Operator, int]:
+  if model_name == "lstm":
+    return None, 0
   selected = {
     "true": topology,
     "permuted": _permuted(topology),
@@ -356,14 +389,13 @@ def _model(
   }[topology_name]
   if model_name == "gconv_gru":
     graph = _symmetric(selected)
-    return GConvForecast(hidden_features), graph, graph.edges
+    return graph, graph.edges
 
   graph = Graph(selected.nodes, selected.source, selected.target)
   affinity = Tensor(selected.affinity, device=device).realize()
   diffusion = DirectedDiffusion(graph, affinity)
   Tensor.realize(diffusion.forward_weight, diffusion.reverse_weight)
-  model = LinearDiffusionForecast() if model_name == "diffusion_linear" else DiffusionForecast(1, hidden_features)
-  return model, diffusion, graph.edges
+  return diffusion, graph.edges
 
 
 def _fit(

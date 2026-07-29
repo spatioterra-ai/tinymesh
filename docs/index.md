@@ -200,6 +200,8 @@ machinery, geodesy, and cells are not implemented.
 - [Controlled transport forecast](research/transport-forecast.md) isolates
   identifiable spatial propagation behind held-out trajectories and false
   topology.
+- [Controlled transport transfer](research/transport-transfer.md) tests frozen
+  weights on unseen graph sizes, localized fields, and longer rollouts.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements.
