@@ -39,6 +39,10 @@ class StaticGraphTemporalSignal(Sequence[tuple[Tensor, Tensor]]):
             raise ValueError("node IDs must be unique")
         if not dtypes.is_float(self.x.dtype):
             raise ValueError(f"x must have a floating dtype, got {self.x.dtype}")
+        if not dtypes.is_float(self.y.dtype):
+            raise ValueError(f"y must have a floating dtype, got {self.y.dtype}")
+        if self.x.dtype != self.y.dtype:
+            raise ValueError("x and y must share one dtype")
         if self.x.device != self.y.device or not isinstance(self.x.device, str):
             raise ValueError("x and y must share one device")
         if self.edge_weight is not None:
@@ -52,7 +56,7 @@ class StaticGraphTemporalSignal(Sequence[tuple[Tensor, Tensor]]):
                 raise ValueError("x and edge_weight must share dtype and device")
 
     def __len__(self) -> int:
-        return self.x.shape[0]
+        return int(self.x.shape[0])
 
     @overload
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor]: ...
