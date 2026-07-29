@@ -207,7 +207,7 @@ wheels = [
 [[package]]
 name = "tinygrad"
 version = "0.13.0"
-source = { git = "https://github.com/tinygrad/tinygrad.git?rev=7d48926293484b78ea2f5a3c73108c3f52a36274#7d48926293484b78ea2f5a3c73108c3f52a36274" }
+source = { git = "https://github.com/tinygrad/tinygrad.git?rev=a17387d6a09307647ca71a9df387b438082a4ca4#a17387d6a09307647ca71a9df387b438082a4ca4" }
 
 [[package]]
 name = "tinymesh"
@@ -223,7 +223,7 @@ docs = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "tinygrad", git = "https://github.com/tinygrad/tinygrad.git?rev=7d48926293484b78ea2f5a3c73108c3f52a36274" }]
+requires-dist = [{ name = "tinygrad", git = "https://github.com/tinygrad/tinygrad.git?rev=a17387d6a09307647ca71a9df387b438082a4ca4" }]
 
 [package.metadata.requires-dev]
 docs = [{ name = "zensical", specifier = "==0.0.51" }]
