@@ -71,6 +71,20 @@ class TemporalSignalTest(unittest.TestCase):
             StaticGraphTemporalSignal(graph, ("a", ""), x, y)
         with self.assertRaisesRegex(ValueError, "unique"):
             StaticGraphTemporalSignal(graph, ("a", "a"), x, y)
+        with self.assertRaisesRegex(ValueError, "y must have a floating dtype"):
+            StaticGraphTemporalSignal(
+                graph,
+                ("a", "b"),
+                x,
+                Tensor.ones(3, 2, 1, dtype=dtypes.int, device=Device.DEFAULT),
+            )
+        with self.assertRaisesRegex(ValueError, "share one dtype"):
+            StaticGraphTemporalSignal(
+                graph,
+                ("a", "b"),
+                x,
+                Tensor.ones(3, 2, 1, dtype=dtypes.float16, device=Device.DEFAULT),
+            )
         with self.assertRaisesRegex(ValueError, r"edge_weight must have shape \[1\]"):
             StaticGraphTemporalSignal(graph, ("a", "b"), x, y, Tensor.ones(2))
         with self.assertRaisesRegex(ValueError, "floating"):
