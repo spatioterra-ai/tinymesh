@@ -7,7 +7,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
-    "tinygrad @ git+https://github.com/tinygrad/tinygrad.git@dd16d5aead62e0207c0c3c50c19bc8b67e176c55",
+    "tinygrad @ git+https://github.com/tinygrad/tinygrad.git@6ea7d366fa92842c0bc8b7b080e26e83a7406252",
 ]
 
 [build-system]
