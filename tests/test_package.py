@@ -1,4 +1,5 @@
 import unittest
+from importlib.metadata import requires
 from pathlib import Path
 
 import tinymesh
@@ -16,6 +17,13 @@ class PackageTest(unittest.TestCase):
     def test_type_marker_and_runtime(self) -> None:
         self.assertTrue(Path(tinymesh.__file__).with_name("py.typed").is_file())
         self.assertEqual((Tensor([1, 2]) + 1).tolist(), [2, 3])
+
+    def test_tinygrad_is_the_only_runtime_dependency(self) -> None:
+        dependencies = [
+            requirement.split()[0]
+            for requirement in requires("tinymesh") or []
+        ]
+        self.assertEqual(dependencies, ["tinygrad"])
 
 
 if __name__ == "__main__":

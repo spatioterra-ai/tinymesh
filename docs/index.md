@@ -8,11 +8,11 @@ nodes may interact. Coordinates, higher-dimensional cells, and time can extend
 that structure without replacing the sparse core.
 
 tinymesh is experimental. It currently proves fixed-graph unit and
-scalar-weighted sparse aggregation, target-normalized sparse attention, and
-trainable mean-GraphSAGE, unweighted GCN, single- and multi-head GAT, T-GCN,
-and Chebyshev GConvGRU callers on CPU and Metal. Its public 0.x surface is
-`Graph` and `StaticGraphTemporalSignal`; the contract is intentionally narrow
-and not stable.
+scalar-weighted sparse aggregation, metric edge geometry, target-normalized
+sparse attention, and trainable mean-GraphSAGE, unweighted GCN, single- and
+multi-head GAT, T-GCN, and Chebyshev GConvGRU callers on CPU and Metal. Its
+public 0.x surface is `Graph` and `StaticGraphTemporalSignal`; the contract is
+intentionally narrow and not stable.
 
 ## Try it
 
@@ -52,6 +52,9 @@ topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
 sparse operation       sum, endpoint projection, target softmax
     |
     v
+metric composition     position -> displacement -> distance -> edge weight
+    |
+    v
 temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
     |
     v
@@ -79,6 +82,8 @@ field; no operation constructs an `N * E` axis.
 - COO-ordered scalar edge weights with one gradient owner per edge;
 - COO-ordered source and target projection with sparse backward;
 - stable target-grouped softmax over scalar edge scores;
+- metric displacement, distance, and radial weighting composed without a new
+  public type or geo dependency;
 - fixed-topology device-buffer reuse;
 - one mean-GraphSAGE composition whose neighbor parameter learns through the
   sparse boundary;
@@ -104,8 +109,8 @@ small fixed-topology data boundary. Model callers remain experiments.
 The backend uses an alpha tinygrad surface and disables default kernel
 optimization for its data-dependent loop. Vectorized attention heads, external
 vector edge features, batching different graphs, changing topology,
-higher-order gradients, timestamps, masks, geometry, and cells are not
-implemented.
+higher-order gradients, timestamps, masks, coordinate-reference metadata,
+geodesy, and cells are not implemented.
 
 ## Learn how it works
 
@@ -117,6 +122,9 @@ implemented.
   temporal resolution, and why missingness is not zero.
 - [Spatial structure](research/spatial-structure.md) separates physical
   connectivity, coordinate frames, node positions, and derived edge geometry.
+- [Spatial geometry experiment](research/spatial-geometry.md) records the
+  zero-geo-dependency metric composition, symmetries, gradients, and sparse
+  UOps.
 - [Sparse aggregation feasibility](research/sparse-aggregation.md) records the
   revision-bound implementation and scaling evidence.
 - [Mean GraphSAGE experiment](research/mean-sage.md) records the exact learning

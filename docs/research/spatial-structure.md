@@ -161,9 +161,9 @@ edge_values + tensor math     derive COO edge geometry
 Graph.sum                     aggregates scalar-weighted node messages
 ```
 
-The next experiment should compare topology-only and distance-weighted messages
-on one fixed physical graph. It should test node-relabeling equivariance,
-translation invariance of displacement, rotation invariance of distance, and
-sparse intermediate shapes. A vector edge-message aggregation primitive earns
+The [spatial geometry experiment](spatial-geometry.md) now proves that direct
+composition on one fixed graph preserves COO identity, sparse intermediate
+shapes, first-order gradients, vertex relabeling, translation, and rotation
+contracts on CPU and Metal. A vector edge-message aggregation primitive earns
 its place only when directional displacement is a real caller; a `Mesh` type
 earns its place only when faces, cells, or hierarchy need an owner.
