@@ -66,6 +66,10 @@ COO connectivity + scalar edge facts
 - A Montevideo forecast protocol preserves target time, fits per-node
   normalization on training rows, and reports raw-unit zero, persistence, and
   train-mean baselines.
+- A fused bidirectional diffusion GRU trains with unit, coordinate-distance,
+  and road-distance affinity. In the frozen three-seed Montevideo comparison,
+  neither geometry variant beats unit diffusion and every learned model loses
+  to persistence.
 - Causal window batches feed node-local LSTM, T-GCN, and GConvGRU forecasts.
   On the first three-seed Chickenpox run, LSTM and GConvGRU are tied; the
   graph-recurrent cell has no stable quality advantage yet.
@@ -135,6 +139,12 @@ Inspect the causal Montevideo forecast protocol and baselines:
 DEV=CPU uv run python -m experiments.montevideo_forecast
 ```
 
+Run the frozen Montevideo comparison:
+
+```console
+DEV=CPU MODEL=all SEED=-1 EPOCHS=10 uv run python -m experiments.montevideo_forecast
+```
+
 Train the controlled Chickenpox forecast:
 
 ```console
@@ -199,7 +209,7 @@ run the [quick start](docs/quickstart.md):
 - [Montevideo spatial-temporal data](docs/research/montevideo-data.md) aligns
   real directed topology, position, distance, and hourly node fields.
 - [Montevideo forecast](docs/research/montevideo-forecast.md) fixes target-time
-  splits, train-only normalization, and raw-unit baselines.
+  splits and retains the negative matched geometry comparison.
 - [Chickenpox forecast](docs/research/chickenpox-forecast.md) follows causal
   batches through three recurrent models and retains the inconclusive graph
   comparison.
@@ -220,6 +230,10 @@ record carries a fixed coordinate frame and unit; general coordinate-reference
 machinery, geodesy, higher-dimensional cells, and richer temporal fields remain
 the wider mesh direction. They enter only when the sparse graph core extends
 naturally; tinymesh is not a GIS, trainer framework, application, or model zoo.
+
+The first matched directed forecast found no stable value from fixed scalar
+distance. That evidence closes the current geometry stage without a public
+helper; new spatial machinery needs a caller that can distinguish it.
 
 ## Development
 

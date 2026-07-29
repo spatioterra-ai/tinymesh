@@ -102,6 +102,10 @@ Run `DEV=<device> uv run python -m experiments.montevideo_data` when changing
 Montevideo tensor lowering or its node, edge, geometry, and time alignment.
 Run `DEV=<device> uv run python -m experiments.montevideo_forecast` when
 changing target-time splits, train-only normalization, or raw-unit baselines.
+Run `DEV=<device> uv run python -m unittest tests.test_directed_gru` when
+changing directed recurrence. Run the frozen forecast with
+`DEV=CPU EPOCHS=10 uv run python -m experiments.montevideo_forecast` only when
+a change can affect its result.
 Run `DEV=<device> uv run python -m experiments.gat` when changing endpoint
 projection, target normalization, or attention composition.
 Run `DEV=<device> uv run python -m experiments.multi_head_gat` when changing
