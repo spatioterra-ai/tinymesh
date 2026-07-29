@@ -46,23 +46,16 @@ COO connectivity + scalar edge facts
 - One tinygrad custom kernel implements both `A @ X` and `A.T @ dY`; weighted
   execution reuses it and computes `dw` with one owner per edge. Neither sum
   path constructs `[N, N]` or `[E, H]` intermediates.
-- A mean-GraphSAGE experiment sends gradients through the sparse boundary into
-  a neighbor parameter on CPU and Metal.
-- An unweighted GCN experiment composes source and destination degree scaling
-  around the same sparse sum.
-- Edge endpoint projection and target-grouped stable softmax compose trainable
-  single- and multi-head GAT experiments without an `N * E` axis.
-- A T-GCN experiment reuses one graph across ordered node snapshots and sends a
-  parameter gradient through space and time.
-- A GConvGRU experiment adds sparse Chebyshev filtering over both input and
-  hidden state and reports its extra parameter and sparse-call cost against
-  T-GCN.
+- `SAGEConv`, `GCNConv`, and `GATConv` compose direct tinygrad parameters over
+  the same sparse graph operations.
+- `TGCN`, `ChebConv`, and `GConvGRU` reuse one graph across ordered node
+  snapshots and send parameter gradients through space and time.
 - A fixed-graph temporal signal and pinned PyG Temporal chickenpox loader keep
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
 - A pinned Montevideo loader adds raw hourly values, projected node positions,
   observed road distance, and a fixed coordinate frame without a geo runtime.
-- A directed-diffusion experiment source-normalizes positive scalar affinity in
-  both graph directions with two sparse sums per application.
+- `DirectedDiffusion` and `DiffusionGRU` source-normalize scalar affinity in
+  both graph directions and keep recurrent propagation sparse.
 - A Montevideo forecast protocol preserves target time, fits per-node
   normalization on training rows, and reports raw-unit zero, persistence, and
   train-mean baselines.
@@ -82,11 +75,13 @@ COO connectivity + scalar edge facts
 - Each `Graph` owns and reuses private realized connectivity; incoming degree
   stays a lazy difference of its CSR row pointers.
 
-The public surface is experimental 0.x code, not a stability promise: the
-private CSR backend uses alpha `Tensor.custom_kernel` and tinygrad's default
-kernel optimization does not yet accept its data-dependent loop.
+`Graph` and `StaticGraphTemporalSignal` are top-level types. `tinymesh.nn` owns
+the proven reusable components and `tinymesh.datasets` owns pinned loaders.
+This is experimental 0.x code, not a stability promise: the private CSR backend
+uses alpha `Tensor.custom_kernel` and tinygrad's default kernel optimization
+does not yet accept its data-dependent loop.
 
-## Run the proof
+## Try it
 
 Install the exact locked tinygrad revision with
 [uv](https://docs.astral.sh/uv/):
@@ -95,102 +90,41 @@ Install the exact locked tinygrad revision with
 uv sync --locked
 ```
 
-Then run one sparse aggregation from the repository checkout:
+Run one sparse aggregation:
 
 ```python
-from tinygrad import Tensor
+from tinygrad import Device, Tensor
 from tinymesh import Graph
 
 graph = Graph(4, source=[0, 1, 1], target=[2, 2, 3])
-state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
+state = Tensor([[2.0], [4.0], [8.0], [16.0]], device=Device.DEFAULT).realize()
 
 print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
 ```
 
-Run the six trainable witnesses:
+Layers are direct tinygrad-style objects:
 
-```console
-DEV=CPU uv run python -m experiments.mean_sage
-DEV=METAL uv run python -m experiments.mean_sage
-DEV=CPU uv run python -m experiments.gcn
-DEV=METAL uv run python -m experiments.gcn
-DEV=CPU uv run python -m experiments.gat
-DEV=METAL uv run python -m experiments.gat
-DEV=CPU uv run python -m experiments.multi_head_gat
-DEV=METAL uv run python -m experiments.multi_head_gat
-DEV=CPU uv run python -m experiments.tgcn
-DEV=METAL uv run python -m experiments.tgcn
-DEV=CPU uv run python -m experiments.gconv_gru
-DEV=METAL uv run python -m experiments.gconv_gru
+```python
+from tinymesh.nn import SAGEConv
+
+layer = SAGEConv(in_features=1, out_features=2)
+print(layer(state, graph).shape)
+# (4, 2)
 ```
 
-Inspect the pinned external temporal dataset:
+List or record the revision-bound evidence:
 
 ```console
-DEV=CPU uv run python -m experiments.chickenpox_data
-DEV=METAL uv run python -m experiments.chickenpox_data
+uv run --locked python -m experiments.run --list
+uv run --locked python -m experiments.run mean_sage DEV=CPU
+uv run --locked python -m experiments.run tgcn DEV=METAL
+uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
 ```
 
-Inspect the pinned spatial-temporal dataset:
-
-```console
-DEV=CPU uv run python -m experiments.montevideo_data
-DEV=METAL uv run python -m experiments.montevideo_data
-```
-
-Inspect the causal Montevideo forecast protocol and baselines:
-
-```console
-DEV=CPU uv run python -m experiments.montevideo_forecast
-```
-
-Select the causal Montevideo seasonal floor:
-
-```console
-DEV=CPU uv run python -m experiments.montevideo_seasonal
-DEV=METAL uv run python -m experiments.montevideo_seasonal
-```
-
-Test delayed residuals on the real graph and structural controls:
-
-```console
-DEV=CPU uv run python -m experiments.montevideo_delayed_edges
-DEV=METAL uv run python -m experiments.montevideo_delayed_edges
-```
-
-Run the frozen Montevideo comparison:
-
-```console
-DEV=CPU MODEL=all SEED=-1 EPOCHS=10 uv run python -m experiments.montevideo_forecast
-```
-
-Train the controlled Chickenpox forecast:
-
-```console
-DEV=CPU uv run python -m experiments.chickenpox_forecast
-```
-
-Inspect weighted forward and both first-order gradients:
-
-```console
-DEV=CPU uv run python -m experiments.weighted_aggregation
-DEV=METAL uv run python -m experiments.weighted_aggregation
-```
-
-Inspect metric geometry and gradients:
-
-```console
-DEV=CPU uv run python -m experiments.spatial_geometry
-DEV=METAL uv run python -m experiments.spatial_geometry
-```
-
-Inspect source-normalized propagation in both graph directions:
-
-```console
-DEV=CPU uv run python -m experiments.directed_diffusion
-DEV=METAL uv run python -m experiments.directed_diffusion
-```
+Successful runs write ignored local envelopes containing the tinymesh revision,
+all five reference pins, explicit settings, execution bounds, and the JSON
+observation. See [Experiments](docs/experiments.md).
 
 ## Learn
 
@@ -203,6 +137,10 @@ run the [quick start](docs/quickstart.md):
   message -> aggregate -> update and the gradient path.
 - [Time](docs/concepts/time.md) separates ordered node fields from fixed,
   weighted, and changing topology.
+- [Experiments](docs/experiments.md) explains the catalog, local run ledger,
+  and component graduation.
+- [Reference projects](docs/reference-projects.md) records how tinygrad, PyG,
+  PyG Temporal, TorchGeo, and TerraTorch influence the design.
 - [Spatial structure](docs/research/spatial-structure.md) separates physical
   connectivity, coordinate frames, node positions, and derived edge geometry.
 - [Spatial geometry experiment](docs/research/spatial-geometry.md) proves
@@ -242,9 +180,11 @@ run the [quick start](docs/quickstart.md):
 
 Unit and scalar-weighted sums now share deterministic topology plus
 destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
-endpoint projection, target softmax, and in-degree; its private backend owns
+incoming mean, endpoint projection, target softmax, and in-degree; its private backend owns
 lowering and rebuildable device caches. A fixed-graph temporal signal owns
 aligned node IDs, features, targets, edge weights, and causal window batches.
+`tinymesh.nn` owns equations and parameters; experiments own data policy,
+unrolling, training, controls, and claims.
 The alpha kernel and optimizer boundary still block stability. Vectorized
 attention heads, external vector edge features, batching different graphs,
 changing topology, timestamps, and masks remain unimplemented.
@@ -265,7 +205,7 @@ controls. New spatial machinery still needs a caller that can distinguish it.
 
 ```console
 uv sync --locked
-uv run python -m unittest discover -s tests -p 'test_*.py'
+uv run --locked python -m unittest discover -s tests -p 'test_*.py'
 uv build
 ```
 
@@ -276,11 +216,13 @@ uv run --locked --only-group docs zensical build --clean --strict
 uv run --locked --only-group docs zensical serve
 ```
 
-The pinned submodules are optional, reference-only source for studying tinygrad,
-PyTorch Geometric, PyTorch Geometric Temporal, TorchGeo, and TerraTorch:
+The pinned submodules are optional, reference-only source:
 
 ```console
 git submodule update --init
 ```
+
+Their exact roles and exclusions live in
+[Reference projects](docs/reference-projects.md).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before changing code.

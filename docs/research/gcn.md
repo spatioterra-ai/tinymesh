@@ -27,10 +27,11 @@ connectivity; the layer owns normalization and its linear map. A later
 multiplication independently. The caller supplies the self-loops required by
 the GCN renormalization rule, keeping topology mutation explicit.
 
-This is the second semantic caller for `Graph.sum`, not evidence for a stable
-model API. The caller remains an experiment, and the private implementation
-still crosses tinygrad's alpha `Tensor.custom_kernel` boundary with default
-kernel optimization disabled.
+This was the second semantic caller for `Graph.sum`, not model-quality
+evidence. The proven equation now lives in `tinymesh.nn.GCNConv`; the
+experiment retains its dense reference and learning witness. The private graph
+implementation still crosses tinygrad's alpha `Tensor.custom_kernel` boundary
+with default kernel optimization disabled.
 
 ## Evidence
 

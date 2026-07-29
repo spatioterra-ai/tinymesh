@@ -18,8 +18,9 @@ edge_values(X, endpoint)  node field [N, H] -> COO edge field [E, H]
 softmax(score)             COO edge score [E] -> target-normalized score [E]
 ```
 
-The layer remains an experiment. Automatic self-loops, dropout, residuals,
-edge-feature scoring, vectorized head execution, and a public model API are not
+The proven layer now lives in `tinymesh.nn.GATConv`; this experiment retains
+the one- and two-head learning witnesses. Automatic self-loops, dropout,
+residuals, edge-feature scoring, and vectorized head execution are not
 implemented.
 
 ## Composition

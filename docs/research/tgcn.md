@@ -10,9 +10,10 @@ At tinygrad revision
 Tinymesh unrolls a T-GCN cell across fixed-topology snapshots and differentiates
 through space and time on CPU and Metal.
 
-The result adds no public API and no `src/tinymesh` code. One graph is reused;
-snapshots and hidden state are ordinary tinygrad tensors; the cell remains an
-experiment.
+At that revision the result added no public API. The same checked equation now
+lives in `tinymesh.nn.TGCN`; one graph is reused, snapshots and hidden state are
+ordinary tinygrad tensors, and this experiment retains the temporal learning
+witness.
 
 ## Why T-GCN first
 
