@@ -137,6 +137,9 @@ field; no operation constructs an `N * E` axis.
   persistence;
 - one three-seed Chickenpox forecast comparing matched LSTM, T-GCN, and
   GConvGRU models without finding a stable graph advantage;
+- one controlled three-seed transport forecast where true-topology
+  DiffusionGRU reduces validation one-step RMSE by 80.2% and four-step rollout
+  RMSE by 79.3% against a degree-matched false graph;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
