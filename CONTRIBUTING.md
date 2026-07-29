@@ -78,6 +78,8 @@ Run focused checks first. The broad local gate is:
 
 ```console
 uv sync --locked
+uv run --locked --group lint ruff check .
+uv run --locked --group lint mypy
 uv run python -m unittest discover -s tests -p 'test_*.py'
 uv build
 ```

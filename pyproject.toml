@@ -18,3 +18,51 @@ build-backend = "uv_build"
 docs = [
     "zensical==0.0.51",
 ]
+lint = [
+    "mypy==1.19.1",
+    "ruff==0.14.10",
+]
+
+[tool.mypy]
+files = ["src/tinymesh"]
+check_untyped_defs = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_configs = true
+
+[tool.ruff]
+exclude = ["submodules"]
+indent-width = 2
+line-length = 150
+preview = true
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "C416",
+    "E112",
+    "E113",
+    "E203",
+    "E272",
+    "E275",
+    "E303",
+    "E304",
+    "E501",
+    "E702",
+    "E703",
+    "E71",
+    "E72",
+    "E731",
+    "F",
+    "FURB110",
+    "RET506",
+    "RET507",
+    "RUF018",
+    "UP039",
+    "W191",
+    "W291",
+    "W293",
+    "W6",
+]
