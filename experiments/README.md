@@ -23,6 +23,10 @@ An owner beginning with `tinymesh.` names the promoted component. An owner of
 Negative model quality can reject a claim without invalidating a layer whose
 equation, gradients, shapes, and sparse work remain correct.
 
+Every stage follows the repository
+[closure gate](../docs/experiments.md#close-a-stage) before another dataset or
+architecture begins.
+
 ## Record a run
 
 Pass experiment settings explicitly:
@@ -31,6 +35,7 @@ Pass experiment settings explicitly:
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
 uv run --locked python -m experiments.run transport_forecast DEV=CPU MODEL=diffusion_gru TOPOLOGY=true SEED=0
+uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru NODES=all INITIAL=dense SEED=0
 ```
 
 The runner refuses dirty tracked work, executes only cataloged modules, clears

@@ -67,4 +67,21 @@ CATALOG = {
             "TOPOLOGY",
         ),
     ),
+    "transport_transfer": Experiment(
+        "forecast",
+        "research-only",
+        (
+            "DEV",
+            "BS",
+            "EPOCHS",
+            "HIDDEN",
+            "HISTORY",
+            "HORIZON",
+            "INITIAL",
+            "LR",
+            "MODEL",
+            "NODES",
+            "SEED",
+        ),
+    ),
 }

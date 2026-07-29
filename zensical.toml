@@ -32,6 +32,7 @@ nav = [
     "research/montevideo-delayed-edges.md",
     "research/chickenpox-forecast.md",
     "research/transport-forecast.md",
+    "research/transport-transfer.md",
   ]},
 ]
 

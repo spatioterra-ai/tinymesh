@@ -140,6 +140,9 @@ field; no operation constructs an `N * E` axis.
 - one controlled three-seed transport forecast where true-topology
   DiffusionGRU reduces validation one-step RMSE by 80.2% and four-step rollout
   RMSE by 79.3% against a degree-matched false graph;
+- one controlled transfer study where a frozen DiffusionGRU beats structural,
+  node-local, and persistence controls on unseen 32- and 48-node graphs for
+  dense and localized fields across 16 recursive steps;
 - CPU and Metal tests.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
@@ -200,6 +203,8 @@ machinery, geodesy, and cells are not implemented.
 - [Controlled transport forecast](research/transport-forecast.md) isolates
   identifiable spatial propagation behind held-out trajectories and false
   topology.
+- [Controlled transport transfer](research/transport-transfer.md) tests frozen
+  weights on unseen graph sizes, localized fields, and longer rollouts.
 
 Concept pages describe ideas that should survive an implementation change.
 Research records bind claims to exact revisions and measurements.
