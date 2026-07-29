@@ -123,11 +123,16 @@ dependencies do not make unprojected angular coordinates metric.
 
 ## Limits
 
-The experiment proves static numeric positions, Euclidean distance, one
+The experiment proves static floating-point positions, Euclidean distance, one
 isotropic exponential weight, fixed directed topology, one device, and
 first-order gradients. It does not prove geodesy, learned vector messages,
 radius or nearest-neighbor graph construction, moving coordinates, faces,
 cells, hierarchy, model quality, or performance.
+
+The position-gradient witness uses strictly positive edge distances. The
+Euclidean norm is not differentiable at zero, so coincident endpoints remain
+outside this gradient contract unless a caller chooses an explicit
+regularization or subgradient convention.
 
 A vector reducer earns a public operation only when directional edge features
 have a caller. A `Mesh` earns a type only when faces, cells, or hierarchy need

@@ -49,10 +49,13 @@ edge facts             source -> target, optional COO-aligned scalar value
 topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
     |
     v
-sparse operation       sum, endpoint projection, target softmax
+sparse edge operation  endpoint projection, target softmax
     |
     v
 metric composition     position -> displacement -> distance -> edge weight
+    |
+    v
+sparse aggregation     unit or scalar-weighted sum
     |
     v
 temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
