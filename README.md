@@ -63,6 +63,9 @@ COO connectivity + scalar edge facts
   observed road distance, and a fixed coordinate frame without a geo runtime.
 - A directed-diffusion experiment source-normalizes positive scalar affinity in
   both graph directions with two sparse sums per application.
+- A Montevideo forecast protocol preserves target time, fits per-node
+  normalization on training rows, and reports raw-unit zero, persistence, and
+  train-mean baselines.
 - Causal window batches feed node-local LSTM, T-GCN, and GConvGRU forecasts.
   On the first three-seed Chickenpox run, LSTM and GConvGRU are tied; the
   graph-recurrent cell has no stable quality advantage yet.
@@ -124,6 +127,12 @@ Inspect the pinned spatial-temporal dataset:
 ```console
 DEV=CPU uv run python -m experiments.montevideo_data
 DEV=METAL uv run python -m experiments.montevideo_data
+```
+
+Inspect the causal Montevideo forecast protocol and baselines:
+
+```console
+DEV=CPU uv run python -m experiments.montevideo_forecast
 ```
 
 Train the controlled Chickenpox forecast:
@@ -189,6 +198,8 @@ run the [quick start](docs/quickstart.md):
   canonical PyG Temporal dataset into the public fixed-graph signal.
 - [Montevideo spatial-temporal data](docs/research/montevideo-data.md) aligns
   real directed topology, position, distance, and hourly node fields.
+- [Montevideo forecast](docs/research/montevideo-forecast.md) fixes target-time
+  splits, train-only normalization, and raw-unit baselines.
 - [Chickenpox forecast](docs/research/chickenpox-forecast.md) follows causal
   batches through three recurrent models and retains the inconclusive graph
   comparison.

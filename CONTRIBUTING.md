@@ -100,6 +100,8 @@ Run `uv run python -m experiments.montevideo_source` when changing the bounded
 Montevideo source or its validation contract.
 Run `DEV=<device> uv run python -m experiments.montevideo_data` when changing
 Montevideo tensor lowering or its node, edge, geometry, and time alignment.
+Run `DEV=<device> uv run python -m experiments.montevideo_forecast` when
+changing target-time splits, train-only normalization, or raw-unit baselines.
 Run `DEV=<device> uv run python -m experiments.gat` when changing endpoint
 projection, target normalization, or attention composition.
 Run `DEV=<device> uv run python -m experiments.multi_head_gat` when changing

@@ -110,6 +110,8 @@ field; no operation constructs an `N * E` axis.
 - one pinned PyG Temporal chickenpox loader with no PyTorch or NumPy runtime;
 - one pinned Montevideo loader that aligns directed topology, raw hourly
   signals, projected position, road distance, and one fixed coordinate frame;
+- one Montevideo protocol with target-time splits, train-only per-node
+  normalization, and raw-unit zero, persistence, and train-mean baselines;
 - one three-seed Chickenpox forecast comparing matched LSTM, T-GCN, and
   GConvGRU models without finding a stable graph advantage;
 - CPU and Metal tests.
@@ -156,6 +158,8 @@ machinery, geodesy, and cells are not implemented.
   external dataset, its lowering, framework parity, and window contract.
 - [Montevideo spatial-temporal data](research/montevideo-data.md) records the
   bounded real source and its topology, geometry, edge, and time contracts.
+- [Montevideo forecast](research/montevideo-forecast.md) records target-time
+  splits, train-only normalization, and raw-unit baselines.
 - [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
   training comparison, including the node-local controls and negative result.
 
