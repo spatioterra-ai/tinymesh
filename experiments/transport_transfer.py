@@ -53,6 +53,12 @@ class InitialResult:
 
 
 @dataclass(frozen=True)
+class TargetResult:
+  nodes: int
+  result: InitialResult
+
+
+@dataclass(frozen=True)
 class Observation:
   device: str
   data_seed: int
@@ -76,15 +82,13 @@ class Observation:
   training_seconds: float
   state: str
   checkpoints: tuple[Checkpoint, ...]
-  target_nodes: int
-  initial: InitialResult
+  targets: tuple[TargetResult, ...]
 
 
 def study(
   device: str,
   *,
   model_name: str = "diffusion_gru",
-  target_nodes: int = 32,
   initial: str = "dense",
   seed: int = 0,
   epochs: int = 30,
@@ -96,7 +100,6 @@ def study(
 ) -> Observation:
   _validate(
     model_name,
-    target_nodes=target_nodes,
     initial=initial,
     seed=seed,
     epochs=epochs,
@@ -135,14 +138,20 @@ def study(
     learning_rate=learning_rate,
   )
   state = _state(model)
-  result = _scope(
-    model,
-    model_name,
-    target_nodes,
-    initial,
-    device,
-    history=history,
-    horizon=horizon,
+  targets = tuple(
+    TargetResult(
+      nodes,
+      _scope(
+        model,
+        model_name,
+        nodes,
+        initial,
+        device,
+        history=history,
+        horizon=horizon,
+      ),
+    )
+    for nodes in TARGET_NODES
   )
   if _state(model) != state:
     raise RuntimeError("transfer evaluation mutated frozen model state")
@@ -169,8 +178,7 @@ def study(
     training_seconds=training_seconds,
     state=state,
     checkpoints=checkpoints,
-    target_nodes=target_nodes,
-    initial=result,
+    targets=targets,
   )
 
 
@@ -218,7 +226,7 @@ def _scope(
         ),
       )
       for structure, operator, edges, predict in operators
-    )
+    ),
   )
 
 
@@ -268,12 +276,10 @@ def _validate(model: str, **settings: int | float | str) -> None:
     raise ValueError("model must be 'lstm' or 'diffusion_gru'")
   if settings["initial"] not in ("dense", "pulse"):
     raise ValueError("initial must be 'dense' or 'pulse'")
-  for name in ("seed", "target_nodes", "epochs", "history", "horizon", "batch_size", "hidden_features"):
+  for name in ("seed", "epochs", "history", "horizon", "batch_size", "hidden_features"):
     value = settings[name]
     if not isinstance(value, int) or isinstance(value, bool) or value <= (0 if name != "seed" else -1):
       raise ValueError(f"{name} must be a {'non-negative' if name == 'seed' else 'positive'} integer")
-  if settings["target_nodes"] not in TARGET_NODES:
-    raise ValueError(f"target_nodes must be one of {TARGET_NODES}")
   if settings["learning_rate"] <= 0:
     raise ValueError("learning_rate must be positive")
 
@@ -282,7 +288,6 @@ def main() -> None:
   observation = study(
     Device.DEFAULT,
     model_name=getenv("MODEL", "diffusion_gru"),
-    target_nodes=getenv("NODES", 32),
     initial=getenv("INITIAL", "dense"),
     seed=getenv("SEED", 0),
     epochs=getenv("EPOCHS", 30),

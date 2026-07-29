@@ -24,12 +24,12 @@ The exact settings, three-seed results, promotion audit, and limits will be
 frozen here after the matched study.
 
 ```console
-uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru NODES=32 INITIAL=dense SEED=0 EPOCHS=30 HISTORY=4 HORIZON=16 BS=64 HIDDEN=8 LR=0.01
+uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru INITIAL=dense SEED=0 EPOCHS=30 HISTORY=4 HORIZON=16 BS=64 HIDDEN=8 LR=0.01
 ```
 
-Repeat with `NODES=24`, `NODES=48`, `INITIAL=pulse`, and model seeds 1 and 2.
-Node size and initial-condition family are explicit run boundaries so each
-process remains below the shared 600-second limit.
+Repeat with `INITIAL=pulse` and model seeds 1 and 2. Each process trains once
+and evaluates all three node sizes for one initial-condition family, remaining
+below the shared 600-second limit.
 
 The transfer claim passes only if true-topology DiffusionGRU beats its permuted
 and self-only controls plus the node-local LSTM on validation-selected,

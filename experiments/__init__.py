@@ -81,7 +81,6 @@ CATALOG = {
             "INITIAL",
             "LR",
             "MODEL",
-            "NODES",
             "SEED",
         ),
     ),

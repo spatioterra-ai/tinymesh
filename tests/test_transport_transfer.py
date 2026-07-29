@@ -76,7 +76,6 @@ class TransportTransferTest(unittest.TestCase):
         "gconv_gru",
         initial="dense",
         seed=0,
-        target_nodes=32,
         epochs=1,
         history=1,
         horizon=1,
