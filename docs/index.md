@@ -11,8 +11,9 @@ tinymesh is experimental. It currently proves fixed-graph unit and
 scalar-weighted sparse aggregation, metric edge geometry, target-normalized
 sparse attention, and trainable mean-GraphSAGE, unweighted GCN, single- and
 multi-head GAT, T-GCN, and Chebyshev GConvGRU callers on CPU and Metal. Its
-public 0.x surface is `Graph` and `StaticGraphTemporalSignal`; the contract is
-intentionally narrow and not stable.
+top-level 0.x surface is `Graph` and `StaticGraphTemporalSignal`; the dataset
+module also exposes revision-bound loaders. The contract is intentionally
+narrow and not stable.
 
 ## Try it
 
@@ -102,6 +103,8 @@ field; no operation constructs an `N * E` axis.
 - one shared-graph batch path that folds leading tensor lanes into sparse
   feature width and yields causal sequence-to-one windows;
 - one pinned PyG Temporal chickenpox loader with no PyTorch or NumPy runtime;
+- one pinned Montevideo loader that aligns directed topology, raw hourly
+  signals, projected position, road distance, and one fixed coordinate frame;
 - one three-seed Chickenpox forecast comparing matched LSTM, T-GCN, and
   GConvGRU models without finding a stable graph advantage;
 - CPU and Metal tests.
@@ -112,8 +115,8 @@ small fixed-topology data boundary. Model callers remain experiments.
 The backend uses an alpha tinygrad surface and disables default kernel
 optimization for its data-dependent loop. Vectorized attention heads, external
 vector edge features, batching different graphs, changing topology,
-higher-order gradients, timestamps, masks, coordinate-reference metadata,
-geodesy, and cells are not implemented.
+higher-order gradients, timestamps, masks, general coordinate-reference
+machinery, geodesy, and cells are not implemented.
 
 ## Learn how it works
 

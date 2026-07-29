@@ -59,6 +59,8 @@ COO connectivity + scalar edge facts
   T-GCN.
 - A fixed-graph temporal signal and pinned PyG Temporal chickenpox loader keep
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
+- A pinned Montevideo loader adds raw hourly values, projected node positions,
+  observed road distance, and a fixed coordinate frame without a geo runtime.
 - Causal window batches feed node-local LSTM, T-GCN, and GConvGRU forecasts.
   On the first three-seed Chickenpox run, LSTM and GConvGRU are tied; the
   graph-recurrent cell has no stable quality advantage yet.
@@ -115,6 +117,13 @@ DEV=CPU uv run python -m experiments.chickenpox_data
 DEV=METAL uv run python -m experiments.chickenpox_data
 ```
 
+Inspect the pinned spatial-temporal dataset:
+
+```console
+DEV=CPU uv run python -m experiments.montevideo_data
+DEV=METAL uv run python -m experiments.montevideo_data
+```
+
 Train the controlled Chickenpox forecast:
 
 ```console
@@ -167,6 +176,8 @@ run the [quick start](docs/quickstart.md):
   graph-convolutional recurrence under one controlled temporal witness.
 - [Chickenpox temporal data](docs/research/chickenpox-data.md) lowers one
   canonical PyG Temporal dataset into the public fixed-graph signal.
+- [Montevideo spatial-temporal data](docs/research/montevideo-data.md) aligns
+  real directed topology, position, distance, and hourly node fields.
 - [Chickenpox forecast](docs/research/chickenpox-forecast.md) follows causal
   batches through three recurrent models and retains the inconclusive graph
   comparison.
@@ -182,11 +193,11 @@ The alpha kernel and optimizer boundary still block stability. Vectorized
 attention heads, external vector edge features, batching different graphs,
 changing topology, timestamps, and masks remain unimplemented.
 
-Numeric coordinates now compose as ordinary node tensors.
-Coordinate-reference metadata, geodesy, higher-dimensional cells, and richer
-temporal fields remain the wider mesh direction. They enter only when the
-sparse graph core extends naturally; tinymesh is not a GIS, trainer framework,
-application, or model zoo.
+Numeric coordinates now compose as ordinary node tensors. One dataset-specific
+record carries a fixed coordinate frame and unit; general coordinate-reference
+machinery, geodesy, higher-dimensional cells, and richer temporal fields remain
+the wider mesh direction. They enter only when the sparse graph core extends
+naturally; tinymesh is not a GIS, trainer framework, application, or model zoo.
 
 ## Development
 

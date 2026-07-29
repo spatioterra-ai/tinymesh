@@ -1,7 +1,7 @@
 import hashlib
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.request import Request, urlopen
 
@@ -25,6 +25,30 @@ _MONTEVIDEO_URL = (
 _MONTEVIDEO_SHA256 = "37d9c6286d474077b5c05173c1570c4da42c387013116daa8862c7a6cab86a75"
 _MONTEVIDEO_MAX_BYTES = 4 * 1024 * 1024
 _MONTEVIDEO_TIMEOUT = 10
+
+
+@dataclass(frozen=True, eq=False)
+class MontevideoBus:
+    """The aligned PyG Temporal Montevideo bus signal."""
+
+    signal: StaticGraphTemporalSignal
+    position: Tensor
+    road_distance: Tensor
+    coordinate_frame: str = field(init=False, default="EPSG:32721")
+    length_unit: str = field(init=False, default="m")
+
+    def __post_init__(self) -> None:
+        if self.signal.edge_weight is not None:
+            raise ValueError("Montevideo signal edge_weight must be None")
+        if self.position.shape != (self.signal.graph.nodes, 2):
+            raise ValueError(f"position must have shape [{self.signal.graph.nodes}, 2], got {self.position.shape}")
+        if self.road_distance.shape != (self.signal.graph.edges,):
+            raise ValueError(
+                f"road_distance must have shape [{self.signal.graph.edges}], got {self.road_distance.shape}"
+            )
+        for name, value in (("position", self.position), ("road_distance", self.road_distance)):
+            if value.dtype != self.signal.x.dtype or value.device != self.signal.x.device:
+                raise ValueError(f"{name} must share signal dtype and device")
 
 
 @dataclass(frozen=True)
@@ -74,6 +98,32 @@ def chickenpox(
     )
     edge_weight = Tensor.ones(graph.edges, dtype=x.dtype, device=x.device).realize()
     return StaticGraphTemporalSignal(graph, node_ids, x, y, edge_weight)
+
+
+def montevideo_bus(
+    path: str | Path | None = None,
+    *,
+    lags: int = 4,
+    device: str | None = None,
+) -> MontevideoBus:
+    """Load the PyG Temporal Montevideo bus signal without normalization."""
+    if not isinstance(lags, int) or isinstance(lags, bool) or lags <= 0:
+        raise ValueError("lags must be a positive integer")
+    source = _read_montevideo(path)
+    steps = len(source.features[0])
+    if lags >= steps:
+        raise ValueError(f"lags must be smaller than the {steps} time steps")
+
+    features = Tensor(source.features, device=device).T
+    targets = Tensor(source.targets, dtype=features.dtype, device=features.device).T
+    snapshots = steps - lags
+    x = Tensor.stack(*(features[lag:lag + snapshots] for lag in range(lags)), dim=2).realize()
+    y = targets[lags:].unsqueeze(2).realize()
+    graph = Graph(len(source.node_ids), source.source, source.target)
+    signal = StaticGraphTemporalSignal(graph, tuple(str(node_id) for node_id in source.node_ids), x, y)
+    position = Tensor(source.position, dtype=x.dtype, device=x.device).realize()
+    road_distance = Tensor(source.road_distance, dtype=x.dtype, device=x.device).realize()
+    return MontevideoBus(signal, position, road_distance)
 
 
 def _read_montevideo(path: str | Path | None = None) -> _MontevideoSource:

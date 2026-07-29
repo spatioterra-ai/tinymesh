@@ -1,9 +1,9 @@
 # Montevideo spatial-temporal data
 
 The Montevideo bus dataset is the first real source with topology, metric
-position, scalar edge facts, and an ordered node signal. This stage starts at
-the source boundary. Tensor lowering follows only after the host values are
-validated and aligned.
+position, scalar edge facts, and an ordered node signal. Tinymesh validates the
+host values first, then lowers their shared node and edge identity into
+tinygrad tensors.
 
 ## Pinned source
 
@@ -40,8 +40,49 @@ oversized input. It returns plain immutable Python values; it creates no tensor,
 normalization statistic, or dense topology.
 
 The source calls its projected position fields `lon` and `lat`. Tinymesh
-preserves the numeric values without interpreting or transforming them at this
-boundary. Coordinate-frame ownership belongs to the aligned dataset lowering.
+preserves the numeric values without interpreting or transforming them at the
+source boundary.
+
+## Aligned tensors
+
+```python
+from tinymesh.datasets import montevideo_bus
+
+data = montevideo_bus(lags=4, device="CPU")
+signal = data.signal
+
+print(signal.x.shape, signal.y.shape)
+# (740, 675, 4) (740, 675, 1)
+print(data.position.shape, data.road_distance.shape)
+# (675, 2) (690,)
+```
+
+`MontevideoBus` composes the existing `StaticGraphTemporalSignal` with one
+node-aligned position tensor and one COO-edge-aligned road-distance tensor. The
+record rejects shape, dtype, or device misalignment. It is dataset-specific;
+it does not establish a generic spatial container.
+
+```text
+Graph                       675 nodes, 690 directed edges
+signal.x                    [740, 675, 4] raw lagged inflow
+signal.y                    [740, 675, 1] raw next-step inflow
+position                    [675, 2] node order
+road_distance               [690] original COO link order
+coordinate frame            EPSG:32721
+length unit                 m
+```
+
+The [Uruguay open-data catalog](https://catalogodatos.gub.uy/dataset/transporte-colectivo-paradas-puntos-de-control-y-recorridos-de-omnibus/resource/f30c15b5-2638-4315-b6a1-4868f9e6e02d)
+identifies the stop positions as WGS 84 / UTM zone 21S. The
+[Uruguay spatial-data recommendation](https://montevideo.gub.uy/sites/default/files/biblioteca/sistemareferenciaproyeccionesrecomendacionesideuy.pdf)
+maps that frame to EPSG:32721, whose position unit is metres. PyG Temporal calls
+the link weight road distance but does not label its unit. Its magnitude and
+agreement with UTM edge distance support metres; Tinymesh records `m` as this
+dataset interpretation and performs no projection.
+
+Road distance remains data, not an aggregation coefficient:
+`signal.edge_weight` is `None`. The loader also retains raw passenger counts.
+Train-only normalization belongs to forecasting, after a forward split.
 
 ## Full-source witness
 
@@ -65,3 +106,19 @@ At the pinned revision:
 ```
 
 This establishes source structure, not model quality or framework parity.
+
+## Tensor witness
+
+```console
+DEV=CPU uv run --locked python -m experiments.montevideo_data [path]
+DEV=METAL uv run --locked python -m experiments.montevideo_data [path]
+```
+
+Both devices report the aligned shapes above. For the first source edge, the
+straight-line coordinate distance is `171.59254 m` and the observed road
+distance is `172.2 m`. Keeping these as separate tensors makes the later
+forecast comparison explicit rather than silently treating either one as the
+graph weight.
+
+This stage proves deterministic lowering and real sparse composition. It makes
+no forecasting or performance claim.
