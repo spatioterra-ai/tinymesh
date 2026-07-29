@@ -5,8 +5,8 @@ from math import prod
 from tinygrad import Device, Tensor, dtypes
 from tinygrad.uop.ops import Ops
 
-from experiments.directed_diffusion import DirectedDiffusion
 from tinymesh import Graph
+from tinymesh.nn import DirectedDiffusion
 
 
 SOURCE = [0, 0, 1, 2, 2, 2]

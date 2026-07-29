@@ -11,10 +11,10 @@ from tinygrad import Context, Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 from tinygrad.uop.ops import Ops
 
-from experiments.directed_diffusion import DirectedDiffusion
 from experiments.directed_gru import DiffusionForecast
 from tinymesh import StaticGraphTemporalSignal
 from tinymesh.datasets import MontevideoBus, montevideo_bus
+from tinymesh.nn import DirectedDiffusion
 
 
 class LocalForecast:

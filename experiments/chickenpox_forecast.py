@@ -9,10 +9,9 @@ from dataclasses import asdict, dataclass
 from tinygrad import Context, Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 
-from experiments.gconv_gru import GConvGRU
-from experiments.tgcn import TGCN
 from tinymesh import Graph, StaticGraphTemporalSignal
 from tinymesh.datasets import chickenpox
+from tinymesh.nn import GConvGRU, TGCN
 
 
 class Forecast:
