@@ -9,10 +9,10 @@ that structure without replacing the sparse core.
 
 tinymesh is experimental. It currently proves fixed-graph unit and
 scalar-weighted sparse aggregation, metric edge geometry, target-normalized
-sparse attention, and trainable mean-GraphSAGE, unweighted GCN, single- and
-multi-head GAT, T-GCN, and Chebyshev GConvGRU callers on CPU and Metal. Its
-top-level 0.x surface is `Graph` and `StaticGraphTemporalSignal`; the dataset
-module also exposes revision-bound loaders. The contract is intentionally
+sparse attention, and trainable spatial, temporal, and directed-diffusion
+components on CPU and Metal. `Graph` and `StaticGraphTemporalSignal` are the
+top-level 0.x types; `tinymesh.nn` owns the proven reusable layers and
+`tinymesh.datasets` owns revision-bound loaders. The contract is intentionally
 narrow and not stable.
 
 ## Try it
@@ -24,11 +24,11 @@ uv sync --locked
 ```
 
 ```python
-from tinygrad import Tensor
+from tinygrad import Device, Tensor
 from tinymesh import Graph
 
 graph = Graph(4, source=[0, 1, 1], target=[2, 2, 3])
-state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
+state = Tensor([[2.0], [4.0], [8.0], [16.0]], device=Device.DEFAULT).realize()
 
 print(graph.sum(state).tolist())
 # [[0.0], [0.0], [6.0], [4.0]]
@@ -40,6 +40,19 @@ zero.
 
 The [quick start](quickstart.md) follows this value through topology lowering,
 sparse execution, backward propagation, and five trainable layer families.
+
+## Public boundary
+
+| Import | Owns |
+| --- | --- |
+| `tinymesh` | `Graph`, `StaticGraphTemporalSignal` |
+| `tinymesh.nn` | `SAGEConv`, `GCNConv`, `GATConv`, `ChebConv`, `TGCN`, `GConvGRU`, `DirectedDiffusion`, `DiffusionGRU` |
+| `tinymesh.datasets` | pinned source validation and tensor lowering |
+| `experiments` | non-runtime catalog, training policy, controls, and observations |
+
+The neural-network classes are direct objects with ordinary tinygrad Tensor
+attributes and `__call__`. There is no factory, registry, trainer, or PyTorch
+compatibility surface.
 
 ## The stack
 
@@ -94,15 +107,17 @@ field; no operation constructs an `N * E` axis.
 - source-normalized scalar affinity propagated sparsely in both graph
   directions;
 - fixed-topology device-buffer reuse;
-- one mean-GraphSAGE composition whose neighbor parameter learns through the
+- `SAGEConv`, whose neighbor parameter learns through the
   sparse boundary;
-- one GCN composition with source and destination degree normalization;
-- single- and multi-head GAT compositions whose attention parameters learn
+- `GCNConv` with source and destination degree normalization;
+- `GATConv` with independently normalized heads whose attention parameters learn
   through endpoint projection, softmax, and weighted sum;
-- one T-GCN composition whose hidden state and parameter gradient cross space
+- `TGCN`, whose hidden state and parameter gradient cross space
   and time;
-- one GConvGRU composition that applies sparse Chebyshev filters to input and
+- `ChebConv` and `GConvGRU`, which apply sparse Chebyshev filters to input and
   hidden state;
+- `DirectedDiffusion` and `DiffusionGRU`, which propagate source-normalized
+  affinity in both graph directions;
 - one fixed-graph temporal signal with causal slicing and aligned node, feature,
   target, and edge axes;
 - one shared-graph batch path that folds leading tensor lanes into sparse
@@ -127,7 +142,8 @@ field; no operation constructs an `N * E` axis.
 
 `Graph` owns semantic COO identity under `src/tinymesh/`; its private CSR
 backend owns lowering and device caches. `StaticGraphTemporalSignal` owns the
-small fixed-topology data boundary. Model callers remain experiments.
+small fixed-topology data boundary. `tinymesh.nn` owns reusable equations;
+experiments own unrolling, task heads, training, controls, and claims.
 The backend uses an alpha tinygrad surface and disables default kernel
 optimization for its data-dependent loop. Vectorized attention heads, external
 vector edge features, batching different graphs, changing topology,
@@ -142,6 +158,10 @@ machinery, geodesy, and cells are not implemented.
   message -> aggregate -> update and the gradient path.
 - [Time](concepts/time.md) explains fixed-topology snapshots, causal recurrence,
   temporal resolution, and why missingness is not zero.
+- [Experiments](experiments.md) explains the catalog, local run envelopes, and
+  component graduation.
+- [Reference projects](reference-projects.md) records all five pinned
+  submodules and their design roles.
 - [Spatial structure](research/spatial-structure.md) separates physical
   connectivity, coordinate frames, node positions, and derived edge geometry.
 - [Spatial geometry experiment](research/spatial-geometry.md) records the
@@ -177,5 +197,6 @@ machinery, geodesy, and cells are not implemented.
   training comparison, including the node-local controls and negative result.
 
 Concept pages describe ideas that should survive an implementation change.
-Research records bind claims to exact revisions and measurements. Source and
-tests own current behavior.
+Research records bind claims to exact revisions and measurements.
+`experiments.CATALOG` owns the runnable evidence inventory; source and tests own
+current behavior.

@@ -17,9 +17,9 @@ positive affinity[E]
        +--> outgoing sum in G.T ----> reverse weight[E] --> G.T.sum
 ```
 
-`DirectedDiffusion` remains under `experiments/`. It owns the reverse graph and
-two normalized edge fields. A fixed recurrent caller realizes those fields
-once before reuse.
+`tinymesh.nn.DirectedDiffusion` now owns the reverse graph and two normalized
+edge fields. This experiment retains the host reference and gradient witness.
+A fixed recurrent caller realizes those fields once before reuse.
 
 ## Operator
 
@@ -106,8 +106,7 @@ blocks; this experiment does not claim framework parity.
 The result covers fixed directed topology, positive scalar affinity, shared
 graph batch axes, first-order gradients, and one-step diffusion. It does not
 cover learned affinity, zero or negative affinity, higher-order walks,
-changing topology, vector edge messages, recurrent model quality, or a public
-diffusion API.
+changing topology, vector edge messages, or recurrent model quality.
 
 ## Reproduce
 

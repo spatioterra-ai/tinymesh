@@ -227,8 +227,9 @@ history, three seeds, regular hourly rows, and per-node standardization.
 Roughly 80% of targets are zero, and scalar geometry can distinguish only a
 small fraction of edges after normalization. There is no calendar, weather,
 missingness mask, multi-horizon decoder, architecture search, learned affinity,
-generic trainer, public model factory, or production claim. The model and
-operator remain experiments.
+generic trainer, public model factory, or production claim. Forecast
+construction and evaluation policy remain experimental; `DirectedDiffusion`
+and `DiffusionGRU` now live in `tinymesh.nn`.
 
 ## Reproduce
 

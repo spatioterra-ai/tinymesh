@@ -189,8 +189,10 @@ The same decomposition identifies capabilities that do not exist yet:
 - Edge-conditioned attention adds edge features to score construction.
 
 GIN and edge-conditioned attention remain design probes. Mean GraphSAGE, GCN,
-single- and multi-head GAT, T-GCN, and GConvGRU use the shared experimental
-`Graph` boundary, but none is a public Tinymesh model API.
+single- and multi-head GAT, T-GCN, and GConvGRU now compose as direct
+`tinymesh.nn` classes over the shared experimental `Graph` boundary. The
+classes own equations and parameters; experiments own training, controls, and
+claims.
 
 The general formulation follows
 [GraphSAGE](https://arxiv.org/abs/1706.02216). The exact learning result lives

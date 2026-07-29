@@ -28,11 +28,11 @@ Start with four nodes and three directed edges:
 Each node has one scalar feature:
 
 ```python
-from tinygrad import Tensor
+from tinygrad import Device, Tensor
 from tinymesh import Graph
 
 graph = Graph(4, source=[1, 0, 1], target=[3, 2, 2])
-state = Tensor([[2.0], [4.0], [8.0], [16.0]], device="CPU").realize()
+state = Tensor([[2.0], [4.0], [8.0], [16.0]], device=Device.DEFAULT).realize()
 
 output = graph.sum(state)
 print(output.tolist())
@@ -100,7 +100,7 @@ Scalar edge values follow the `source` and `target` arrays passed to
 `Graph`:
 
 ```python
-edge_weight = Tensor([-1.0, 0.5, 2.0], device="CPU").realize()
+edge_weight = Tensor([-1.0, 0.5, 2.0], device=state.device).realize()
 
 weighted = graph.sum(state, edge_weight=edge_weight)
 print(weighted.tolist())
@@ -146,19 +146,28 @@ The first edge is the only edge ending at node `3`, so its attention is `1`.
 The other two end at node `2` and normalize together. Both tensors retain the
 original edge order: `1 -> 3`, `0 -> 2`, `1 -> 2`.
 
-## Train mean GraphSAGE
+## Compose mean GraphSAGE
 
-The first model caller is mean GraphSAGE:
+`SAGEConv` is a direct tinygrad-style object:
 
 ```text
-neighbor = mean(W_neighbor x_u for every edge u -> v)
+neighbor = W_neighbor mean(x_u for every edge u -> v) + b_neighbor
 output   = W_root x_v + neighbor
+```
+
+```python
+from tinymesh.nn import SAGEConv
+
+layer = SAGEConv(in_features=1, out_features=2)
+output = layer(state, graph)
+print(output.shape)
+# (4, 2)
 ```
 
 Run its one-step learning witness:
 
 ```console
-DEV=CPU uv run python -m experiments.mean_sage
+uv run --locked python -m experiments.run mean_sage DEV=CPU
 ```
 
 It starts with loss `1`, sends the gradient through transpose CSR, updates only
@@ -176,10 +185,10 @@ the neighbor weight, and reaches loss `0`:
 ```
 
 This proves that a tinygrad parameter can learn through the current sparse
-boundary. It does not prove model quality, generalization, temporal learning,
-or a stable model API. Read [Message passing](concepts/message-passing.md) for
-the layer decomposition and [Mean GraphSAGE experiment](research/mean-sage.md)
-for the exact witness.
+boundary. It does not prove model quality, generalization, or temporal
+learning. `tinymesh.nn` is still an experimental 0.x API. Read
+[Message passing](concepts/message-passing.md) for the layer decomposition and
+[Mean GraphSAGE experiment](research/mean-sage.md) for the exact witness.
 
 ## Reuse the sum in GCN
 
@@ -193,7 +202,7 @@ output = D^-1/2 A D^-1/2 XW
 Run its one-step witness:
 
 ```console
-DEV=CPU uv run python -m experiments.gcn
+uv run --locked python -m experiments.run gcn DEV=CPU
 ```
 
 For unit edges, the source and destination factors are node-wise tensor
@@ -207,7 +216,7 @@ The third caller computes scalar source and target coefficients at nodes,
 projects them to edges, normalizes by target, and reuses weighted sum:
 
 ```console
-DEV=CPU uv run python -m experiments.gat
+uv run --locked python -m experiments.run gat DEV=CPU
 ```
 
 One SGD step lowers loss from `0.214323` to `0.126819` and updates the shared
@@ -218,7 +227,7 @@ A multi-head layer repeats normalization and aggregation independently, then
 concatenates the node outputs:
 
 ```console
-DEV=CPU uv run python -m experiments.multi_head_gat
+uv run --locked python -m experiments.run multi_head_gat DEV=CPU
 ```
 
 The checked fixture gives two heads opposite initial attention parameters. One
@@ -233,7 +242,7 @@ PyTorch or NumPy to the runtime:
 ```python
 from tinymesh.datasets import chickenpox
 
-signal = chickenpox(lags=4, device="CPU")
+signal = chickenpox(lags=4, device=Device.DEFAULT)
 train, test = signal.split(0.8)
 
 print(len(train), len(test))
@@ -252,7 +261,7 @@ lowering, parity, and window contract.
 Recurrent models can instead expose history as a separate axis:
 
 ```python
-sequence = chickenpox(lags=1, device="CPU")
+sequence = chickenpox(lags=1, device=Device.DEFAULT)
 values, target = next(sequence.batches(batch_size=32, history=8))
 
 print(values.shape, target.shape)
@@ -265,12 +274,12 @@ feature width, runs one CSR operation, and restores `[B, ..., N, H]`.
 Temporal recurrence reuses one graph while node fields and hidden state change:
 
 ```python
-from experiments.tgcn import TGCN
+from tinymesh.nn import TGCN
 
 temporal_graph = Graph(2, source=[0, 1, 0], target=[0, 1, 1])
 snapshots = (
-    Tensor([[1.0], [0.0]], device="CPU"),
-    Tensor([[0.0], [0.0]], device="CPU"),
+    Tensor([[1.0], [0.0]], device=Device.DEFAULT),
+    Tensor([[0.0], [0.0]], device=Device.DEFAULT),
 )
 cell = TGCN(in_features=1, hidden_features=1)
 
@@ -284,7 +293,7 @@ the update, reset, and candidate graph projections together. Run the checked
 two-snapshot learning witness:
 
 ```console
-DEV=CPU uv run python -m experiments.tgcn
+uv run --locked python -m experiments.run tgcn DEV=CPU
 ```
 
 The first snapshot crosses edge `0 -> 1`; the second contains no signal, so the
@@ -305,7 +314,7 @@ candidate       = Cheb_K([input, reset * hidden])
 Run the controlled comparison:
 
 ```console
-DEV=CPU uv run python -m experiments.gconv_gru
+uv run --locked python -m experiments.run gconv_gru DEV=CPU
 ```
 
 Both cells see the same symmetric graph, two snapshots, hidden width, target,
@@ -322,7 +331,7 @@ fusion, exact results, and limits.
 Run the controlled Chickenpox experiment:
 
 ```console
-DEV=CPU uv run python -m experiments.chickenpox_forecast
+uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU
 ```
 
 It splits time before making eight-week windows, trains a node-local LSTM,
@@ -343,42 +352,15 @@ The implementation is intentionally small:
   owns public graph identity, validation, and methods;
 - [`src/tinymesh/_csr.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/_csr.py)
   owns private lowering, device caches, sparse forward, and sparse backward;
+- [`src/tinymesh/nn/__init__.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/nn/__init__.py)
+  owns the direct spatial, temporal, and diffusion components;
 - [`src/tinymesh/temporal.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/temporal.py)
   owns aligned fixed-graph temporal signals;
 - [`src/tinymesh/datasets.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/src/tinymesh/datasets.py)
-  owns the pinned chickenpox source lowering;
-- [`experiments/csr_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/csr_aggregation.py)
-  retains the revision-bound CSR benchmark;
-- [`experiments/mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/mean_sage.py)
-  composes the first trainable model;
-- [`experiments/gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gcn.py)
-  composes the normalized second caller;
-- [`experiments/weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/weighted_aggregation.py)
-  records weighted forward and both gradients;
-- [`experiments/gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gat.py)
-  composes graph-attention heads;
-- [`experiments/multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/multi_head_gat.py)
-  records the two-head learning witness;
-- [`experiments/tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/tgcn.py)
-  composes the fixed-graph recurrent cell;
-- [`experiments/gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/gconv_gru.py)
-  composes Chebyshev filtering and graph-convolutional recurrence;
-- [`experiments/chickenpox_forecast.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/chickenpox_forecast.py)
-  trains the first real temporal comparison;
-- [`tests/test_graph.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_graph.py)
-  with [`tests/test_mean_sage.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_mean_sage.py)
-  [`tests/test_gcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gcn.py),
-  [`tests/test_weighted_aggregation.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_weighted_aggregation.py),
-  [`tests/test_edge_values.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_edge_values.py),
-  [`tests/test_softmax.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_softmax.py),
-  [`tests/test_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gat.py),
-  [`tests/test_multi_head_gat.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_multi_head_gat.py),
-  [`tests/test_tgcn.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_tgcn.py),
-  [`tests/test_gconv_gru.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_gconv_gru.py),
-  [`tests/test_chickenpox_forecast.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_chickenpox_forecast.py),
-  [`tests/test_temporal.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_temporal.py),
-  and [`tests/test_datasets.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/tests/test_datasets.py)
-  state the current contracts.
+  owns pinned source lowering;
+- [`experiments/__init__.py`](https://github.com/spatioterra-ai/tinymesh/blob/main/experiments/__init__.py)
+  owns the evidence catalog; experiments retain training and observations;
+- [`tests/`](https://github.com/spatioterra-ai/tinymesh/tree/main/tests)
+  states the current contracts.
 
-The public surface is experimental. Model callers remain experiments, and the
-alpha tinygrad execution boundary is not a stable contract.
+The public surface and alpha tinygrad execution boundary remain experimental.

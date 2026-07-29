@@ -167,5 +167,6 @@ DEV=CPU SEED=1 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01 uv run python -m expe
 DEV=CPU SEED=2 EPOCHS=50 HISTORY=8 BS=357 HIDDEN=4 LR=0.01 uv run python -m experiments.chickenpox_forecast
 ```
 
-The model code remains under `experiments/`. The public result is the batched
-fixed-graph execution and temporal-window contract.
+Forecast unrolling, readouts, and training remain under `experiments/`.
+`TGCN` and `GConvGRU` now live in `tinymesh.nn`. The other public result is the
+batched fixed-graph execution and temporal-window contract.

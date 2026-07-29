@@ -7,6 +7,8 @@ repo_name = "spatioterra-ai/tinymesh"
 nav = [
   "index.md",
   "quickstart.md",
+  "experiments.md",
+  "reference-projects.md",
   {"Concepts" = [
     "concepts/topology.md",
     "concepts/message-passing.md",

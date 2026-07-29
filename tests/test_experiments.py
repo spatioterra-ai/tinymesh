@@ -69,6 +69,11 @@ class RunnerTest(unittest.TestCase):
             },
         )
         self.assertTrue(all(len(commit) == 40 for commit in references.values()))
+        reference_doc = (ROOT / "docs" / "reference-projects.md").read_text()
+        self.assertTrue(all(commit in reference_doc for commit in references.values()))
+        tinygrad = references["submodules/tinygrad"]
+        self.assertIn(f"tinygrad.git@{tinygrad}", (ROOT / "pyproject.toml").read_text())
+        self.assertIn(tinygrad, (ROOT / "uv.lock").read_text())
 
     def test_dirty_revision_is_rejected(self) -> None:
         with patch("experiments.run._git", return_value=" M src/tinymesh/graph.py"):

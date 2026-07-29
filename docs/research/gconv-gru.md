@@ -10,8 +10,9 @@ At tinygrad revision
 Tinymesh matches an independent Chebyshev GConvGRU reference across two
 snapshots on CPU and Metal.
 
-The result adds no public API and no `src/tinymesh` code. `ChebConv` and
-`GConvGRU` remain experiments over the existing `Graph`.
+At that revision the result added no public API. The checked contracts now live
+in `tinymesh.nn.ChebConv` and `tinymesh.nn.GConvGRU`; this experiment retains
+their host parity, sparse-call evidence, and controlled comparison.
 
 ## Chebyshev graph convolution
 

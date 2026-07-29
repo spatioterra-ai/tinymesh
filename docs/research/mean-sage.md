@@ -10,9 +10,11 @@ At tinygrad revision
 an experimental mean-GraphSAGE layer composes tinygrad linear maps with
 tinymesh's CSR aggregation and trains on CPU and Metal.
 
-The result proves composition and first-order parameter learning, not a stable
-model API or useful model quality. The caller remains under `experiments/`; it
-uses the public `Graph` boundary but is not exported.
+The result proves composition and first-order parameter learning, not useful
+model quality. At that revision the caller remained under `experiments/`.
+After independent GCN, GAT, temporal, gradient, shape, and sparse-work
+evidence established one reusable owner, the same contract became
+`tinymesh.nn.SAGEConv`; this experiment retains the learning witness.
 
 ## Learning witness
 
