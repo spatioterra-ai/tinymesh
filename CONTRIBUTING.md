@@ -94,6 +94,8 @@ trainable caller. Run
 edge identity, scalar weighting, or edge gradients.
 Run `DEV=<device> uv run python -m experiments.spatial_geometry` when changing
 endpoint geometry, metric weighting, or position gradients.
+Run `DEV=<device> uv run python -m experiments.directed_diffusion` when changing
+source-normalized forward or reverse propagation.
 Run `uv run python -m experiments.montevideo_source` when changing the bounded
 Montevideo source or its validation contract.
 Run `DEV=<device> uv run python -m experiments.montevideo_data` when changing

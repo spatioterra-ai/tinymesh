@@ -61,6 +61,8 @@ COO connectivity + scalar edge facts
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
 - A pinned Montevideo loader adds raw hourly values, projected node positions,
   observed road distance, and a fixed coordinate frame without a geo runtime.
+- A directed-diffusion experiment source-normalizes positive scalar affinity in
+  both graph directions with two sparse sums per application.
 - Causal window batches feed node-local LSTM, T-GCN, and GConvGRU forecasts.
   On the first three-seed Chickenpox run, LSTM and GConvGRU are tied; the
   graph-recurrent cell has no stable quality advantage yet.
@@ -144,6 +146,13 @@ DEV=CPU uv run python -m experiments.spatial_geometry
 DEV=METAL uv run python -m experiments.spatial_geometry
 ```
 
+Inspect source-normalized propagation in both graph directions:
+
+```console
+DEV=CPU uv run python -m experiments.directed_diffusion
+DEV=METAL uv run python -m experiments.directed_diffusion
+```
+
 ## Learn
 
 Start with the [documentation](https://spatioterra-ai.github.io/tinymesh/) or
@@ -159,6 +168,8 @@ run the [quick start](docs/quickstart.md):
   connectivity, coordinate frames, node positions, and derived edge geometry.
 - [Spatial geometry experiment](docs/research/spatial-geometry.md) proves
   direct metric composition, symmetry contracts, gradients, and sparse UOps.
+- [Directed diffusion experiment](docs/research/directed-diffusion.md) proves
+  sparse source normalization in both directions of a fixed graph.
 - [Sparse aggregation feasibility](docs/research/sparse-aggregation.md) retains
   the revision-bound scaling and kernel evidence.
 - [Mean GraphSAGE experiment](docs/research/mean-sage.md) retains the exact
