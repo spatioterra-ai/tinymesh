@@ -12,6 +12,8 @@ over another machine-learning framework.
 [Quick start](https://spatioterra-ai.github.io/tinymesh/quickstart/) |
 [Contributing](CONTRIBUTING.md)
 
+[![Tests](https://github.com/spatioterra-ai/tinymesh/actions/workflows/tests.yml/badge.svg)](https://github.com/spatioterra-ai/tinymesh/actions/workflows/tests.yml)
+
 ## What works
 
 The repository currently proves one narrow sparse core:

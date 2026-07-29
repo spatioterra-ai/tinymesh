@@ -1,3 +1,5 @@
+from typing import cast
+
 from tinygrad import Tensor, UOp, dtypes
 from tinygrad.dtype import AddrSpace
 from tinygrad.uop.ops import AxisType, KernelInfo
@@ -23,8 +25,9 @@ class _CSR:
             return values * len(self.column)
         if not self.column:
             return values * 0
-        row_ptr, column, transpose_row_ptr, transpose_column = self._tensors(values.device)
-        output = Tensor.invalids(*values.shape, dtype=values.dtype, device=values.device)
+        device = cast(str, values.device)
+        row_ptr, column, transpose_row_ptr, transpose_column = self._tensors(device)
+        output = Tensor.invalids(*values.shape, dtype=values.dtype, device=device)
         return output.custom_kernel(
             values,
             row_ptr,
@@ -38,9 +41,10 @@ class _CSR:
     def weighted_sum(self, values: Tensor, edge_weight: Tensor) -> Tensor:
         if self.nodes == 1 or not self.column:
             return values * edge_weight.sum()
-        row_ptr, column, transpose_row_ptr, transpose_column = self._tensors(values.device)
-        edge_order, transpose_order, source, target = self._edge_tensors(values.device)
-        output = Tensor.invalids(*values.shape, dtype=values.dtype, device=values.device)
+        device = cast(str, values.device)
+        row_ptr, column, transpose_row_ptr, transpose_column = self._tensors(device)
+        edge_order, transpose_order, source, target = self._edge_tensors(device)
+        output = Tensor.invalids(*values.shape, dtype=values.dtype, device=device)
         return output.custom_kernel(
             values,
             edge_weight,
@@ -61,14 +65,15 @@ class _CSR:
             return values[:0]
         if self.nodes == 1:
             return values.expand(len(self.source), values.shape[1])
-        row_ptr, _, transpose_row_ptr, _ = self._tensors(values.device)
-        edge_order, transpose_order, source_index, target_index = self._edge_tensors(values.device)
+        device = cast(str, values.device)
+        row_ptr, _, transpose_row_ptr, _ = self._tensors(device)
+        edge_order, transpose_order, source_index, target_index = self._edge_tensors(device)
         index, grouped_row_ptr, grouped_edge = (
             (source_index, transpose_row_ptr, transpose_order)
             if source
             else (target_index, row_ptr, edge_order)
         )
-        output = Tensor.invalids(len(self.source), values.shape[1], dtype=values.dtype, device=values.device)
+        output = Tensor.invalids(len(self.source), values.shape[1], dtype=values.dtype, device=device)
         return output.custom_kernel(
             values,
             index,
@@ -94,9 +99,10 @@ class _CSR:
     def _segment_sum(self, edge_values: Tensor) -> Tensor:
         if self.nodes == 1:
             return edge_values.sum(axis=0, keepdim=True)
-        row_ptr, _, _, _ = self._tensors(edge_values.device)
-        edge_order, _, _, target = self._edge_tensors(edge_values.device)
-        output = Tensor.invalids(self.nodes, edge_values.shape[1], dtype=edge_values.dtype, device=edge_values.device)
+        device = cast(str, edge_values.device)
+        row_ptr, _, _, _ = self._tensors(device)
+        edge_order, _, _, target = self._edge_tensors(device)
+        output = Tensor.invalids(self.nodes, edge_values.shape[1], dtype=edge_values.dtype, device=device)
         return output.custom_kernel(
             edge_values,
             row_ptr,
@@ -109,9 +115,10 @@ class _CSR:
     def _segment_max(self, edge_values: Tensor) -> Tensor:
         if self.nodes == 1:
             return edge_values.max(axis=0, keepdim=True)
-        row_ptr, _, _, _ = self._tensors(edge_values.device)
-        edge_order, _, _, _ = self._edge_tensors(edge_values.device)
-        output = Tensor.invalids(self.nodes, edge_values.shape[1], dtype=edge_values.dtype, device=edge_values.device)
+        device = cast(str, edge_values.device)
+        row_ptr, _, _, _ = self._tensors(device)
+        edge_order, _, _, _ = self._edge_tensors(device)
+        output = Tensor.invalids(self.nodes, edge_values.shape[1], dtype=edge_values.dtype, device=device)
         return output.custom_kernel(
             edge_values,
             row_ptr,
