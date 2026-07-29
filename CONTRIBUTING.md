@@ -92,6 +92,8 @@ named by a CSR, gradient, or degree-skew claim. Run
 trainable caller. Run
 `DEV=<device> uv run python -m experiments.weighted_aggregation` when changing
 edge identity, scalar weighting, or edge gradients.
+Run `DEV=<device> uv run python -m experiments.spatial_geometry` when changing
+endpoint geometry, metric weighting, or position gradients.
 Run `DEV=<device> uv run python -m experiments.gat` when changing endpoint
 projection, target normalization, or attention composition.
 Run `DEV=<device> uv run python -m experiments.multi_head_gat` when changing

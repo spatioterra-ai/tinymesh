@@ -36,6 +36,9 @@ COO connectivity + scalar edge facts
   for forward propagation and transpose CSR for backward propagation.
 - Edge-aligned scalar values and their gradients stay in original COO order;
   private maps connect them to both CSR traversals.
+- Numeric node positions compose through endpoint projection, displacement,
+  distance, radial weighting, and sparse sum without a new public type or geo
+  dependency.
 - Sparse sum stores `O(N + E)` topology and each direction performs
   `O((N + E)H)` work for `N` nodes, `E` edges, and feature width `H`.
 - Leading batch and time axes fold into feature width, so `Graph.sum` applies
@@ -125,6 +128,13 @@ DEV=CPU uv run python -m experiments.weighted_aggregation
 DEV=METAL uv run python -m experiments.weighted_aggregation
 ```
 
+Inspect metric geometry and gradients:
+
+```console
+DEV=CPU uv run python -m experiments.spatial_geometry
+DEV=METAL uv run python -m experiments.spatial_geometry
+```
+
 ## Learn
 
 Start with the [documentation](https://spatioterra-ai.github.io/tinymesh/) or
@@ -138,6 +148,8 @@ run the [quick start](docs/quickstart.md):
   weighted, and changing topology.
 - [Spatial structure](docs/research/spatial-structure.md) separates physical
   connectivity, coordinate frames, node positions, and derived edge geometry.
+- [Spatial geometry experiment](docs/research/spatial-geometry.md) proves
+  direct metric composition, symmetry contracts, gradients, and sparse UOps.
 - [Sparse aggregation feasibility](docs/research/sparse-aggregation.md) retains
   the revision-bound scaling and kernel evidence.
 - [Mean GraphSAGE experiment](docs/research/mean-sage.md) retains the exact
@@ -170,10 +182,11 @@ The alpha kernel and optimizer boundary still block stability. Vectorized
 attention heads, external vector edge features, batching different graphs,
 changing topology, timestamps, and masks remain unimplemented.
 
-Coordinates, coordinate-reference metadata, higher-dimensional cells, and
-richer temporal fields remain the wider mesh direction. They enter only when
-the sparse graph core extends naturally; tinymesh is not a GIS, trainer
-framework, application, or model zoo.
+Numeric coordinates now compose as ordinary node tensors.
+Coordinate-reference metadata, geodesy, higher-dimensional cells, and richer
+temporal fields remain the wider mesh direction. They enter only when the
+sparse graph core extends naturally; tinymesh is not a GIS, trainer framework,
+application, or model zoo.
 
 ## Development
 
