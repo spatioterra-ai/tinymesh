@@ -13,6 +13,7 @@ nav = [
     "concepts/time.md",
   ]},
   {"Research" = [
+    "research/spatial-structure.md",
     "research/sparse-aggregation.md",
     "research/mean-sage.md",
     "research/gcn.md",
