@@ -133,6 +133,9 @@ field; no operation constructs an `N * E` axis.
 - one pinned PyG Temporal chickenpox loader with no PyTorch or NumPy runtime;
 - one pinned Montevideo loader that aligns directed topology, raw hourly
   signals, projected position, road distance, and one fixed coordinate frame;
+- one checksummed METR-LA loader that aligns raw five-minute traffic speed,
+  naive source timestamps, zero-sentinel missingness, and directed
+  road-distance affinity without a dense adjacency tensor;
 - one Montevideo protocol with target-time splits, train-only per-node
   normalization, and raw-unit zero, persistence, and train-mean baselines;
 - one validation-selected, train-only hour-of-week baseline that improves
@@ -161,8 +164,8 @@ experiments own unrolling, task heads, training, controls, and claims.
 The backend uses an alpha tinygrad surface and disables default kernel
 optimization for its data-dependent loop. Vectorized attention heads, external
 vector edge features, batching different graphs, changing topology,
-higher-order gradients, timestamps, masks, general coordinate-reference
-machinery, geodesy, and cells are not implemented.
+higher-order gradients, generic timestamp and missingness containers, general
+coordinate-reference machinery, geodesy, and cells are not implemented.
 
 ## Learn how it works
 
@@ -201,6 +204,8 @@ machinery, geodesy, and cells are not implemented.
   external dataset, its lowering, framework parity, and window contract.
 - [Montevideo spatial-temporal data](research/montevideo-data.md) records the
   bounded real source and its topology, geometry, edge, and time contracts.
+- [METR-LA sensor data](research/metr-la-data.md) records raw source identity,
+  time, missingness, directed affinity, and device-independent lowering.
 - [Montevideo forecast](research/montevideo-forecast.md) records target-time
   splits, a fused directed recurrent cell, and the negative geometry result.
 - [Montevideo seasonal floor](research/montevideo-seasonal.md) records the

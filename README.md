@@ -63,6 +63,9 @@ COO connectivity + scalar edge facts
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
 - A pinned Montevideo loader adds raw hourly values, projected node positions,
   observed road distance, and a fixed coordinate frame without a geo runtime.
+- A checksummed METR-LA loader aligns 34,272 five-minute rows, explicit
+  zero-sentinel missingness, 207 sensor IDs, and 1,722 directed affinity edges
+  without NumPy, pandas, pickle, or a dense adjacency tensor.
 - `DirectedDiffusion` and `DiffusionGRU` source-normalize caller-validated
   positive scalar affinity in both graph directions and keep recurrent
   propagation sparse.
@@ -185,6 +188,8 @@ run the [quick start](docs/quickstart.md):
   canonical PyG Temporal dataset into the public fixed-graph signal.
 - [Montevideo spatial-temporal data](docs/research/montevideo-data.md) aligns
   real directed topology, position, distance, and hourly node fields.
+- [METR-LA sensor data](docs/research/metr-la-data.md) aligns raw traffic
+  speed, source timestamps, missingness, and directed road-distance affinity.
 - [Montevideo forecast](docs/research/montevideo-forecast.md) fixes target-time
   splits and retains the negative matched geometry comparison.
 - [Montevideo seasonal floor](docs/research/montevideo-seasonal.md) selects the
@@ -205,12 +210,14 @@ destination-CSR execution. `Graph` exposes ordered edge identity, incoming sum,
 incoming mean, endpoint projection, target softmax, and in-degree; its private
 backend owns lowering and rebuildable device caches. A fixed-graph temporal
 signal owns aligned node IDs, features, targets, edge weights, and causal
-window batches.
+window batches. A separate dataset-specific METR-LA record retains raw
+timestamps and a derived missingness mask before task policy exists.
 `tinymesh.nn` owns equations and parameters; experiments own data policy,
 unrolling, training, controls, and claims.
 The alpha kernel and optimizer boundary still block stability. Vectorized
 attention heads, external vector edge features, batching different graphs,
-changing topology, timestamps, and masks remain unimplemented.
+changing topology, and generic timestamp and missingness containers remain
+unimplemented.
 
 Numeric coordinates now compose as ordinary node tensors. One dataset-specific
 record carries a fixed coordinate frame and unit; general coordinate-reference
@@ -224,7 +231,8 @@ floor, and the first delayed-edge residual test did not beat that floor or
 structural controls. Controlled transport now distinguishes the existing
 sparse diffusion path and shows size transfer under one known law. Further
 synthetic tuning has diminishing value; the next claim needs the same controls
-on a real physical sensor network.
+on a real physical sensor network. METR-LA now supplies that data boundary; it
+does not yet supply the forecast evidence.
 
 ## Development
 
