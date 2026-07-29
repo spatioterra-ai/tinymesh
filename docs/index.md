@@ -144,6 +144,8 @@ geodesy, and cells are not implemented.
   fused recurrent cell, and controlled T-GCN comparison.
 - [Chickenpox temporal data](research/chickenpox-data.md) records the first
   external dataset, its lowering, framework parity, and window contract.
+- [Montevideo spatial-temporal data](research/montevideo-data.md) records the
+  bounded real source and its topology, geometry, edge, and time contracts.
 - [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
   training comparison, including the node-local controls and negative result.
 
