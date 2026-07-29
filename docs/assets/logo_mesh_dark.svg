@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 190 70" shape-rendering="crispEdges" fill="#fff">
+  <polygon points="0,50 0,10 40,10 40,20 30,20 30,50 20,50 20,20 10,20 10,50"></polygon>
+  <polygon points="40,50 40,20 50,20 50,50"></polygon>
+  <polygon points="60,30 60,10 90,10 90,20 70,20 70,30"></polygon>
+  <polygon points="60,50 60,30 80,30 80,20 90,20 90,40 80,40 80,50"></polygon>
+  <polygon points="100,10 130,10 130,20 120,20 120,30 130,30 130,50 100,50 100,40 110,40 110,30 100,30"></polygon>
+  <polygon points="140,50 140,0 150,0 150,10 160,10 160,50 170,50 170,20 150,20 150,50"></polygon>
+</svg>

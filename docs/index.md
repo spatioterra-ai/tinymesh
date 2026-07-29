@@ -1,3 +1,12 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="assets/logo_mesh_light.svg">
+  <img alt="tinymesh" src="assets/logo_mesh_dark.svg" width="50%" height="50%">
+</picture>
+
+</div>
+
 # tinymesh
 
 tinymesh is a tinygrad-native library for learning over sparse structures
