@@ -129,6 +129,21 @@ That richer cell can fall back toward a node-local function, while T-GCN cannot
 undo all smoothing of a volatile node signal. This is a plausible explanation
 for the gap, not a causal result.
 
+## Framework comparison
+
+The data tensors match PyG Temporal, but this training result is not a framework
+benchmark. The pinned PyG Temporal tree does not record expected T-GCN or
+GConvGRU outputs. Its
+[Chickenpox DCRNN example](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/fe555bc30ee197755c4b58a89407033a5f383415/docs/source/notes/introduction.rst#L236-L304)
+reports test MSE `0.7418`, but uses four lag features, hidden width `32`, a
+20/80 split, and 200 epochs. Its model and evaluation protocol therefore differ
+from this run.
+
+A valid framework comparison must hold the windows, chronological splits,
+model dimensions, seeds, optimizer, epochs, checkpoint rule, and metrics fixed.
+The numerical proximity between `0.7418` and this GConvGRU's `0.735942` is not
+evidence of parity or improvement.
+
 ## Limits
 
 - The pinned `FX` values are already standardized across the source series;
@@ -142,8 +157,7 @@ for the gap, not a causal result.
 - Full-batch training makes the small witness deterministic and cheap after JIT
   capture. Smaller batches work but change optimization and compile more
   shapes.
-- The experiment does not reproduce a published PyG Temporal score or rank a
-  production architecture.
+- No matched PyG Temporal training result exists yet.
 
 ## Reproduce
 
