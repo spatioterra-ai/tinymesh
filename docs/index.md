@@ -68,7 +68,7 @@ temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
 causal windows         values[B,L,N,F] + target[B,N,Y]
     |
     v
-model composition      GraphSAGE, GCN, GAT, LSTM, T-GCN, GConvGRU
+model composition      GraphSAGE, GCN, GAT, LSTM, T-GCN, GConvGRU, DiffusionGRU
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -112,6 +112,9 @@ field; no operation constructs an `N * E` axis.
   signals, projected position, road distance, and one fixed coordinate frame;
 - one Montevideo protocol with target-time splits, train-only per-node
   normalization, and raw-unit zero, persistence, and train-mean baselines;
+- one matched three-seed Montevideo forecast where coordinate and road
+  diffusion do not beat unit diffusion and all learned models lose to
+  persistence;
 - one three-seed Chickenpox forecast comparing matched LSTM, T-GCN, and
   GConvGRU models without finding a stable graph advantage;
 - CPU and Metal tests.
@@ -159,7 +162,7 @@ machinery, geodesy, and cells are not implemented.
 - [Montevideo spatial-temporal data](research/montevideo-data.md) records the
   bounded real source and its topology, geometry, edge, and time contracts.
 - [Montevideo forecast](research/montevideo-forecast.md) records target-time
-  splits, train-only normalization, and raw-unit baselines.
+  splits, a fused directed recurrent cell, and the negative geometry result.
 - [Chickenpox forecast](research/chickenpox-forecast.md) records the first real
   training comparison, including the node-local controls and negative result.
 

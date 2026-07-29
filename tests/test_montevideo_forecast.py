@@ -6,6 +6,7 @@ from tinygrad import Device, Tensor
 from experiments.montevideo_forecast import (
     Standardizer,
     _baselines,
+    forecast,
     normalize_splits,
     split_signal,
 )
@@ -113,6 +114,12 @@ class MontevideoForecastTest(unittest.TestCase):
                 split_signal(signal(), history=history)
         with self.assertRaisesRegex(ValueError, "too short"):
             split_signal(signal(), history=8)
+
+    def test_rejects_invalid_training_configuration_before_loading(self) -> None:
+        with self.assertRaisesRegex(ValueError, "non-negative integers"):
+            forecast(Device.DEFAULT, seeds=(True,))
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            forecast(Device.DEFAULT, epochs=0)
 
 
 if __name__ == "__main__":
