@@ -96,6 +96,8 @@ Run `DEV=<device> uv run python -m experiments.spatial_geometry` when changing
 endpoint geometry, metric weighting, or position gradients.
 Run `uv run python -m experiments.montevideo_source` when changing the bounded
 Montevideo source or its validation contract.
+Run `DEV=<device> uv run python -m experiments.montevideo_data` when changing
+Montevideo tensor lowering or its node, edge, geometry, and time alignment.
 Run `DEV=<device> uv run python -m experiments.gat` when changing endpoint
 projection, target normalization, or attention composition.
 Run `DEV=<device> uv run python -m experiments.multi_head_gat` when changing
