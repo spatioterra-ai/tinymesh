@@ -70,6 +70,9 @@ COO connectivity + scalar edge facts
   task shape, then splits by target time, fits observed training rows only,
   masks missing targets, and establishes persistence at test MAE 4.232 and
   RMSE 8.145 as the graph-model floor.
+- A persistence-anchored residual A3T-GCN improves validation MAE by 0.5% and
+  RMSE by 1.1%, but self-only topology beats the real and permuted graphs in
+  all three seeds; the current gain is temporal, not spatial.
 - `DirectedDiffusion` and `DiffusionGRU` source-normalize caller-validated
   positive scalar affinity in both graph directions and keep recurrent
   propagation sparse.
@@ -241,9 +244,9 @@ structural controls. Controlled transport now distinguishes the existing
 sparse diffusion path and shows size transfer under one known law. Further
 synthetic tuning has diminishing value. METR-LA now supplies the real sensor
 boundary, a trustworthy 12-to-12 protocol, and strong temporal controls.
-Full-size A3T-GCN forward/backward works, but matched true/permuted/self
-training exceeds the current local 600-second bound and remains the next
-evidence step.
+Full-size A3T-GCN training now fits the local 600-second bound at batch 512.
+The matched METR-LA result finds a small residual temporal gain while rejecting
+a spatial advantage from unit-weight GCN neighbor mixing.
 
 ## Development
 

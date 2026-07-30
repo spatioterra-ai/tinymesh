@@ -5,8 +5,10 @@ from math import isfinite
 from tinygrad import Device, Tensor
 
 from experiments.metr_la_forecast import (
+    Forecast,
     _execution_batch,
     _graphs,
+    _objective,
     forecast,
     train,
 )
@@ -87,6 +89,7 @@ class METRLAForecastTest(unittest.TestCase):
         padded = _execution_batch(batch, Device.DEFAULT, batch_size=8)
 
         self.assertEqual(padded.values.shape, (8, 2, 4, 2))
+        self.assertEqual(padded.anchor.shape, (8, 4, 1))
         self.assertEqual(int(padded.observed.sum().item()), int(batch.observed.sum().item()))
 
     def test_false_graph_is_an_isomorphic_relabeling(self) -> None:
@@ -103,6 +106,33 @@ class METRLAForecastTest(unittest.TestCase):
         )
         self.assertEqual(graphs["self"].edges, graphs["self"].nodes)
 
+    def test_residual_head_starts_at_latest_speed(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3)
+        batch = next(batches(protocol, protocol.train, batch_size=17))
+        model = Forecast(2, 2, 2, 3, head="residual")
+
+        prediction = model(batch.values, protocol.data.graph, batch.anchor)
+        expected = batch.anchor.expand(*prediction.shape)
+
+        self.assertEqual(prediction.tolist(), expected.tolist())
+
+    def test_residual_anchor_is_causal_persistence(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3)
+        batch = next(batches(protocol, protocol.validation, batch_size=8))
+        expected = _baseline("persistence", protocol, protocol.validation)
+
+        actual = protocol.standardizer.restore(batch.anchor).expand(*expected.shape)
+
+        self.assertLess((actual - expected).abs().max().item(), 1e-5)
+
+    def test_masked_objectives(self) -> None:
+        error = Tensor([1.0, -2.0, 100.0])
+        observed = Tensor([True, True, False])
+
+        self.assertAlmostEqual(_objective(error, observed, "mse").item(), 2.5)
+        self.assertAlmostEqual(_objective(error, observed, "mae").item(), 1.5)
+        self.assertAlmostEqual(_objective(error, observed, "huber").item(), 1.0)
+
     def test_tiny_forecast_trains_through_masked_a3tgcn(self) -> None:
         result = train(
             prepare(dataset(), history=2, horizon=3),
@@ -113,12 +143,17 @@ class METRLAForecastTest(unittest.TestCase):
             hidden_features=2,
             learning_rate=0.01,
             checkpoint_every=1,
+            evaluate_test=True,
         )
 
         self.assertEqual(len(result.results), 1)
+        self.assertEqual(result.head, "direct")
+        self.assertEqual(result.loss, "mse")
         model = result.results[0]
         self.assertEqual((model.topology, model.seed, model.sparse_calls), ("true", 0, 2))
         self.assertTrue(isfinite(model.validation.overall.rmse))
+        self.assertIsNotNone(model.test)
+        assert model.test is not None
         self.assertTrue(isfinite(model.test.overall.rmse))
         self.assertEqual(result.protocol.pygt_windows, 26)
         self.assertEqual(result.protocol.pygt_train_windows, 20)
@@ -137,12 +172,19 @@ class METRLAForecastTest(unittest.TestCase):
 
         before, after = result.results[0].checkpoints
         self.assertNotEqual(before.validation, after.validation)
+        self.assertIsNone(result.results[0].test)
 
     def test_rejects_invalid_training_before_loading(self) -> None:
         with self.assertRaisesRegex(ValueError, "non-negative integers"):
             forecast(Device.DEFAULT, seeds=(True,))
         with self.assertRaisesRegex(ValueError, "positive integer"):
             forecast(Device.DEFAULT, epochs=0)
+        with self.assertRaisesRegex(ValueError, "direct.*residual"):
+            forecast(Device.DEFAULT, head="other")
+        with self.assertRaisesRegex(ValueError, "mse.*mae.*huber"):
+            forecast(Device.DEFAULT, loss="other")
+        with self.assertRaisesRegex(ValueError, "boolean"):
+            forecast(Device.DEFAULT, evaluate_test=1)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":

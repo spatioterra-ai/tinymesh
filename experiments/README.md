@@ -36,6 +36,7 @@ uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
 uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
 uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
+uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=self HEAD=residual LOSS=mae SEED=0 BS=512
 uv run --locked python -m experiments.run transport_forecast DEV=CPU MODEL=diffusion_gru TOPOLOGY=true SEED=0
 uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru NODES=all INITIAL=dense SEED=0
 ```
@@ -53,6 +54,10 @@ entry. A successful run writes an ignored JSON envelope under
 Local envelopes are working evidence, not release artifacts. A result that
 changes a decision belongs in `docs/research/` with its command, revisions,
 scope, controls, and limits.
+
+Forecast training is validation-only by default. Add `TEST=1` only after the
+model contract and budget are frozen; this is an evaluation boundary, not a
+tuning flag.
 
 ## Graduation gate
 

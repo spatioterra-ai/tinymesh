@@ -71,6 +71,7 @@ class Protocol:
 @dataclass(frozen=True, eq=False)
 class WindowBatch:
     values: Tensor
+    anchor: Tensor
     target: Tensor
     observed: Tensor
     starts: tuple[int, ...]
@@ -219,13 +220,19 @@ def batches(
         if tensors is None
         else tensors
     )
+    fallback = ((protocol.node_mean - protocol.standardizer.mean) / protocol.standardizer.scale).to(features.device).realize()
     for offset in range(0, len(starts), batch_size):
         selected = tuple(starts[offset:offset + batch_size])
         start = Tensor(selected, device=features.device).reshape(-1, 1)
         history_index = start + Tensor(tuple(range(-span.history, 0)), device=features.device).reshape(1, -1)
         target_index = start + Tensor(tuple(range(span.horizon)), device=features.device).reshape(1, -1)
+        values, history_observed = features[history_index], observed[history_index]
+        anchor = fallback.reshape(1, protocol.data.graph.nodes).expand(len(selected), protocol.data.graph.nodes)
+        for period in range(span.history):
+            anchor = history_observed[:, period].where(values[:, period, :, 0], anchor)
         yield WindowBatch(
-            features[history_index],
+            values,
+            anchor.unsqueeze(2),
             target[target_index].permute(0, 2, 1),
             observed[target_index].permute(0, 2, 1),
             selected,

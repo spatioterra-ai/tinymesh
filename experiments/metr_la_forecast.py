@@ -28,12 +28,31 @@ from tinymesh.nn import A3TGCN
 
 
 class Forecast:
-    def __init__(self, in_features: int, hidden_features: int, periods: int, horizon: int) -> None:
+    def __init__(
+        self,
+        in_features: int,
+        hidden_features: int,
+        periods: int,
+        horizon: int,
+        head: str = "direct",
+    ) -> None:
+        if head not in ("direct", "residual"):
+            raise ValueError("head must be 'direct' or 'residual'")
         self.encoder = A3TGCN(in_features, hidden_features, periods)
         self.readout = nn.Linear(hidden_features, horizon)
+        if head == "residual":
+            self.readout.weight = Tensor.zeros_like(self.readout.weight)
+            assert self.readout.bias is not None
+            self.readout.bias = Tensor.zeros_like(self.readout.bias)
+        self.head = head
 
-    def __call__(self, values: Tensor, graph: Graph) -> Tensor:
-        return self.readout(self.encoder(values, graph).relu())
+    def __call__(self, values: Tensor, graph: Graph, anchor: Tensor | None = None) -> Tensor:
+        forecast = self.readout(self.encoder(values, graph).relu())
+        if self.head == "direct":
+            return forecast
+        if anchor is None or anchor.shape != (*forecast.shape[:-1], 1):
+            raise ValueError(f"residual anchor must have shape {(*forecast.shape[:-1], 1)}")
+        return forecast + anchor
 
 
 @dataclass(frozen=True)
@@ -52,12 +71,15 @@ class Result:
     runtime_seconds: float
     checkpoints: tuple[Checkpoint, ...]
     validation: Scores
-    test: Scores
+    test: Scores | None
 
 
 @dataclass(frozen=True)
 class ForecastObservation:
     device: str
+    head: str
+    loss: str
+    evaluate_test: bool
     epochs: int
     batch_size: int
     hidden_features: int
@@ -70,6 +92,8 @@ class ForecastObservation:
 @dataclass(frozen=True)
 class SmokeObservation:
     device: str
+    head: str
+    loss: str
     seed: int
     steps: int
     trained_windows: int
@@ -102,8 +126,11 @@ def forecast(
     hidden_features: int = 32,
     learning_rate: float = 0.001,
     checkpoint_every: int = 5,
+    head: str = "direct",
+    loss: str = "mse",
+    evaluate_test: bool = False,
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, evaluate_test)
     return train(
         prepare(metr_la(device="CPU"), history=history, horizon=horizon),
         device=device,
@@ -114,6 +141,9 @@ def forecast(
         hidden_features=hidden_features,
         learning_rate=learning_rate,
         checkpoint_every=checkpoint_every,
+        head=head,
+        loss=loss,
+        evaluate_test=evaluate_test,
     )
 
 
@@ -127,8 +157,10 @@ def smoke(
     batch_size: int = 32,
     hidden_features: int = 32,
     learning_rate: float = 0.001,
+    head: str = "direct",
+    loss: str = "mse",
 ) -> SmokeObservation:
-    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1)
+    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1, head, loss)
     if not isinstance(steps, int) or isinstance(steps, bool) or steps <= 0:
         raise ValueError("steps must be a positive integer")
     protocol = prepare(metr_la(device="CPU"), history=history, horizon=horizon)
@@ -138,16 +170,18 @@ def smoke(
 
     tensors = _execution_tensors(protocol, device)
     Tensor.manual_seed(seed)
-    model = Forecast(protocol.features.shape[2], hidden_features, history, horizon)
+    model = Forecast(protocol.features.shape[2], hidden_features, history, horizon, head)
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, protocol.data.graph, optimizer)
+    train_step = _training_step(model, protocol.data.graph, optimizer, loss)
     losses = []
     start = perf_counter()
     for batch in islice(batches(protocol, protocol.train, batch_size, shuffle=seed, tensors=tensors), steps):
         batch = _execution_batch(batch, device, batch_size)
-        losses.append(float(train_step(batch.values, batch.target, batch.observed).item()))
+        losses.append(float(train_step(batch.values, batch.anchor, batch.target, batch.observed).item()))
     return SmokeObservation(
         device,
+        head,
+        loss,
         seed,
         steps,
         min(steps * batch_size, protocol.train.windows),
@@ -176,13 +210,22 @@ def train(
     hidden_features: int,
     learning_rate: float,
     checkpoint_every: int,
+    head: str = "direct",
+    loss: str = "mse",
+    evaluate_test: bool = False,
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, evaluate_test)
     graphs, tensors, results = _graphs(protocol.data.graph), _execution_tensors(protocol, device), []
     for topology in topologies:
         for seed in seeds:
             Tensor.manual_seed(seed)
-            model = Forecast(protocol.features.shape[2], hidden_features, protocol.train.history, protocol.train.horizon)
+            model = Forecast(
+                protocol.features.shape[2],
+                hidden_features,
+                protocol.train.history,
+                protocol.train.horizon,
+                head,
+            )
             best_epoch, runtime, checkpoints, validation = _fit(
                 model,
                 graphs[topology],
@@ -194,6 +237,7 @@ def train(
                 batch_size=batch_size,
                 learning_rate=learning_rate,
                 checkpoint_every=checkpoint_every,
+                loss=loss,
             )
             results.append(
                 Result(
@@ -205,19 +249,26 @@ def train(
                     runtime,
                     checkpoints,
                     validation,
-                    _evaluate(
-                        model,
-                        graphs[topology],
-                        protocol,
-                        protocol.test,
-                        tensors,
-                        device=device,
-                        batch_size=batch_size,
+                    (
+                        _evaluate(
+                            model,
+                            graphs[topology],
+                            protocol,
+                            protocol.test,
+                            tensors,
+                            device=device,
+                            batch_size=batch_size,
+                        )
+                        if evaluate_test
+                        else None
                     ),
                 )
             )
     return ForecastObservation(
         device,
+        head,
+        loss,
+        evaluate_test,
         epochs,
         batch_size,
         hidden_features,
@@ -254,9 +305,10 @@ def _fit(
     batch_size: int,
     learning_rate: float,
     checkpoint_every: int,
+    loss: str,
 ) -> tuple[int, float, tuple[Checkpoint, ...], Scores]:
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, graph, optimizer)
+    train_step = _training_step(model, graph, optimizer, loss)
     start = perf_counter()
     best_epoch = 0
     best = _evaluate(
@@ -278,7 +330,7 @@ def _fit(
             tensors=tensors,
         ):
             batch = _execution_batch(batch, device, batch_size)
-            train_step(batch.values, batch.target, batch.observed)
+            train_step(batch.values, batch.anchor, batch.target, batch.observed)
         if epoch % checkpoint_every != 0 and epoch != epochs:
             continue
         validation = _evaluate(
@@ -298,17 +350,27 @@ def _fit(
     return best_epoch, runtime, tuple(checkpoints), best
 
 
-def _training_step(model: Forecast, graph: Graph, optimizer) -> TinyJit:
+def _training_step(model: Forecast, graph: Graph, optimizer, loss: str) -> TinyJit:
     @TinyJit
     @Context(TRAINING=1)
-    def step(values: Tensor, target: Tensor, observed: Tensor) -> Tensor:
+    def step(values: Tensor, anchor: Tensor, target: Tensor, observed: Tensor) -> Tensor:
         optimizer.zero_grad()
-        weight = observed.cast(target.dtype)
-        error = (model(values, graph) - target) * weight
-        loss = (error.square().sum() / weight.sum()).backward()
-        return loss.realize(*optimizer.schedule_step())
+        objective = _objective(model(values, graph, anchor) - target, observed, loss).backward()
+        return objective.realize(*optimizer.schedule_step())
 
     return step
+
+
+def _objective(error: Tensor, observed: Tensor, loss: str) -> Tensor:
+    absolute = error.abs()
+    if loss == "mse":
+        element = error.square()
+    elif loss == "mae":
+        element = absolute
+    else:
+        element = (absolute < 1).where(error.square() / 2, absolute - 0.5)
+    weight = observed.cast(error.dtype)
+    return (element * weight).sum() / weight.sum()
 
 
 def _evaluate(
@@ -330,7 +392,7 @@ def _evaluate(
             predict = predictors.get(execution.values.shape)
             if predict is None:
                 predictors[execution.values.shape] = predict = _predictor(model, graph)
-            prediction = predict(execution.values)[:size].to(protocol.data.speed.device).realize()
+            prediction = predict(execution.values, execution.anchor)[:size].to(protocol.data.speed.device).realize()
             target = batch.target.to(protocol.data.speed.device).realize()
             yield protocol.standardizer.restore(prediction) - protocol.standardizer.restore(target), batch.observed.to(
                 protocol.data.speed.device
@@ -341,8 +403,8 @@ def _evaluate(
 
 def _predictor(model: Forecast, graph: Graph):
     @TinyJit
-    def predict(values: Tensor) -> Tensor:
-        return model(values, graph).realize()
+    def predict(values: Tensor, anchor: Tensor) -> Tensor:
+        return model(values, graph, anchor).realize()
 
     return predict
 
@@ -356,6 +418,7 @@ def _execution_batch(batch: WindowBatch, device: str, batch_size: int) -> Window
         padding = batch_size - len(batch.starts)
         batch = WindowBatch(
             batch.values.cat(batch.values[-1:].expand(padding, *batch.values.shape[1:]), dim=0),
+            batch.anchor.cat(batch.anchor[-1:].expand(padding, *batch.anchor.shape[1:]), dim=0),
             batch.target.cat(batch.target[-1:].expand(padding, *batch.target.shape[1:]), dim=0),
             batch.observed.cat(
                 Tensor.zeros(padding, *batch.observed.shape[1:], dtype=batch.observed.dtype, device=batch.observed.device),
@@ -363,7 +426,10 @@ def _execution_batch(batch: WindowBatch, device: str, batch_size: int) -> Window
             ),
             batch.starts + (batch.starts[-1],) * padding,
         )
-    values = tuple(value.contiguous().to(device).realize() for value in (batch.values, batch.target, batch.observed))
+    values = tuple(
+        value.contiguous().to(device).realize()
+        for value in (batch.values, batch.anchor, batch.target, batch.observed)
+    )
     return WindowBatch(*values, batch.starts)
 
 
@@ -379,6 +445,7 @@ def _sparse_calls(model: Forecast, graph: Graph, protocol: Protocol, device: str
     output = model(
         Tensor.zeros(1, protocol.train.history, graph.nodes, protocol.features.shape[2], device=device),
         graph,
+        Tensor.zeros(1, graph.nodes, 1, device=device),
     )
     return sum(uop.src[0].arg.name == "csr_sum" for uop in output.uop.toposort() if uop.op is Ops.CALL)
 
@@ -391,6 +458,9 @@ def _validate(
     hidden_features: int,
     learning_rate: float,
     checkpoint_every: int,
+    head: str,
+    loss: str,
+    evaluate_test: bool = False,
 ) -> None:
     allowed = {"true", "permuted", "self"}
     if not topologies or any(topology not in allowed for topology in topologies):
@@ -407,12 +477,20 @@ def _validate(
             raise ValueError(f"{name} must be a positive integer")
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive")
+    if head not in ("direct", "residual"):
+        raise ValueError("head must be 'direct' or 'residual'")
+    if loss not in ("mse", "mae", "huber"):
+        raise ValueError("loss must be 'mse', 'mae', or 'huber'")
+    if not isinstance(evaluate_test, bool):
+        raise ValueError("evaluate_test must be boolean")
 
 
 def main() -> None:
-    epochs, steps = getenv("EPOCHS", 0), getenv("STEPS", 0)
+    epochs, steps, evaluate_test = getenv("EPOCHS", 0), getenv("STEPS", 0), getenv("TEST", 0)
     if epochs and steps:
         raise SystemExit("EPOCHS and STEPS are mutually exclusive")
+    if evaluate_test not in (0, 1):
+        raise SystemExit("TEST must be 0 or 1")
     settings = {"history": getenv("HISTORY", 12), "horizon": getenv("HORIZON", 12)}
     if steps:
         observation = smoke(
@@ -422,6 +500,8 @@ def main() -> None:
             batch_size=getenv("BS", 32),
             hidden_features=getenv("HIDDEN", 32),
             learning_rate=getenv("LR", 0.001),
+            head=getenv("HEAD", "direct"),
+            loss=getenv("LOSS", "mse"),
             **settings,
         )
     elif not epochs:
@@ -437,6 +517,9 @@ def main() -> None:
             hidden_features=getenv("HIDDEN", 32),
             learning_rate=getenv("LR", 0.001),
             checkpoint_every=getenv("CHECKPOINT_EVERY", 5),
+            head=getenv("HEAD", "direct"),
+            loss=getenv("LOSS", "mse"),
+            evaluate_test=bool(evaluate_test),
             **settings,
         )
     print(json.dumps(asdict(observation), indent=2))
