@@ -28,6 +28,7 @@ nav = [
     "research/chickenpox-data.md",
     "research/montevideo-data.md",
     "research/metr-la-data.md",
+    "research/metr-la-forecast.md",
     "research/montevideo-forecast.md",
     "research/montevideo-seasonal.md",
     "research/montevideo-delayed-edges.md",

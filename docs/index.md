@@ -55,7 +55,7 @@ sparse execution, backward propagation, and five trainable layer families.
 | Import | Owns |
 | --- | --- |
 | `tinymesh` | `Graph`, `StaticGraphTemporalSignal` |
-| `tinymesh.nn` | `SAGEConv`, `GCNConv`, `GATConv`, `ChebConv`, `TGCN`, `GConvGRU`, `DirectedDiffusion`, `DiffusionGRU` |
+| `tinymesh.nn` | `SAGEConv`, `GCNConv`, `GATConv`, `ChebConv`, `TGCN`, `A3TGCN`, `GConvGRU`, `DirectedDiffusion`, `DiffusionGRU` |
 | `tinymesh.datasets` | pinned source validation and tensor lowering |
 | `experiments` | non-runtime catalog, training policy, controls, and observations |
 
@@ -90,7 +90,7 @@ temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
 causal windows         values[B,L,N,F] + target[B,N,Y]
     |
     v
-model composition      GraphSAGE, GCN, GAT, LSTM, T-GCN, GConvGRU, DiffusionGRU
+model composition      GraphSAGE, GCN, GAT, LSTM, T-GCN, A3T-GCN, GConvGRU, DiffusionGRU
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
@@ -122,6 +122,8 @@ field; no operation constructs an `N * E` axis.
   through endpoint projection, softmax, and weighted sum;
 - `TGCN`, whose hidden state and parameter gradient cross space
   and time;
+- `A3TGCN`, which learns a softmax mixture of shared T-GCN period encodings
+  across arbitrary leading batch axes;
 - `ChebConv` and `GConvGRU`, which apply sparse Chebyshev filters to input and
   hidden state;
 - `DirectedDiffusion` and `DiffusionGRU`, which propagate source-normalized
@@ -136,6 +138,9 @@ field; no operation constructs an `N * E` axis.
 - one checksummed METR-LA loader that aligns raw five-minute traffic speed,
   naive source timestamps, zero-sentinel missingness, and directed
   road-distance affinity without a dense adjacency tensor;
+- one leakage-safe METR-LA 12-to-12 protocol with train-only observed
+  normalization, masked loss, raw-speed metrics, direct tensor-index batches,
+  and persistence at test MAE 4.232 / RMSE 8.145 as the model floor;
 - one Montevideo protocol with target-time splits, train-only per-node
   normalization, and raw-unit zero, persistence, and train-mean baselines;
 - one validation-selected, train-only hour-of-week baseline that improves
@@ -206,6 +211,9 @@ coordinate-reference machinery, geodesy, and cells are not implemented.
   bounded real source and its topology, geometry, edge, and time contracts.
 - [METR-LA sensor data](research/metr-la-data.md) records raw source identity,
   time, missingness, directed affinity, and device-independent lowering.
+- [METR-LA forecast](research/metr-la-forecast.md) records A3T-GCN structural
+  parity, trustworthy task policy, temporal controls, and the local execution
+  bound.
 - [Montevideo forecast](research/montevideo-forecast.md) records target-time
   splits, a fused directed recurrent cell, and the negative geometry result.
 - [Montevideo seasonal floor](research/montevideo-seasonal.md) records the

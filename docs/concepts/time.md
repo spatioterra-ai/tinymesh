@@ -150,14 +150,16 @@ enough to enlarge `StaticGraphTemporalSignal`. Read the
 
 ## Where spatial mixing happens
 
-Two fixed-graph cells now expose one architectural choice:
+Three fixed-graph cells now expose two architectural choices:
 
 ```text
 T-GCN       graph-mix X_t, then combine node-local H_(t-1)
+A3T-GCN     attend over shared T-GCN encodings from fixed H_0
 GConvGRU    graph-mix X_t and H_(t-1) inside the gates
 ```
 
-T-GCN is cheaper. GConvGRU lets a node's remembered state affect neighboring
+T-GCN is cheaper. A3T-GCN mixes independent period encodings rather than
+carrying hidden state through them. GConvGRU lets a node's remembered state affect neighboring
 nodes before the next update. Whether that extra path helps is a model and data
 question, not a data-container question. Both consume the same explicit
 `Graph`, snapshots, and hidden tensor.

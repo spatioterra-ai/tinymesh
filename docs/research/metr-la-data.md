@@ -156,6 +156,7 @@ uv run --locked python -m experiments.run metr_la_data DEV=METAL
 ```
 
 The matching affinity digest proves device-independent lowering at this
-revision. It does not show that the affinity improves a forecast. That requires
-a forward split, train-only preprocessing, missing-value-aware loss, strong
-temporal controls, and false-topology controls in the next stage.
+revision. It does not show that the affinity improves a forecast. The
+[METR-LA forecast](metr-la-forecast.md) now owns the forward split, train-only
+preprocessing, missing-value-aware loss, temporal controls, and false
+topologies; its learned graph comparison remains pending.
