@@ -8,6 +8,7 @@ from experiments.metr_la_forecast import (
     Forecast,
     _execution_batch,
     _graphs,
+    _objective,
     forecast,
     train,
 )
@@ -114,6 +115,14 @@ class METRLAForecastTest(unittest.TestCase):
 
         self.assertEqual(prediction.tolist(), expected.tolist())
 
+    def test_masked_objectives(self) -> None:
+        error = Tensor([1.0, -2.0, 100.0])
+        observed = Tensor([True, True, False])
+
+        self.assertAlmostEqual(_objective(error, observed, "mse").item(), 2.5)
+        self.assertAlmostEqual(_objective(error, observed, "mae").item(), 1.5)
+        self.assertAlmostEqual(_objective(error, observed, "huber").item(), 1.0)
+
     def test_tiny_forecast_trains_through_masked_a3tgcn(self) -> None:
         result = train(
             prepare(dataset(), history=2, horizon=3),
@@ -128,6 +137,7 @@ class METRLAForecastTest(unittest.TestCase):
 
         self.assertEqual(len(result.results), 1)
         self.assertEqual(result.head, "direct")
+        self.assertEqual(result.loss, "mse")
         model = result.results[0]
         self.assertEqual((model.topology, model.seed, model.sparse_calls), ("true", 0, 2))
         self.assertTrue(isfinite(model.validation.overall.rmse))
@@ -157,6 +167,8 @@ class METRLAForecastTest(unittest.TestCase):
             forecast(Device.DEFAULT, epochs=0)
         with self.assertRaisesRegex(ValueError, "direct.*residual"):
             forecast(Device.DEFAULT, head="other")
+        with self.assertRaisesRegex(ValueError, "mse.*mae.*huber"):
+            forecast(Device.DEFAULT, loss="other")
 
 
 if __name__ == "__main__":

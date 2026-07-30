@@ -74,6 +74,7 @@ class Result:
 class ForecastObservation:
     device: str
     head: str
+    loss: str
     epochs: int
     batch_size: int
     hidden_features: int
@@ -87,6 +88,7 @@ class ForecastObservation:
 class SmokeObservation:
     device: str
     head: str
+    loss: str
     seed: int
     steps: int
     trained_windows: int
@@ -120,8 +122,9 @@ def forecast(
     learning_rate: float = 0.001,
     checkpoint_every: int = 5,
     head: str = "direct",
+    loss: str = "mse",
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss)
     return train(
         prepare(metr_la(device="CPU"), history=history, horizon=horizon),
         device=device,
@@ -133,6 +136,7 @@ def forecast(
         learning_rate=learning_rate,
         checkpoint_every=checkpoint_every,
         head=head,
+        loss=loss,
     )
 
 
@@ -147,8 +151,9 @@ def smoke(
     hidden_features: int = 32,
     learning_rate: float = 0.001,
     head: str = "direct",
+    loss: str = "mse",
 ) -> SmokeObservation:
-    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1, head)
+    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1, head, loss)
     if not isinstance(steps, int) or isinstance(steps, bool) or steps <= 0:
         raise ValueError("steps must be a positive integer")
     protocol = prepare(metr_la(device="CPU"), history=history, horizon=horizon)
@@ -160,7 +165,7 @@ def smoke(
     Tensor.manual_seed(seed)
     model = Forecast(protocol.features.shape[2], hidden_features, history, horizon, head)
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, protocol.data.graph, optimizer)
+    train_step = _training_step(model, protocol.data.graph, optimizer, loss)
     losses = []
     start = perf_counter()
     for batch in islice(batches(protocol, protocol.train, batch_size, shuffle=seed, tensors=tensors), steps):
@@ -169,6 +174,7 @@ def smoke(
     return SmokeObservation(
         device,
         head,
+        loss,
         seed,
         steps,
         min(steps * batch_size, protocol.train.windows),
@@ -198,8 +204,9 @@ def train(
     learning_rate: float,
     checkpoint_every: int,
     head: str = "direct",
+    loss: str = "mse",
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss)
     graphs, tensors, results = _graphs(protocol.data.graph), _execution_tensors(protocol, device), []
     for topology in topologies:
         for seed in seeds:
@@ -222,6 +229,7 @@ def train(
                 batch_size=batch_size,
                 learning_rate=learning_rate,
                 checkpoint_every=checkpoint_every,
+                loss=loss,
             )
             results.append(
                 Result(
@@ -247,6 +255,7 @@ def train(
     return ForecastObservation(
         device,
         head,
+        loss,
         epochs,
         batch_size,
         hidden_features,
@@ -283,9 +292,10 @@ def _fit(
     batch_size: int,
     learning_rate: float,
     checkpoint_every: int,
+    loss: str,
 ) -> tuple[int, float, tuple[Checkpoint, ...], Scores]:
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, graph, optimizer)
+    train_step = _training_step(model, graph, optimizer, loss)
     start = perf_counter()
     best_epoch = 0
     best = _evaluate(
@@ -327,17 +337,27 @@ def _fit(
     return best_epoch, runtime, tuple(checkpoints), best
 
 
-def _training_step(model: Forecast, graph: Graph, optimizer) -> TinyJit:
+def _training_step(model: Forecast, graph: Graph, optimizer, loss: str) -> TinyJit:
     @TinyJit
     @Context(TRAINING=1)
     def step(values: Tensor, target: Tensor, observed: Tensor) -> Tensor:
         optimizer.zero_grad()
-        weight = observed.cast(target.dtype)
-        error = (model(values, graph) - target) * weight
-        loss = (error.square().sum() / weight.sum()).backward()
-        return loss.realize(*optimizer.schedule_step())
+        objective = _objective(model(values, graph) - target, observed, loss).backward()
+        return objective.realize(*optimizer.schedule_step())
 
     return step
+
+
+def _objective(error: Tensor, observed: Tensor, loss: str) -> Tensor:
+    absolute = error.abs()
+    if loss == "mse":
+        element = error.square()
+    elif loss == "mae":
+        element = absolute
+    else:
+        element = (absolute < 1).where(error.square() / 2, absolute - 0.5)
+    weight = observed.cast(error.dtype)
+    return (element * weight).sum() / weight.sum()
 
 
 def _evaluate(
@@ -421,6 +441,7 @@ def _validate(
     learning_rate: float,
     checkpoint_every: int,
     head: str,
+    loss: str,
 ) -> None:
     allowed = {"true", "permuted", "self"}
     if not topologies or any(topology not in allowed for topology in topologies):
@@ -439,6 +460,8 @@ def _validate(
         raise ValueError("learning_rate must be positive")
     if head not in ("direct", "residual"):
         raise ValueError("head must be 'direct' or 'residual'")
+    if loss not in ("mse", "mae", "huber"):
+        raise ValueError("loss must be 'mse', 'mae', or 'huber'")
 
 
 def main() -> None:
@@ -455,6 +478,7 @@ def main() -> None:
             hidden_features=getenv("HIDDEN", 32),
             learning_rate=getenv("LR", 0.001),
             head=getenv("HEAD", "direct"),
+            loss=getenv("LOSS", "mse"),
             **settings,
         )
     elif not epochs:
@@ -471,6 +495,7 @@ def main() -> None:
             learning_rate=getenv("LR", 0.001),
             checkpoint_every=getenv("CHECKPOINT_EVERY", 5),
             head=getenv("HEAD", "direct"),
+            loss=getenv("LOSS", "mse"),
             **settings,
         )
     print(json.dumps(asdict(observation), indent=2))
