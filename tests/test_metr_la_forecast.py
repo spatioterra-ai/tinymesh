@@ -89,6 +89,7 @@ class METRLAForecastTest(unittest.TestCase):
         padded = _execution_batch(batch, Device.DEFAULT, batch_size=8)
 
         self.assertEqual(padded.values.shape, (8, 2, 4, 2))
+        self.assertEqual(padded.anchor.shape, (8, 4, 1))
         self.assertEqual(int(padded.observed.sum().item()), int(batch.observed.sum().item()))
 
     def test_false_graph_is_an_isomorphic_relabeling(self) -> None:
@@ -110,10 +111,19 @@ class METRLAForecastTest(unittest.TestCase):
         batch = next(batches(protocol, protocol.train, batch_size=17))
         model = Forecast(2, 2, 2, 3, head="residual")
 
-        prediction = model(batch.values, protocol.data.graph)
-        expected = batch.values[:, -1, :, :1].expand(*prediction.shape)
+        prediction = model(batch.values, protocol.data.graph, batch.anchor)
+        expected = batch.anchor.expand(*prediction.shape)
 
         self.assertEqual(prediction.tolist(), expected.tolist())
+
+    def test_residual_anchor_is_causal_persistence(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3)
+        batch = next(batches(protocol, protocol.validation, batch_size=8))
+        expected = _baseline("persistence", protocol, protocol.validation)
+
+        actual = protocol.standardizer.restore(batch.anchor).expand(*expected.shape)
+
+        self.assertLess((actual - expected).abs().max().item(), 1e-5)
 
     def test_masked_objectives(self) -> None:
         error = Tensor([1.0, -2.0, 100.0])

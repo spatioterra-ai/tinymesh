@@ -46,9 +46,13 @@ class Forecast:
             self.readout.bias = Tensor.zeros_like(self.readout.bias)
         self.head = head
 
-    def __call__(self, values: Tensor, graph: Graph) -> Tensor:
+    def __call__(self, values: Tensor, graph: Graph, anchor: Tensor | None = None) -> Tensor:
         forecast = self.readout(self.encoder(values, graph).relu())
-        return forecast if self.head == "direct" else forecast + values[..., -1, :, :1]
+        if self.head == "direct":
+            return forecast
+        if anchor is None or anchor.shape != (*forecast.shape[:-1], 1):
+            raise ValueError(f"residual anchor must have shape {(*forecast.shape[:-1], 1)}")
+        return forecast + anchor
 
 
 @dataclass(frozen=True)
@@ -170,7 +174,7 @@ def smoke(
     start = perf_counter()
     for batch in islice(batches(protocol, protocol.train, batch_size, shuffle=seed, tensors=tensors), steps):
         batch = _execution_batch(batch, device, batch_size)
-        losses.append(float(train_step(batch.values, batch.target, batch.observed).item()))
+        losses.append(float(train_step(batch.values, batch.anchor, batch.target, batch.observed).item()))
     return SmokeObservation(
         device,
         head,
@@ -317,7 +321,7 @@ def _fit(
             tensors=tensors,
         ):
             batch = _execution_batch(batch, device, batch_size)
-            train_step(batch.values, batch.target, batch.observed)
+            train_step(batch.values, batch.anchor, batch.target, batch.observed)
         if epoch % checkpoint_every != 0 and epoch != epochs:
             continue
         validation = _evaluate(
@@ -340,9 +344,9 @@ def _fit(
 def _training_step(model: Forecast, graph: Graph, optimizer, loss: str) -> TinyJit:
     @TinyJit
     @Context(TRAINING=1)
-    def step(values: Tensor, target: Tensor, observed: Tensor) -> Tensor:
+    def step(values: Tensor, anchor: Tensor, target: Tensor, observed: Tensor) -> Tensor:
         optimizer.zero_grad()
-        objective = _objective(model(values, graph) - target, observed, loss).backward()
+        objective = _objective(model(values, graph, anchor) - target, observed, loss).backward()
         return objective.realize(*optimizer.schedule_step())
 
     return step
@@ -379,7 +383,7 @@ def _evaluate(
             predict = predictors.get(execution.values.shape)
             if predict is None:
                 predictors[execution.values.shape] = predict = _predictor(model, graph)
-            prediction = predict(execution.values)[:size].to(protocol.data.speed.device).realize()
+            prediction = predict(execution.values, execution.anchor)[:size].to(protocol.data.speed.device).realize()
             target = batch.target.to(protocol.data.speed.device).realize()
             yield protocol.standardizer.restore(prediction) - protocol.standardizer.restore(target), batch.observed.to(
                 protocol.data.speed.device
@@ -390,8 +394,8 @@ def _evaluate(
 
 def _predictor(model: Forecast, graph: Graph):
     @TinyJit
-    def predict(values: Tensor) -> Tensor:
-        return model(values, graph).realize()
+    def predict(values: Tensor, anchor: Tensor) -> Tensor:
+        return model(values, graph, anchor).realize()
 
     return predict
 
@@ -405,6 +409,7 @@ def _execution_batch(batch: WindowBatch, device: str, batch_size: int) -> Window
         padding = batch_size - len(batch.starts)
         batch = WindowBatch(
             batch.values.cat(batch.values[-1:].expand(padding, *batch.values.shape[1:]), dim=0),
+            batch.anchor.cat(batch.anchor[-1:].expand(padding, *batch.anchor.shape[1:]), dim=0),
             batch.target.cat(batch.target[-1:].expand(padding, *batch.target.shape[1:]), dim=0),
             batch.observed.cat(
                 Tensor.zeros(padding, *batch.observed.shape[1:], dtype=batch.observed.dtype, device=batch.observed.device),
@@ -412,7 +417,10 @@ def _execution_batch(batch: WindowBatch, device: str, batch_size: int) -> Window
             ),
             batch.starts + (batch.starts[-1],) * padding,
         )
-    values = tuple(value.contiguous().to(device).realize() for value in (batch.values, batch.target, batch.observed))
+    values = tuple(
+        value.contiguous().to(device).realize()
+        for value in (batch.values, batch.anchor, batch.target, batch.observed)
+    )
     return WindowBatch(*values, batch.starts)
 
 
@@ -428,6 +436,7 @@ def _sparse_calls(model: Forecast, graph: Graph, protocol: Protocol, device: str
     output = model(
         Tensor.zeros(1, protocol.train.history, graph.nodes, protocol.features.shape[2], device=device),
         graph,
+        Tensor.zeros(1, graph.nodes, 1, device=device),
     )
     return sum(uop.src[0].arg.name == "csr_sum" for uop in output.uop.toposort() if uop.op is Ops.CALL)
 
