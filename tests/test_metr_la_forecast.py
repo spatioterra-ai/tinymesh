@@ -15,14 +15,14 @@ from tinymesh import Graph
 from tinymesh.datasets import METRLA
 
 
-def dataset(*, future_shift: float = 0.0) -> METRLA:
+def dataset(*, future_shift: float = 0.0, steps: int = 30) -> METRLA:
     graph = Graph(
         4,
         [0, 1, 2, 3, 0, 1, 2, 2],
         [0, 1, 2, 3, 1, 2, 0, 3],
     )
     rows = []
-    for time in range(30):
+    for time in range(steps):
         shift = future_shift if time >= 21 else 0.0
         rows.append([
             10.0 + time + shift,
@@ -37,7 +37,7 @@ def dataset(*, future_shift: float = 0.0) -> METRLA:
     return METRLA(
         graph,
         ("a", "b", "c", "d"),
-        tuple(datetime(2012, 3, 1) + timedelta(minutes=5 * time) for time in range(30)),
+        tuple(datetime(2012, 3, 1) + timedelta(minutes=5 * time) for time in range(steps)),
         speed,
         Tensor.ones(graph.edges, dtype=speed.dtype, device=speed.device).realize(),
     )
@@ -122,6 +122,21 @@ class METRLAForecastTest(unittest.TestCase):
         self.assertTrue(isfinite(model.test.overall.rmse))
         self.assertEqual(result.protocol.pygt_windows, 26)
         self.assertEqual(result.protocol.pygt_train_windows, 20)
+
+    def test_checkpoint_evaluation_observes_training(self) -> None:
+        result = train(
+            prepare(dataset(steps=60), history=2, horizon=3),
+            topologies=("true",),
+            seeds=(0,),
+            epochs=1,
+            batch_size=2,
+            hidden_features=2,
+            learning_rate=0.01,
+            checkpoint_every=1,
+        )
+
+        before, after = result.results[0].checkpoints
+        self.assertNotEqual(before.validation, after.validation)
 
     def test_rejects_invalid_training_before_loading(self) -> None:
         with self.assertRaisesRegex(ValueError, "non-negative integers"):

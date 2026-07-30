@@ -183,13 +183,11 @@ def train(
         for seed in seeds:
             Tensor.manual_seed(seed)
             model = Forecast(protocol.features.shape[2], hidden_features, protocol.train.history, protocol.train.horizon)
-            predictors = {}
             best_epoch, runtime, checkpoints, validation = _fit(
                 model,
                 graphs[topology],
                 protocol,
                 tensors,
-                predictors,
                 device=device,
                 seed=seed,
                 epochs=epochs,
@@ -213,7 +211,6 @@ def train(
                         protocol,
                         protocol.test,
                         tensors,
-                        predictors,
                         device=device,
                         batch_size=batch_size,
                     ),
@@ -250,7 +247,6 @@ def _fit(
     graph: Graph,
     protocol: Protocol,
     tensors: tuple[Tensor, Tensor, Tensor],
-    predictors: dict,
     *,
     device: str,
     seed: int,
@@ -269,7 +265,6 @@ def _fit(
         protocol,
         protocol.validation,
         tensors,
-        predictors,
         device=device,
         batch_size=batch_size,
     )
@@ -292,7 +287,6 @@ def _fit(
             protocol,
             protocol.validation,
             tensors,
-            predictors,
             device=device,
             batch_size=batch_size,
         )
@@ -323,11 +317,12 @@ def _evaluate(
     protocol: Protocol,
     span,
     tensors: tuple[Tensor, Tensor, Tensor],
-    predictors: dict,
     *,
     device: str,
     batch_size: int,
 ) -> Scores:
+    predictors = {}  # TinyJit captures parameter buffers, so one evaluator owns its lifetime.
+
     def errors():
         for batch in batches(protocol, span, batch_size, tensors=tensors):
             size = len(batch.starts)
