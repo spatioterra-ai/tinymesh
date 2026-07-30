@@ -267,17 +267,17 @@ class SpatialGeometryTest(unittest.TestCase):
         for edge_projection in ranges[:2]:
             self.assertEqual(
                 [(uop.src[0].arg, uop.arg[1]) for uop in edge_projection],
-                [(edges * dimensions, AxisType.LOOP)],
+                [(edges * dimensions, AxisType.WEAK)],
             )
         self.assertEqual(
             [(uop.src[0].arg, uop.arg[1]) for uop in ranges[2]],
-            [(edges, AxisType.LOOP), (dimensions, AxisType.REDUCE)],
+            [(edges, AxisType.WEAK), (dimensions, AxisType.REDUCE)],
         )
         self.assertEqual(
             (ranges[3][0].src[0].arg, ranges[3][0].arg[1]),
-            (nodes * features, AxisType.LOOP),
+            (nodes * features, AxisType.WEAK),
         )
-        self.assertEqual(ranges[3][1].arg[1], AxisType.LOOP)
+        self.assertEqual(ranges[3][1].arg[1], AxisType.WEAK)
         self.assertEqual(ranges[3][1].dtype, UOp.loop(-1).dtype)
 
 

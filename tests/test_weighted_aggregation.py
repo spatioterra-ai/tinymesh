@@ -149,7 +149,7 @@ class WeightedAggregationTest(unittest.TestCase):
     def _assert_csr_kernel(self, tensor, *, nodes, edges, width):
         body = self._kernel_body(tensor)
         ranges = [uop for uop in body.toposort() if uop.op is Ops.RANGE]
-        self.assertEqual([uop.arg[1] for uop in ranges], [AxisType.LOOP, AxisType.LOOP])
+        self.assertEqual([uop.arg[1] for uop in ranges], [AxisType.WEAK, AxisType.WEAK])
         self.assertEqual(ranges[0].src[0].arg, nodes * width)
         self.assertEqual(ranges[1].dtype, UOp.loop(-1).dtype)
         self._assert_no_edge_feature_state(body, nodes, edges, width)
@@ -157,7 +157,7 @@ class WeightedAggregationTest(unittest.TestCase):
     def _assert_edge_kernel(self, tensor, *, nodes, edges, width):
         body = self._kernel_body(tensor)
         ranges = [uop for uop in body.toposort() if uop.op is Ops.RANGE]
-        self.assertEqual([uop.arg[1] for uop in ranges], [AxisType.LOOP, AxisType.REDUCE])
+        self.assertEqual([uop.arg[1] for uop in ranges], [AxisType.WEAK, AxisType.REDUCE])
         self.assertEqual([uop.src[0].arg for uop in ranges], [edges, width])
         self._assert_no_edge_feature_state(body, nodes, edges, width)
 
