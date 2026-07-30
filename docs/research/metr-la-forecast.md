@@ -101,6 +101,25 @@ uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
 uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0 BS=32 HIDDEN=32 LR=0.001
 ```
 
+Revision
+[`827b5f2`](https://github.com/spatioterra-ai/tinymesh/commit/827b5f2074af7bebd06932b722f26a3e05f75f9b)
+recorded the complete protocol in 21.96 seconds on CPU. Its Metal smoke
+completed in 135.11 seconds overall, with 65.47 seconds inside three optimizer
+steps over 96 windows:
+
+```json
+{
+  "parameters": 6840,
+  "sparse_calls": 12,
+  "first_loss": 1.123005986213684,
+  "last_loss": 0.8795691728591919
+}
+```
+
+The loss movement proves the masked objective reaches A3T-GCN parameters
+through the full 207-node sparse graph. Three shuffled batches are not a model
+comparison or convergence result.
+
 On the current local Metal device, one full width-32 epoch did not complete
 inside the runner's 600-second bound at batch 32 or 128. Those stopped
 diagnostics produce no model score. A matched three-seed comparison of true,
