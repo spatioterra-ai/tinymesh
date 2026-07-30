@@ -486,9 +486,11 @@ def _validate(
 
 
 def main() -> None:
-    epochs, steps = getenv("EPOCHS", 0), getenv("STEPS", 0)
+    epochs, steps, evaluate_test = getenv("EPOCHS", 0), getenv("STEPS", 0), getenv("TEST", 0)
     if epochs and steps:
         raise SystemExit("EPOCHS and STEPS are mutually exclusive")
+    if evaluate_test not in (0, 1):
+        raise SystemExit("TEST must be 0 or 1")
     settings = {"history": getenv("HISTORY", 12), "horizon": getenv("HORIZON", 12)}
     if steps:
         observation = smoke(
@@ -517,7 +519,7 @@ def main() -> None:
             checkpoint_every=getenv("CHECKPOINT_EVERY", 5),
             head=getenv("HEAD", "direct"),
             loss=getenv("LOSS", "mse"),
-            evaluate_test=bool(getenv("TEST", 0)),
+            evaluate_test=bool(evaluate_test),
             **settings,
         )
     print(json.dumps(asdict(observation), indent=2))

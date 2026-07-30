@@ -26,6 +26,7 @@ uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
 uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
 uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
+uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=self HEAD=residual LOSS=mae SEED=0 BS=512
 ```
 
 The runner refuses a dirty tracked worktree, clears inherited experiment
@@ -46,6 +47,10 @@ and limits.
 the protocol and baselines; `STEPS=N` records bounded optimizer execution
 without a quality claim; `EPOCHS=N` runs checkpoint-selected model evidence.
 `EPOCHS` and `STEPS` cannot be combined.
+
+Training emits validation evidence only. `TEST=1` explicitly opens final test
+evaluation after the head, loss, topology set, seeds, and budget are frozen.
+Repeated test queries are development evidence, not an untouched benchmark.
 
 ## Promotion
 

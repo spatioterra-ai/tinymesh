@@ -141,6 +141,9 @@ field; no operation constructs an `N * E` axis.
 - one leakage-safe METR-LA 12-to-12 protocol with train-only observed
   normalization, masked loss, raw-speed metrics, direct tensor-index batches,
   and persistence at test MAE 4.232 / RMSE 8.145 as the model floor;
+- one matched three-seed residual A3T-GCN study where every learned topology
+  slightly beats persistence, but self-only beats the real and permuted graphs
+  on validation and development-test MAE and RMSE;
 - one Montevideo protocol with target-time splits, train-only per-node
   normalization, and raw-unit zero, persistence, and train-mean baselines;
 - one validation-selected, train-only hour-of-week baseline that improves

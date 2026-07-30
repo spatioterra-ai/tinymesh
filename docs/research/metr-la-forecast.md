@@ -1,9 +1,10 @@
 # METR-LA forecast
 
-Tinymesh now reproduces the PyG Temporal A3T-GCN task shape without inheriting
-its evaluation policy. The protocol establishes the temporal floor and a
-runnable sparse model path; it does not yet establish that the sensor graph
-improves traffic forecasting.
+Tinymesh reproduces the PyG Temporal A3T-GCN task shape without inheriting its
+evaluation policy. A persistence-anchored residual head now improves the
+temporal floor slightly and consistently, but self-only topology beats the
+real sensor graph in every matched seed. The current result supports temporal
+residual learning, not spatial message passing.
 
 ## Architecture
 
@@ -31,6 +32,20 @@ redundant graph-convolution biases: each would feed immediately into a biased
 gate projection and can be folded into that gate bias without changing the
 represented functions.
 
+The direct head preserves PyG parity. The experiment-only residual head asks
+the network to predict a correction to the causal persistence forecast:
+
+```text
+latest observed speed ----------------------+
+                                            |
+x[t-11:t] --> A3TGCN --> ReLU --> Linear --> + --> y[t+1:t+12]
+```
+
+Its linear layer starts at zero, so epoch zero is exactly persistence.
+Checkpoint selection can therefore keep the known floor when learned
+corrections are harmful. The anchor, head, objective, and selection policy
+remain experiment concerns; none expands the public `A3TGCN` contract.
+
 ## Parity and policy
 
 Both paths use 207 sensors, the 1,722-edge thresholded sensor graph, two input
@@ -50,7 +65,7 @@ The trustworthy experiment deliberately differs after that structural parity:
 | split | 80/20 after overlapping windows | 70/10/20 by target time before windows |
 | speed fit | all rows, including future and zero sentinels | observed training rows only |
 | missing input | normalized zero sentinel | training-mean value in normalized space |
-| loss | unmasked standardized MSE | observed-target masked standardized MSE |
+| loss | unmasked standardized MSE | observed-target masked MSE, MAE, or Huber |
 | metrics | standardized MSE | raw-speed MAE and RMSE |
 | controls | none | train mean, persistence, daily mean, permuted graph, self graph |
 
@@ -63,7 +78,9 @@ raw speed + timestamps + observed mask
                   |
        gather starts x fixed offsets
                   |
-      [B,12,207,2] -> [B,207,12]
+      [B,12,207,2] + persistence anchor
+                  |
+               A3TGCN
                   |
          masked loss / raw metrics
 ```
@@ -92,48 +109,91 @@ MAE is 3.494, 4.196, and 5.363; test RMSE is 6.390, 8.008, and 10.280.
 Normalized features, targets, and masks transfer to the execution device once.
 Each batch is one tensor gather from `starts × offsets`; partial batches are
 padded to the compiled shape with a false target mask. Topology remains sparse
-through all 12 A3T-GCN calls.
+through all 12 A3T-GCN calls. The residual anchor is derived causally from the
+same input history and falls back to the per-sensor training mean.
 
-Protocol and bounded optimizer-step evidence are separate:
+The first bounded smoke at revision
+[`827b5f2`](https://github.com/spatioterra-ai/tinymesh/commit/827b5f2074af7bebd06932b722f26a3e05f75f9b)
+proved full-size sparse forward, backward, and optimizer execution. Batch 512
+then made complete local training practical. No Modal or paid compute was used.
 
-```console
-uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
-uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0 BS=32 HIDDEN=32 LR=0.001
+Prediction JITs are scoped to one evaluation pass. TinyJit captures parameter
+buffers, so a predictor must not survive an optimizer update. A regression
+guards this boundary after an early full-epoch run exposed stale checkpoint
+evaluation.
+
+## Model selection
+
+The PyG-parity direct head does not clear persistence. At seed 0, 12 epochs of
+masked MSE reach validation MAE 6.554 and RMSE 9.962. A residual head is the
+smallest useful correction: the known causal forecast flows directly to the
+output while A3T-GCN learns only a delta.
+
+Masked MSE improves RMSE but worsens MAE. Huber narrows that conflict. Masked
+MAE with the exact persistence anchor is the first validation-selected
+configuration to improve both metrics, so the matched comparison freezes:
+
+```text
+head=residual   loss=mae        hidden=32
+epochs=3        batch=512       learning_rate=0.001
+seeds=0,1,2     checkpoint=each epoch
 ```
+
+## Matched topology result
 
 Revision
-[`827b5f2`](https://github.com/spatioterra-ai/tinymesh/commit/827b5f2074af7bebd06932b722f26a3e05f75f9b)
-recorded the complete protocol in 21.96 seconds on CPU. Its Metal smoke
-completed in 135.11 seconds overall, with 65.47 seconds inside three optimizer
-steps over 96 windows:
+[`508805e`](https://github.com/spatioterra-ai/tinymesh/commit/508805ea920df477be051c251f48773431b1275d)
+ran true, isomorphically permuted, and self-only topology under the frozen
+budget. The three seed envelopes completed on Metal in 356.42, 341.67, and
+323.60 seconds.
 
-```json
-{
-  "parameters": 6840,
-  "sparse_calls": 12,
-  "first_loss": 1.123005986213684,
-  "last_loss": 0.8795691728591919
-}
+```console
+uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=all HEAD=residual LOSS=mae SEED=0 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
+uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=all HEAD=residual LOSS=mae SEED=1 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
+uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=all HEAD=residual LOSS=mae SEED=2 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
 ```
 
-The loss movement proves the masked objective reaches A3T-GCN parameters
-through the full 207-node sparse graph. Three shuffled batches are not a model
-comparison or convergence result.
+Values are mean ± sample standard deviation across seeds:
 
-On the current local Metal device, one full width-32 epoch did not complete
-inside the runner's 600-second bound at batch 32 or 128. Those stopped
-diagnostics produce no model score. A matched three-seed comparison of true,
-isomorphically relabeled, and self-only topology therefore remains pending
-explicit bounded GPU execution.
+| Topology | Validation MAE | Validation RMSE | Test MAE | Test RMSE |
+| --- | ---: | ---: | ---: | ---: |
+| persistence | 3.8547 | 7.6462 | 4.2323 | 8.1450 |
+| true | 3.8342 ± 0.0001 | 7.5651 ± 0.0027 | 4.2090 ± 0.0001 | 8.0664 ± 0.0025 |
+| permuted | 3.8461 ± 0.0013 | 7.6106 ± 0.0020 | 4.2229 ± 0.0012 | 8.1105 ± 0.0018 |
+| self-only | **3.8230 ± 0.0009** | **7.4836 ± 0.0068** | **4.1931 ± 0.0008** | **7.9745 ± 0.0070** |
+
+True topology improves validation MAE by 0.53% and RMSE by 1.06% over
+persistence; its test improvements are 0.55% and 0.96%. It beats the permuted
+graph on MAE and RMSE in every seed on both splits. That is not a graph win:
+self-only topology beats true topology on the same 12 paired comparisons and
+improves test MAE by 0.93% and RMSE by 2.09% over persistence.
+
+```text
+persistence < permuted < true < self-only
+              learned temporal correction ----^
+              useful neighbor mixing: no
+```
+
+The result says the residual temporal head learns a small repeatable
+correction. Unit-weight GCN neighbor mixing removes useful node-local
+information in this architecture. Distance affinity, directed diffusion, and
+other graph operators remain separate hypotheses.
+
+These test numbers are development evidence, not an untouched benchmark
+claim. The original runner evaluated test for each model-selection probe even
+though decisions used validation. Current training defaults to
+validation-only; `TEST=1` is now an explicit final-evaluation boundary.
 
 ## Promotion and limits
 
 `A3TGCN` is public because it is a small standard composition with batched and
 unbatched shape, gradient, sparse-call, and live METR-LA evidence. The task
-head, target-time split, normalization, mask policy, baselines, checkpointing,
-false graphs, and run modes remain under `experiments/`.
+head, persistence anchor, objectives, target-time split, normalization, mask
+policy, baselines, checkpointing, false graphs, and run modes remain under
+`experiments/`.
 
-The current evidence proves framework-independent task construction and
-full-size sparse forward/backward execution. It does not prove PyTorch numeric
-parity, benchmark rank, graph value, affinity value, production accuracy, or
-completed training.
+The evidence proves framework-independent task construction, full-size sparse
+training, and a small node-local temporal improvement. It rejects a spatial
+advantage from this unit-weight A3T-GCN configuration. It does not prove
+PyTorch numeric parity, benchmark rank, affinity value, production accuracy,
+or a general absence of graph value.
