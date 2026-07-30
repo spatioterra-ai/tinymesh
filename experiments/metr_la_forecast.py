@@ -71,7 +71,7 @@ class Result:
     runtime_seconds: float
     checkpoints: tuple[Checkpoint, ...]
     validation: Scores
-    test: Scores
+    test: Scores | None
 
 
 @dataclass(frozen=True)
@@ -79,6 +79,7 @@ class ForecastObservation:
     device: str
     head: str
     loss: str
+    evaluate_test: bool
     epochs: int
     batch_size: int
     hidden_features: int
@@ -127,8 +128,9 @@ def forecast(
     checkpoint_every: int = 5,
     head: str = "direct",
     loss: str = "mse",
+    evaluate_test: bool = False,
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, evaluate_test)
     return train(
         prepare(metr_la(device="CPU"), history=history, horizon=horizon),
         device=device,
@@ -141,6 +143,7 @@ def forecast(
         checkpoint_every=checkpoint_every,
         head=head,
         loss=loss,
+        evaluate_test=evaluate_test,
     )
 
 
@@ -209,8 +212,9 @@ def train(
     checkpoint_every: int,
     head: str = "direct",
     loss: str = "mse",
+    evaluate_test: bool = False,
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, evaluate_test)
     graphs, tensors, results = _graphs(protocol.data.graph), _execution_tensors(protocol, device), []
     for topology in topologies:
         for seed in seeds:
@@ -245,14 +249,18 @@ def train(
                     runtime,
                     checkpoints,
                     validation,
-                    _evaluate(
-                        model,
-                        graphs[topology],
-                        protocol,
-                        protocol.test,
-                        tensors,
-                        device=device,
-                        batch_size=batch_size,
+                    (
+                        _evaluate(
+                            model,
+                            graphs[topology],
+                            protocol,
+                            protocol.test,
+                            tensors,
+                            device=device,
+                            batch_size=batch_size,
+                        )
+                        if evaluate_test
+                        else None
                     ),
                 )
             )
@@ -260,6 +268,7 @@ def train(
         device,
         head,
         loss,
+        evaluate_test,
         epochs,
         batch_size,
         hidden_features,
@@ -451,6 +460,7 @@ def _validate(
     checkpoint_every: int,
     head: str,
     loss: str,
+    evaluate_test: bool = False,
 ) -> None:
     allowed = {"true", "permuted", "self"}
     if not topologies or any(topology not in allowed for topology in topologies):
@@ -471,6 +481,8 @@ def _validate(
         raise ValueError("head must be 'direct' or 'residual'")
     if loss not in ("mse", "mae", "huber"):
         raise ValueError("loss must be 'mse', 'mae', or 'huber'")
+    if not isinstance(evaluate_test, bool):
+        raise ValueError("evaluate_test must be boolean")
 
 
 def main() -> None:
@@ -505,6 +517,7 @@ def main() -> None:
             checkpoint_every=getenv("CHECKPOINT_EVERY", 5),
             head=getenv("HEAD", "direct"),
             loss=getenv("LOSS", "mse"),
+            evaluate_test=bool(getenv("TEST", 0)),
             **settings,
         )
     print(json.dumps(asdict(observation), indent=2))

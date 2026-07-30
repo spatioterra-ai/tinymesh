@@ -40,6 +40,7 @@ CATALOG = {
             "MODEL",
             "HEAD",
             "LOSS",
+            "TEST",
             "SEED",
             "HISTORY",
             "HORIZON",

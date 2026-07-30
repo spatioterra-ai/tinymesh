@@ -143,6 +143,7 @@ class METRLAForecastTest(unittest.TestCase):
             hidden_features=2,
             learning_rate=0.01,
             checkpoint_every=1,
+            evaluate_test=True,
         )
 
         self.assertEqual(len(result.results), 1)
@@ -151,6 +152,8 @@ class METRLAForecastTest(unittest.TestCase):
         model = result.results[0]
         self.assertEqual((model.topology, model.seed, model.sparse_calls), ("true", 0, 2))
         self.assertTrue(isfinite(model.validation.overall.rmse))
+        self.assertIsNotNone(model.test)
+        assert model.test is not None
         self.assertTrue(isfinite(model.test.overall.rmse))
         self.assertEqual(result.protocol.pygt_windows, 26)
         self.assertEqual(result.protocol.pygt_train_windows, 20)
@@ -169,6 +172,7 @@ class METRLAForecastTest(unittest.TestCase):
 
         before, after = result.results[0].checkpoints
         self.assertNotEqual(before.validation, after.validation)
+        self.assertIsNone(result.results[0].test)
 
     def test_rejects_invalid_training_before_loading(self) -> None:
         with self.assertRaisesRegex(ValueError, "non-negative integers"):
@@ -179,6 +183,8 @@ class METRLAForecastTest(unittest.TestCase):
             forecast(Device.DEFAULT, head="other")
         with self.assertRaisesRegex(ValueError, "mse.*mae.*huber"):
             forecast(Device.DEFAULT, loss="other")
+        with self.assertRaisesRegex(ValueError, "boolean"):
+            forecast(Device.DEFAULT, evaluate_test=1)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
