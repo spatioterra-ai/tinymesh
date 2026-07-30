@@ -8,7 +8,7 @@ imports.
 | --- | --- | --- | --- |
 | tinygrad | [`6ea7d366`](https://github.com/tinygrad/tinygrad/tree/6ea7d366fa92842c0bc8b7b080e26e83a7406252) | Tensor, autograd, compilation, devices, direct module shape, minimal code | mesh semantics or a compatibility wrapper |
 | PyTorch Geometric | [`726310a4`](https://github.com/pyg-team/pytorch_geometric/tree/726310a486eae37a89cd6359072b82bbbbb71579) | graph-layer equations, conventional names, host and dense comparisons | PyTorch, `MessagePassing`, registries, aggregation plug-ins |
-| PyTorch Geometric Temporal | [`fe555bc3`](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/tree/fe555bc30ee197755c4b58a89407033a5f383415) | recurrent equations and pinned temporal datasets | PyTorch, trainer surfaces, dense adjacency construction |
+| PyTorch Geometric Temporal | [`fe555bc3`](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/tree/fe555bc30ee197755c4b58a89407033a5f383415) | recurrent and period-attention equations, pinned temporal datasets | PyTorch, batch-specific aliases, trainer surfaces, dense adjacency construction |
 | TorchGeo | [`468c670b`](https://github.com/torchgeo/torchgeo/tree/468c670bc94c961eb80e6c0ad32ed147852c367b) | explicit geospatial query, dataset, and sampling boundaries | GIS dependencies or general coordinate types without a caller |
 | TerraTorch | [`375356c9`](https://github.com/torchgeo/terratorch/tree/375356c9ba1d919c39816abaf6b499afc303497f) | backbone, neck, head, and task composition seams | factories or registries before configuration-driven composition exists |
 

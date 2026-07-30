@@ -24,6 +24,8 @@ Record a run by passing every experiment setting explicitly:
 ```console
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
+uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
+uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
 ```
 
 The runner refuses a dirty tracked worktree, clears inherited experiment
@@ -39,6 +41,11 @@ at 600 seconds. A successful run writes an ignored JSON envelope under
 Local envelopes support iteration. A result that changes a project decision
 belongs in `docs/research/` with its exact command, revisions, controls, scope,
 and limits.
+
+`metr_la_forecast` keeps three modes explicit: no `EPOCHS` or `STEPS` records
+the protocol and baselines; `STEPS=N` records bounded optimizer execution
+without a quality claim; `EPOCHS=N` runs checkpoint-selected model evidence.
+`EPOCHS` and `STEPS` cannot be combined.
 
 ## Promotion
 

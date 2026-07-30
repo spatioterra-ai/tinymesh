@@ -57,8 +57,8 @@ COO connectivity + scalar edge facts
   path constructs `[N, N]` or `[E, H]` intermediates.
 - `SAGEConv`, `GCNConv`, and `GATConv` compose direct tinygrad parameters over
   the same sparse graph operations.
-- `TGCN`, `ChebConv`, and `GConvGRU` reuse one graph across ordered node
-  snapshots and send parameter gradients through space and time.
+- `TGCN`, `A3TGCN`, `ChebConv`, and `GConvGRU` reuse one graph across ordered
+  node snapshots and send parameter gradients through space and time.
 - A fixed-graph temporal signal and pinned PyG Temporal chickenpox loader keep
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
 - A pinned Montevideo loader adds raw hourly values, projected node positions,
@@ -66,6 +66,10 @@ COO connectivity + scalar edge facts
 - A checksummed METR-LA loader aligns 34,272 five-minute rows, explicit
   zero-sentinel missingness, 207 sensor IDs, and 1,722 directed affinity edges
   without NumPy, pandas, pickle, or a dense adjacency tensor.
+- A leakage-safe METR-LA protocol reproduces PyG Temporal's 12-to-12 A3T-GCN
+  task shape, then splits by target time, fits observed training rows only,
+  masks missing targets, and establishes persistence at test MAE 4.232 and
+  RMSE 8.145 as the graph-model floor.
 - `DirectedDiffusion` and `DiffusionGRU` source-normalize caller-validated
   positive scalar affinity in both graph directions and keep recurrent
   propagation sparse.
@@ -142,6 +146,7 @@ uv run --locked python -m experiments.run --list
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run tgcn DEV=METAL
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
+uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
 ```
 
 Successful runs write ignored local envelopes containing the tinymesh revision,
@@ -190,6 +195,9 @@ run the [quick start](docs/quickstart.md):
   real directed topology, position, distance, and hourly node fields.
 - [METR-LA sensor data](docs/research/metr-la-data.md) aligns raw traffic
   speed, source timestamps, missingness, and directed road-distance affinity.
+- [METR-LA forecast](docs/research/metr-la-forecast.md) reproduces the A3T-GCN
+  task shape, fixes leakage and missingness policy, and establishes the
+  temporal floor plus current execution boundary.
 - [Montevideo forecast](docs/research/montevideo-forecast.md) fixes target-time
   splits and retains the negative matched geometry comparison.
 - [Montevideo seasonal floor](docs/research/montevideo-seasonal.md) selects the
@@ -211,7 +219,8 @@ incoming mean, endpoint projection, target softmax, and in-degree; its private
 backend owns lowering and rebuildable device caches. A fixed-graph temporal
 signal owns aligned node IDs, features, targets, edge weights, and causal
 window batches. A separate dataset-specific METR-LA record retains raw
-timestamps and a derived missingness mask before task policy exists.
+timestamps and a derived missingness mask before task policy exists; its
+forecast protocol remains research-owned.
 `tinymesh.nn` owns equations and parameters; experiments own data policy,
 unrolling, training, controls, and claims.
 The alpha kernel and optimizer boundary still block stability. Vectorized
@@ -230,9 +239,11 @@ scalar distance. A later temporal study found a much stronger hour-of-week
 floor, and the first delayed-edge residual test did not beat that floor or
 structural controls. Controlled transport now distinguishes the existing
 sparse diffusion path and shows size transfer under one known law. Further
-synthetic tuning has diminishing value; the next claim needs the same controls
-on a real physical sensor network. METR-LA now supplies that data boundary; it
-does not yet supply the forecast evidence.
+synthetic tuning has diminishing value. METR-LA now supplies the real sensor
+boundary, a trustworthy 12-to-12 protocol, and strong temporal controls.
+Full-size A3T-GCN forward/backward works, but matched true/permuted/self
+training exceeds the current local 600-second bound and remains the next
+evidence step.
 
 ## Development
 

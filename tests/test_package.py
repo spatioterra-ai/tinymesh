@@ -22,6 +22,7 @@ class PackageTest(unittest.TestCase):
             {"ChebConv", "GATConv", "GCNConv", "SAGEConv"},
         )
         self.assertTrue(all(hasattr(nn, name) for name in (
+            "A3TGCN",
             "DiffusionGRU",
             "DirectedDiffusion",
             "GConvGRU",

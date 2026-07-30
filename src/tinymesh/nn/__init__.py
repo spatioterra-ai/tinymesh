@@ -135,6 +135,33 @@ class TGCN:
         return update * hidden + (1 - update) * candidate
 
 
+class A3TGCN:
+    """Attention over T-GCN encodings of a fixed number of periods."""
+
+    def __init__(self, in_features: int, hidden_features: int, periods: int) -> None:
+        if periods <= 0:
+            raise ValueError("periods must be positive")
+        self.cell = TGCN(in_features, hidden_features)
+        self.attention = Tensor.uniform(periods)
+        self.in_features, self.hidden_features, self.periods = in_features, hidden_features, periods
+
+    def __call__(
+        self,
+        values: Tensor,
+        graph: Graph,
+        hidden: Tensor | None = None,
+    ) -> Tensor:
+        expected = (self.periods, graph.nodes, self.in_features)
+        if values.ndim < 3 or values.shape[-3:] != expected:
+            raise ValueError(f"values must have shape [..., {self.periods}, {graph.nodes}, {self.in_features}], got {values.shape}")
+        probability = self.attention.softmax(axis=0)
+        states = [
+            self.cell(values[..., period, :, :], graph, hidden) * probability[period]
+            for period in range(self.periods)
+        ]
+        return sum(states[1:], start=states[0])
+
+
 class GConvGRU:
     """One Chebyshev graph-convolutional recurrent step."""
 

@@ -34,6 +34,8 @@ Pass experiment settings explicitly:
 ```console
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
+uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
+uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
 uv run --locked python -m experiments.run transport_forecast DEV=CPU MODEL=diffusion_gru TOPOLOGY=true SEED=0
 uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru NODES=all INITIAL=dense SEED=0
 ```
