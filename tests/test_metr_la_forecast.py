@@ -5,6 +5,7 @@ from math import isfinite
 from tinygrad import Device, Tensor
 
 from experiments.metr_la_forecast import (
+    Forecast,
     _execution_batch,
     _graphs,
     forecast,
@@ -103,6 +104,16 @@ class METRLAForecastTest(unittest.TestCase):
         )
         self.assertEqual(graphs["self"].edges, graphs["self"].nodes)
 
+    def test_residual_head_starts_at_latest_speed(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3)
+        batch = next(batches(protocol, protocol.train, batch_size=17))
+        model = Forecast(2, 2, 2, 3, head="residual")
+
+        prediction = model(batch.values, protocol.data.graph)
+        expected = batch.values[:, -1, :, :1].expand(*prediction.shape)
+
+        self.assertEqual(prediction.tolist(), expected.tolist())
+
     def test_tiny_forecast_trains_through_masked_a3tgcn(self) -> None:
         result = train(
             prepare(dataset(), history=2, horizon=3),
@@ -116,6 +127,7 @@ class METRLAForecastTest(unittest.TestCase):
         )
 
         self.assertEqual(len(result.results), 1)
+        self.assertEqual(result.head, "direct")
         model = result.results[0]
         self.assertEqual((model.topology, model.seed, model.sparse_calls), ("true", 0, 2))
         self.assertTrue(isfinite(model.validation.overall.rmse))
@@ -143,6 +155,8 @@ class METRLAForecastTest(unittest.TestCase):
             forecast(Device.DEFAULT, seeds=(True,))
         with self.assertRaisesRegex(ValueError, "positive integer"):
             forecast(Device.DEFAULT, epochs=0)
+        with self.assertRaisesRegex(ValueError, "direct.*residual"):
+            forecast(Device.DEFAULT, head="other")
 
 
 if __name__ == "__main__":

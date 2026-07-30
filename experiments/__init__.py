@@ -33,7 +33,7 @@ CATALOG = {
     "metr_la_forecast": Experiment(
         "forecast",
         "tinymesh.nn.A3TGCN",
-        ("DEV", "EPOCHS", "STEPS", "MODEL", "SEED", "HISTORY", "HORIZON", "BS", "HIDDEN", "LR", "CHECKPOINT_EVERY"),
+        ("DEV", "EPOCHS", "STEPS", "MODEL", "HEAD", "SEED", "HISTORY", "HORIZON", "BS", "HIDDEN", "LR", "CHECKPOINT_EVERY"),
     ),
     "chickenpox_forecast": Experiment(
         "forecast",

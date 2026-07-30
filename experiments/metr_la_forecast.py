@@ -28,12 +28,27 @@ from tinymesh.nn import A3TGCN
 
 
 class Forecast:
-    def __init__(self, in_features: int, hidden_features: int, periods: int, horizon: int) -> None:
+    def __init__(
+        self,
+        in_features: int,
+        hidden_features: int,
+        periods: int,
+        horizon: int,
+        head: str = "direct",
+    ) -> None:
+        if head not in ("direct", "residual"):
+            raise ValueError("head must be 'direct' or 'residual'")
         self.encoder = A3TGCN(in_features, hidden_features, periods)
         self.readout = nn.Linear(hidden_features, horizon)
+        if head == "residual":
+            self.readout.weight = Tensor.zeros_like(self.readout.weight)
+            assert self.readout.bias is not None
+            self.readout.bias = Tensor.zeros_like(self.readout.bias)
+        self.head = head
 
     def __call__(self, values: Tensor, graph: Graph) -> Tensor:
-        return self.readout(self.encoder(values, graph).relu())
+        forecast = self.readout(self.encoder(values, graph).relu())
+        return forecast if self.head == "direct" else forecast + values[..., -1, :, :1]
 
 
 @dataclass(frozen=True)
@@ -58,6 +73,7 @@ class Result:
 @dataclass(frozen=True)
 class ForecastObservation:
     device: str
+    head: str
     epochs: int
     batch_size: int
     hidden_features: int
@@ -70,6 +86,7 @@ class ForecastObservation:
 @dataclass(frozen=True)
 class SmokeObservation:
     device: str
+    head: str
     seed: int
     steps: int
     trained_windows: int
@@ -102,8 +119,9 @@ def forecast(
     hidden_features: int = 32,
     learning_rate: float = 0.001,
     checkpoint_every: int = 5,
+    head: str = "direct",
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head)
     return train(
         prepare(metr_la(device="CPU"), history=history, horizon=horizon),
         device=device,
@@ -114,6 +132,7 @@ def forecast(
         hidden_features=hidden_features,
         learning_rate=learning_rate,
         checkpoint_every=checkpoint_every,
+        head=head,
     )
 
 
@@ -127,8 +146,9 @@ def smoke(
     batch_size: int = 32,
     hidden_features: int = 32,
     learning_rate: float = 0.001,
+    head: str = "direct",
 ) -> SmokeObservation:
-    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1)
+    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1, head)
     if not isinstance(steps, int) or isinstance(steps, bool) or steps <= 0:
         raise ValueError("steps must be a positive integer")
     protocol = prepare(metr_la(device="CPU"), history=history, horizon=horizon)
@@ -138,7 +158,7 @@ def smoke(
 
     tensors = _execution_tensors(protocol, device)
     Tensor.manual_seed(seed)
-    model = Forecast(protocol.features.shape[2], hidden_features, history, horizon)
+    model = Forecast(protocol.features.shape[2], hidden_features, history, horizon, head)
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
     train_step = _training_step(model, protocol.data.graph, optimizer)
     losses = []
@@ -148,6 +168,7 @@ def smoke(
         losses.append(float(train_step(batch.values, batch.target, batch.observed).item()))
     return SmokeObservation(
         device,
+        head,
         seed,
         steps,
         min(steps * batch_size, protocol.train.windows),
@@ -176,13 +197,20 @@ def train(
     hidden_features: int,
     learning_rate: float,
     checkpoint_every: int,
+    head: str = "direct",
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head)
     graphs, tensors, results = _graphs(protocol.data.graph), _execution_tensors(protocol, device), []
     for topology in topologies:
         for seed in seeds:
             Tensor.manual_seed(seed)
-            model = Forecast(protocol.features.shape[2], hidden_features, protocol.train.history, protocol.train.horizon)
+            model = Forecast(
+                protocol.features.shape[2],
+                hidden_features,
+                protocol.train.history,
+                protocol.train.horizon,
+                head,
+            )
             best_epoch, runtime, checkpoints, validation = _fit(
                 model,
                 graphs[topology],
@@ -218,6 +246,7 @@ def train(
             )
     return ForecastObservation(
         device,
+        head,
         epochs,
         batch_size,
         hidden_features,
@@ -391,6 +420,7 @@ def _validate(
     hidden_features: int,
     learning_rate: float,
     checkpoint_every: int,
+    head: str,
 ) -> None:
     allowed = {"true", "permuted", "self"}
     if not topologies or any(topology not in allowed for topology in topologies):
@@ -407,6 +437,8 @@ def _validate(
             raise ValueError(f"{name} must be a positive integer")
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive")
+    if head not in ("direct", "residual"):
+        raise ValueError("head must be 'direct' or 'residual'")
 
 
 def main() -> None:
@@ -422,6 +454,7 @@ def main() -> None:
             batch_size=getenv("BS", 32),
             hidden_features=getenv("HIDDEN", 32),
             learning_rate=getenv("LR", 0.001),
+            head=getenv("HEAD", "direct"),
             **settings,
         )
     elif not epochs:
@@ -437,6 +470,7 @@ def main() -> None:
             hidden_features=getenv("HIDDEN", 32),
             learning_rate=getenv("LR", 0.001),
             checkpoint_every=getenv("CHECKPOINT_EVERY", 5),
+            head=getenv("HEAD", "direct"),
             **settings,
         )
     print(json.dumps(asdict(observation), indent=2))
