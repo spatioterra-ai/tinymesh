@@ -119,5 +119,11 @@ uv run --locked python -m experiments.run metr_la_diffusion DEV=CPU
 uv run --locked python -m experiments.run metr_la_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
 ```
 
-The implementation stage establishes causal execution, sparse structure,
-controls, and revision-bound logging. Predictive evidence remains pending.
+Revision
+[`90f53dca`](https://github.com/spatioterra-ai/tinymesh/commit/90f53dca8ce19833771cf0b35a92672f081139c9)
+completed the Metal smoke in 63.48 seconds end to end. The optimizer step
+processed 512 full-source windows with 11,436 parameters and 48 sparse calls;
+its masked normalized MAE was `0.308893`. This establishes causal forward,
+backward, Adam, sparse structure, controls, and revision-bound logging. One
+step makes no predictive-quality claim; matched validation evidence remains
+pending.
