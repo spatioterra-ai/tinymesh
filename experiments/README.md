@@ -1,80 +1,21 @@
 # Experiments
 
-Experiments decide whether a primitive, component, dataset boundary, or model
-claim has earned its place. They do not define the public API.
+Experiments own revision-bound policy, controls, training, and measurements.
+They use the public runtime; they do not define it.
 
-`experiments.CATALOG` is the source of truth:
+```text
+experiments.CATALOG   runnable inventory, settings, timeout, API owner
+experiments.run       clean-revision execution and ignored local envelope
+docs/research/        durable result and current decision
+```
+
+List the exact inventory:
 
 ```console
 uv run --locked python -m experiments.run --list
 ```
 
-Its groups have one meaning:
-
-- `kernel` measures sparse execution and scaling;
-- `primitive` tests a graph operation or an intentionally unpromoted
-  composition;
-- `layer` proves a reusable `tinymesh.nn` component;
-- `data` validates a public loader and its alignment;
-- `forecast` compares research policy and predictive evidence.
-
-An owner beginning with `tinymesh.` names the promoted component. An owner of
-`research-only` means the result informs a decision without creating an API.
-Negative model quality can reject a claim without invalidating a layer whose
-equation, gradients, shapes, and sparse work remain correct.
-
-Every stage follows the repository
-[closure gate](../docs/experiments.md#close-a-stage) before another dataset or
-architecture begins.
-
-Every catalog entry owns a fixed positive timeout. The default is 600 seconds;
-`metr_la_diffusion` uses 900 seconds because full matched controls exceed the
-default on the reference Metal path. A CLI setting cannot weaken either bound.
-
-## Record a run
-
-Pass experiment settings explicitly:
-
-```console
-uv run --locked python -m experiments.run mean_sage DEV=CPU
-uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
-uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
-uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
-uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=self HEAD=residual LOSS=mae SEED=0 BS=512
-uv run --locked python -m experiments.run metr_la_diffusion DEV=CPU
-uv run --locked python -m experiments.run metr_la_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
-uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
-uv run --locked python -m experiments.run transport_forecast DEV=CPU MODEL=diffusion_gru TOPOLOGY=true SEED=0
-uv run --locked python -m experiments.run transport_transfer DEV=CPU MODEL=diffusion_gru NODES=all INITIAL=dense SEED=0
-```
-
-The runner refuses dirty tracked work, executes only cataloged modules, clears
-inherited experiment settings, and accepts only the settings declared by that
-entry. A successful run writes an ignored JSON envelope under
-`experiments/runs/` with:
-
-- the tinymesh revision and every pinned reference gitlink;
-- the experiment group and API owner;
-- explicit settings, Python version, UTC start, timeout, and elapsed time;
-- the experiment's JSON observation.
-
-Local envelopes are working evidence, not release artifacts. A result that
-changes a decision belongs in `docs/research/` with its command, revisions,
-scope, controls, and limits.
-
-Forecast training is validation-only by default. Add `TEST=1` only after the
-model contract and budget are frozen; this is an evaluation boundary, not a
-tuning flag.
-
-## Graduation gate
-
-A component moves into `src/tinymesh/` only when it has:
-
-1. a stable mathematical contract and a live caller;
-2. host or dense parity where applicable;
-3. first-order gradient and shape evidence;
-4. sparse-work evidence without network-scale dense carriers;
-5. a smaller public owner than leaving duplicate implementations in research.
-
-Dataset accuracy governs model claims. It does not, by itself, govern whether a
-general component is correctly implemented.
+An owner beginning with `tinymesh.` names an already-promoted contract.
+`research-only` means the result creates no API. The canonical
+[experiment guide](../docs/experiments.md) owns run syntax, evidence envelopes,
+the graduation gate, and stage closure.

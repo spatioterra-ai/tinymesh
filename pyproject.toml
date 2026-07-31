@@ -67,3 +67,6 @@ select = [
     "W293",
     "W6",
 ]
+
+[tool.ruff.format]
+exclude = ["*"]
