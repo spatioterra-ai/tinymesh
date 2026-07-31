@@ -64,7 +64,7 @@ evidence supports:
 
 ```text
 controlled transport   correct topology matters and transfers across graph size
-real forecasts         no stable spatial advantage yet
+real forecasts         METR-LA topology signal; incumbent local model still wins
 implementation         fixed-topology first-order core; alpha custom kernel
 ```
 
