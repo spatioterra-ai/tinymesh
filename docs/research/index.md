@@ -59,6 +59,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   residuals against reversed and permuted controls.
 - [METR-LA forecast](metr-la-forecast.md) — A3T-GCN task parity, trustworthy
   evaluation, and a temporal rather than spatial gain.
+- [METR-LA directed diffusion](metr-la-diffusion.md) — factorized space-time
+  recurrence over real affinity with matched topology controls.
 - [Controlled transport](transport-forecast.md) — a positive identifiable
   topology witness.
 - [Controlled transfer](transport-transfer.md) — frozen local parameters on

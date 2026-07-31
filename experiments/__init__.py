@@ -10,6 +10,24 @@ class Experiment:
     settings: tuple[str, ...] = ("DEV",)
 
 
+METR_LA_SETTINGS = (
+    "DEV",
+    "EPOCHS",
+    "STEPS",
+    "MODEL",
+    "HEAD",
+    "LOSS",
+    "TEST",
+    "SEED",
+    "HISTORY",
+    "HORIZON",
+    "BS",
+    "HIDDEN",
+    "LR",
+    "CHECKPOINT_EVERY",
+)
+
+
 CATALOG = {
     "sparse_aggregation": Experiment("kernel", "tinymesh.Graph"),
     "csr_aggregation": Experiment(
@@ -33,22 +51,12 @@ CATALOG = {
     "metr_la_forecast": Experiment(
         "forecast",
         "tinymesh.nn.A3TGCN",
-        (
-            "DEV",
-            "EPOCHS",
-            "STEPS",
-            "MODEL",
-            "HEAD",
-            "LOSS",
-            "TEST",
-            "SEED",
-            "HISTORY",
-            "HORIZON",
-            "BS",
-            "HIDDEN",
-            "LR",
-            "CHECKPOINT_EVERY",
-        ),
+        METR_LA_SETTINGS,
+    ),
+    "metr_la_diffusion": Experiment(
+        "forecast",
+        "tinymesh.nn.DiffusionGRU",
+        METR_LA_SETTINGS,
     ),
     "chickenpox_forecast": Experiment(
         "forecast",
