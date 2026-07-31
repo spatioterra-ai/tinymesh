@@ -178,8 +178,9 @@ persistence < permuted < true < self-only
 
 The result says the residual temporal head learns a small repeatable
 correction. Unit-weight GCN neighbor mixing removes useful node-local
-information in this architecture. Distance affinity, directed diffusion, and
-other graph operators remain separate hypotheses.
+information in this architecture. The later
+[directed-diffusion result](metr-la-diffusion.md) finds a topology-specific
+long-horizon RMSE signal, but self-only recurrence still wins MAE.
 
 These test numbers are development evidence, not an untouched benchmark
 claim. The original runner evaluated test for each model-selection probe even
