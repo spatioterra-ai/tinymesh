@@ -7,6 +7,7 @@ repo_name = "spatioterra-ai/tinymesh"
 nav = [
   "index.md",
   "quickstart.md",
+  "api.md",
   "experiments.md",
   "reference-projects.md",
   {"Concepts" = [
@@ -15,6 +16,7 @@ nav = [
     "concepts/time.md",
   ]},
   {"Research" = [
+    "research/index.md",
     "research/spatial-structure.md",
     "research/spatial-geometry.md",
     "research/directed-diffusion.md",
@@ -37,6 +39,25 @@ nav = [
     "research/transport-transfer.md",
   ]},
 ]
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["src"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+docstring_section_style = "list"
+filters = ["!^_"]
+heading_level = 2
+inherited_members = false
+merge_init_into_class = true
+separate_signature = true
+show_root_heading = true
+show_root_full_path = false
+show_signature_annotations = true
+show_source = true
+show_symbol_type_heading = true
+show_symbol_type_toc = true
+signature_crossrefs = true
+summary = true
 
 [project.validation]
 invalid_links = true
