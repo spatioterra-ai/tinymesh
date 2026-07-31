@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from math import sqrt
+from math import cos, sin, sqrt, tau
 from random import Random
 
 from tinygrad import Tensor
@@ -53,6 +53,9 @@ class WindowSpan:
 class Protocol:
     data: METRLA
     features: Tensor
+    feature_set: str
+    feature_names: tuple[str, ...]
+    feature_statistics: tuple[tuple[str, float], ...]
     target: Tensor
     observed: Tensor
     standardizer: Standardizer
@@ -64,8 +67,6 @@ class Protocol:
     train: WindowSpan
     validation: WindowSpan
     test: WindowSpan
-    time_mean: float
-    time_scale: float
 
 
 @dataclass(frozen=True, eq=False)
@@ -110,6 +111,9 @@ class ProtocolObservation:
     edges: int
     steps: int
     features: int
+    feature_set: str
+    feature_names: tuple[str, ...]
+    feature_statistics: tuple[tuple[str, float], ...]
     history: int
     horizon: int
     pygt_windows: int
@@ -122,16 +126,22 @@ class ProtocolObservation:
     train_observations: int
     speed_mean: float
     speed_scale: float
-    time_mean: float
-    time_scale: float
     validation: Baselines
     test: Baselines
 
 
-def prepare(data: METRLA, *, history: int = 12, horizon: int = 12) -> Protocol:
+def prepare(
+    data: METRLA,
+    *,
+    history: int = 12,
+    horizon: int = 12,
+    feature_set: str = "linear_time",
+) -> Protocol:
     for name, value in (("history", history), ("horizon", horizon)):
         if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
             raise ValueError(f"{name} must be a positive integer")
+    if feature_set not in ("linear_time", "calendar"):
+        raise ValueError("feature_set must be 'linear_time' or 'calendar'")
     steps = data.speed.shape[0]
     train_end, validation_end = int(0.7 * steps), int(0.8 * steps)
     spans = (
@@ -145,23 +155,22 @@ def prepare(data: METRLA, *, history: int = 12, horizon: int = 12) -> Protocol:
     observed = data.observed.realize()
     standardizer = Standardizer.fit(data.speed[:train_end], observed[:train_end])
     target = standardizer.normalize(data.speed, observed).realize()
-    time = Tensor(
-        [(timestamp.hour * 60 + timestamp.minute) / (24 * 60) for timestamp in data.timestamps],
-        dtype=data.speed.dtype,
-        device=data.speed.device,
-    ).realize()
-    time_mean = time[:train_end].mean().realize()
-    time_scale = time[:train_end].std(correction=0).realize()
-    if time_scale.item() == 0:
-        raise ValueError("training timestamps must vary within the day")
-    time_feature = ((time - time_mean) / time_scale).reshape(steps, 1, 1).expand(steps, data.graph.nodes, 1)
-    features = target.unsqueeze(2).cat(time_feature, dim=2).realize()
+    features, feature_names, feature_statistics = _features(
+        data,
+        target,
+        observed,
+        train_end,
+        feature_set,
+    )
     node_mean = _node_mean(data.speed[:train_end], observed[:train_end], standardizer.mean)
     start_slot = (data.timestamps[0].hour * 60 + data.timestamps[0].minute) // data.sample_minutes
     seasonal_mean = _seasonal_mean(data.speed[:train_end], observed[:train_end], node_mean, start_slot)
     return Protocol(
         data,
         features,
+        feature_set,
+        feature_names,
+        feature_statistics,
         target,
         observed,
         standardizer,
@@ -171,8 +180,6 @@ def prepare(data: METRLA, *, history: int = 12, horizon: int = 12) -> Protocol:
         train_end,
         validation_end,
         *spans,
-        float(time_mean.item()),
-        float(time_scale.item()),
     )
 
 
@@ -185,6 +192,9 @@ def observe(protocol: Protocol) -> ProtocolObservation:
         protocol.data.graph.edges,
         steps,
         protocol.features.shape[2],
+        protocol.feature_set,
+        protocol.feature_names,
+        protocol.feature_statistics,
         protocol.train.history,
         protocol.train.horizon,
         pygt_windows,
@@ -197,10 +207,61 @@ def observe(protocol: Protocol) -> ProtocolObservation:
         int(protocol.observed[:protocol.train_end].sum().item()),
         float(protocol.standardizer.mean.item()),
         float(protocol.standardizer.scale.item()),
-        protocol.time_mean,
-        protocol.time_scale,
         baselines(protocol, protocol.validation),
         baselines(protocol, protocol.test),
+    )
+
+
+def _features(
+    data: METRLA,
+    target: Tensor,
+    observed: Tensor,
+    train_end: int,
+    feature_set: str,
+) -> tuple[Tensor, tuple[str, ...], tuple[tuple[str, float], ...]]:
+    steps, nodes = data.speed.shape
+    day = [
+        (timestamp.hour * 60 + timestamp.minute) / (24 * 60)
+        for timestamp in data.timestamps
+    ]
+    if feature_set == "linear_time":
+        time = Tensor(day, dtype=data.speed.dtype, device=data.speed.device).realize()
+        mean = time[:train_end].mean().realize()
+        scale = time[:train_end].std(correction=0).realize()
+        if scale.item() == 0:
+            raise ValueError("training timestamps must vary within the day")
+        time = ((time - mean) / scale).reshape(steps, 1, 1).expand(steps, nodes, 1)
+        return (
+            target.unsqueeze(2).cat(time, dim=2).realize(),
+            ("speed", "time_of_day"),
+            (
+                ("time_mean", float(mean.item())),
+                ("time_scale", float(scale.item())),
+            ),
+        )
+
+    calendar = Tensor(
+        [
+            (
+                sin(tau * phase),
+                cos(tau * phase),
+                sin(tau * (timestamp.weekday() + phase) / 7),
+                cos(tau * (timestamp.weekday() + phase) / 7),
+            )
+            for timestamp, phase in zip(data.timestamps, day)
+        ],
+        dtype=data.speed.dtype,
+        device=data.speed.device,
+    ).reshape(steps, 1, 4).expand(steps, nodes, 4)
+    features = target.unsqueeze(2).cat(
+        observed.cast(data.speed.dtype).unsqueeze(2),
+        calendar,
+        dim=2,
+    )
+    return (
+        features.realize(),
+        ("speed", "observed", "sin_day", "cos_day", "sin_week", "cos_week"),
+        (),
     )
 
 

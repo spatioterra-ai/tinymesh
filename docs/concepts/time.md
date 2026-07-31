@@ -115,6 +115,41 @@ alignment, and cache lifetime.
 
 Proving fixed-topology recurrence does not prove dynamic graphs.
 
+## The product mesh stays factorized
+
+A fixed graph observed at ordered times has a conceptual joint domain:
+
+```text
+J = G x T
+
+joint node       (v, t)
+spatial edge     (u, t)   -> (v, t)
+temporal edge    (v, t-1) -> (v, t)
+```
+
+The [time-vertex framework](https://arxiv.org/abs/1705.02307) writes its joint
+Laplacian as a Kronecker sum:
+
+```text
+L_J = L_T ⊗ I_N + I_T ⊗ L_G
+```
+
+This is a mathematical description, not a storage instruction. Materializing
+`N*T` joint nodes or a product adjacency would duplicate one fixed topology.
+Tinymesh instead keeps `X[T,N,F]`, applies the spatial operator over `N`, and
+advances causal state over `T`:
+
+```text
+for t:
+  H[t] = Cell(X[t], G, H[t-1])
+```
+
+Topology and spatial transport remain proportional to the snapshots and sparse
+support, `O(T * (N + E) * H)`; learned feature projections add their ordinary
+tensor cost. A changing edge field, delayed cross-time edge, or changing
+topology needs its own aligned contract; the conceptual product does not make
+those facts implicit.
+
 ## The fixed-graph signal
 
 The first real dataset caller adds invariants that a tuple cannot carry:

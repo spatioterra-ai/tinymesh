@@ -5,10 +5,12 @@ from math import isfinite
 from tinygrad import Device, Tensor
 
 from experiments.metr_la_forecast import (
-    Forecast,
+    A3Forecast,
+    DiffusionForecast,
     _execution_batch,
     _graphs,
     _objective,
+    _operators,
     forecast,
     train,
 )
@@ -73,6 +75,21 @@ class METRLAForecastTest(unittest.TestCase):
         self.assertEqual(original.target[1, 1].item(), 0.0)
         self.assertEqual(original.features[1, 1, 0].item(), 0.0)
 
+    def test_calendar_features_are_causal_cycles_with_explicit_missingness(self) -> None:
+        protocol = prepare(dataset(steps=289), history=2, horizon=3, feature_set="calendar")
+
+        self.assertEqual(
+            protocol.feature_names,
+            ("speed", "observed", "sin_day", "cos_day", "sin_week", "cos_week"),
+        )
+        self.assertEqual(protocol.features.shape, (289, 4, 6))
+        self.assertEqual(protocol.feature_statistics, ())
+        self.assertEqual(protocol.features[1, 1, :2].tolist(), [0.0, 0.0])
+        self.assertAlmostEqual(protocol.features[0, 0, 2].item(), 0.0, places=6)
+        self.assertAlmostEqual(protocol.features[0, 0, 3].item(), 1.0, places=6)
+        self.assertAlmostEqual(protocol.features[144, 0, 2].item(), 0.0, places=6)
+        self.assertAlmostEqual(protocol.features[144, 0, 3].item(), -1.0, places=6)
+
     def test_persistence_uses_latest_observed_history(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3)
         batch = next(batches(protocol, protocol.validation, batch_size=8))
@@ -106,15 +123,50 @@ class METRLAForecastTest(unittest.TestCase):
         )
         self.assertEqual(graphs["self"].edges, graphs["self"].nodes)
 
+    def test_diffusion_controls_preserve_affinity_and_parameter_shape(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
+        operators = _operators(protocol, "diffusion_gru", Device.DEFAULT)
+
+        self.assertEqual(
+            operators["true"].forward_weight.tolist(),
+            operators["permuted"].forward_weight.tolist(),
+        )
+        self.assertEqual(operators["self"].forward_weight.tolist(), [1.0] * 4)
+        self.assertEqual(operators["self"].reverse_weight.tolist(), [1.0] * 4)
+
     def test_residual_head_starts_at_latest_speed(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3)
         batch = next(batches(protocol, protocol.train, batch_size=17))
-        model = Forecast(2, 2, 2, 3, head="residual")
+        model = A3Forecast(2, 2, 2, 3, head="residual")
 
         prediction = model(batch.values, protocol.data.graph, batch.anchor)
         expected = batch.anchor.expand(*prediction.shape)
 
         self.assertEqual(prediction.tolist(), expected.tolist())
+
+    def test_diffusion_residual_starts_at_latest_speed(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
+        batch = next(batches(protocol, protocol.train, batch_size=17))
+        diffusion = _operators(protocol, "diffusion_gru", Device.DEFAULT)["true"]
+        model = DiffusionForecast(6, 2, 2, 3, head="residual")
+
+        prediction = model(batch.values, diffusion, batch.anchor)
+        expected = batch.anchor.expand(*prediction.shape)
+
+        self.assertEqual(prediction.tolist(), expected.tolist())
+
+    def test_diffusion_forecast_does_not_materialize_product_adjacency(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
+        batch = next(batches(protocol, protocol.train, batch_size=2))
+        diffusion = _operators(protocol, "diffusion_gru", Device.DEFAULT)["true"]
+        output = DiffusionForecast(6, 2, 2, 3)(batch.values, diffusion)
+        shapes = {
+            tuple(int(size) for size in uop._shape)
+            for uop in output.uop.toposort()
+            if uop._shape is not None
+        }
+
+        self.assertTrue({(4, 4), (4, 8), (8, 8)}.isdisjoint(shapes))
 
     def test_residual_anchor_is_causal_persistence(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3)
@@ -147,6 +199,7 @@ class METRLAForecastTest(unittest.TestCase):
         )
 
         self.assertEqual(len(result.results), 1)
+        self.assertEqual(result.architecture, "a3tgcn")
         self.assertEqual(result.head, "direct")
         self.assertEqual(result.loss, "mse")
         model = result.results[0]
@@ -157,6 +210,26 @@ class METRLAForecastTest(unittest.TestCase):
         self.assertTrue(isfinite(model.test.overall.rmse))
         self.assertEqual(result.protocol.pygt_windows, 26)
         self.assertEqual(result.protocol.pygt_train_windows, 20)
+
+    def test_tiny_forecast_trains_through_sequential_diffusion(self) -> None:
+        result = train(
+            prepare(dataset(steps=60), history=2, horizon=3, feature_set="calendar"),
+            topologies=("true",),
+            seeds=(0,),
+            epochs=1,
+            batch_size=38,
+            hidden_features=2,
+            learning_rate=0.01,
+            checkpoint_every=1,
+            head="residual",
+            loss="mae",
+            architecture="diffusion_gru",
+        )
+
+        self.assertEqual(result.architecture, "diffusion_gru")
+        self.assertEqual(result.protocol.feature_set, "calendar")
+        self.assertEqual(result.results[0].sparse_calls, 8)
+        self.assertTrue(isfinite(result.results[0].validation.overall.rmse))
 
     def test_checkpoint_evaluation_observes_training(self) -> None:
         result = train(
@@ -185,6 +258,20 @@ class METRLAForecastTest(unittest.TestCase):
             forecast(Device.DEFAULT, loss="other")
         with self.assertRaisesRegex(ValueError, "boolean"):
             forecast(Device.DEFAULT, evaluate_test=1)  # type: ignore[arg-type]
+        with self.assertRaisesRegex(ValueError, "a3tgcn.*diffusion_gru"):
+            forecast(Device.DEFAULT, architecture="other")
+        with self.assertRaisesRegex(ValueError, "calendar"):
+            train(
+                prepare(dataset(), history=2, horizon=3),
+                topologies=("true",),
+                seeds=(0,),
+                epochs=1,
+                batch_size=17,
+                hidden_features=2,
+                learning_rate=0.01,
+                checkpoint_every=1,
+                architecture="diffusion_gru",
+            )
 
 
 if __name__ == "__main__":

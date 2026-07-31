@@ -27,6 +27,8 @@ uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 
 uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
 uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
 uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=self HEAD=residual LOSS=mae SEED=0 BS=512
+uv run --locked python -m experiments.run metr_la_diffusion DEV=CPU
+uv run --locked python -m experiments.run metr_la_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
 ```
 
 The runner refuses a dirty tracked worktree, clears inherited experiment
@@ -47,6 +49,10 @@ and limits.
 the protocol and baselines; `STEPS=N` records bounded optimizer execution
 without a quality claim; `EPOCHS=N` runs checkpoint-selected model evidence.
 `EPOCHS` and `STEPS` cannot be combined.
+
+`metr_la_diffusion` uses the same bounded execution and evaluation policy with
+sequential `DiffusionGRU`, real affinity, and cyclical calendar inputs. Keeping
+it as a separate catalog entry preserves the A3T-GCN evidence contract.
 
 Training emits validation evidence only. `TEST=1` explicitly opens final test
 evaluation after the head, loss, topology set, seeds, and budget are frozen.

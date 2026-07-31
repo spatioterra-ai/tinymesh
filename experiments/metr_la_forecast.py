@@ -1,4 +1,4 @@
-"""Test A3T-GCN against causal controls on METR-LA."""
+"""Test temporal graph models against causal controls on METR-LA."""
 
 from __future__ import annotations
 
@@ -24,10 +24,10 @@ from experiments.metr_la_protocol import (
 )
 from tinymesh import Graph
 from tinymesh.datasets import metr_la
-from tinymesh.nn import A3TGCN
+from tinymesh.nn import A3TGCN, DiffusionGRU, DirectedDiffusion
 
 
-class Forecast:
+class A3Forecast:
     def __init__(
         self,
         in_features: int,
@@ -41,18 +41,46 @@ class Forecast:
         self.encoder = A3TGCN(in_features, hidden_features, periods)
         self.readout = nn.Linear(hidden_features, horizon)
         if head == "residual":
-            self.readout.weight = Tensor.zeros_like(self.readout.weight)
-            assert self.readout.bias is not None
-            self.readout.bias = Tensor.zeros_like(self.readout.bias)
+            _zero(self.readout)
         self.head = head
 
     def __call__(self, values: Tensor, graph: Graph, anchor: Tensor | None = None) -> Tensor:
-        forecast = self.readout(self.encoder(values, graph).relu())
-        if self.head == "direct":
-            return forecast
-        if anchor is None or anchor.shape != (*forecast.shape[:-1], 1):
-            raise ValueError(f"residual anchor must have shape {(*forecast.shape[:-1], 1)}")
-        return forecast + anchor
+        return _output(self.readout(self.encoder(values, graph).relu()), anchor, self.head)
+
+
+class DiffusionForecast:
+    def __init__(
+        self,
+        in_features: int,
+        hidden_features: int,
+        periods: int,
+        horizon: int,
+        head: str = "direct",
+    ) -> None:
+        if head not in ("direct", "residual"):
+            raise ValueError("head must be 'direct' or 'residual'")
+        self.cell = DiffusionGRU(in_features, hidden_features)
+        self.readout = nn.Linear(hidden_features, horizon)
+        if head == "residual":
+            _zero(self.readout)
+        self.in_features, self.periods, self.head = in_features, periods, head
+
+    def __call__(
+        self,
+        values: Tensor,
+        diffusion: DirectedDiffusion,
+        anchor: Tensor | None = None,
+    ) -> Tensor:
+        expected = (self.periods, diffusion.graph.nodes, self.in_features)
+        if values.ndim < 3 or values.shape[-3:] != expected:
+            raise ValueError(
+                f"values must have shape [..., {self.periods}, "
+                f"{diffusion.graph.nodes}, {self.in_features}], got {values.shape}"
+            )
+        hidden = None
+        for period in range(self.periods):
+            hidden = self.cell(values[..., period, :, :], diffusion, hidden)
+        return _output(self.readout(hidden.relu()), anchor, self.head)
 
 
 @dataclass(frozen=True)
@@ -77,6 +105,7 @@ class Result:
 @dataclass(frozen=True)
 class ForecastObservation:
     device: str
+    architecture: str
     head: str
     loss: str
     evaluate_test: bool
@@ -92,6 +121,7 @@ class ForecastObservation:
 @dataclass(frozen=True)
 class SmokeObservation:
     device: str
+    architecture: str
     head: str
     loss: str
     seed: int
@@ -110,8 +140,20 @@ class SmokeObservation:
     runtime_seconds: float
 
 
-def observe(_device: str, *, history: int = 12, horizon: int = 12) -> ProtocolObservation:
-    return observe_protocol(prepare(metr_la(device="CPU"), history=history, horizon=horizon))
+def observe(
+    _device: str,
+    *,
+    history: int = 12,
+    horizon: int = 12,
+    architecture: str = "a3tgcn",
+) -> ProtocolObservation:
+    _validate_architecture(architecture)
+    return observe_protocol(prepare(
+        metr_la(device="CPU"),
+        history=history,
+        horizon=horizon,
+        feature_set=_feature_set(architecture),
+    ))
 
 
 def forecast(
@@ -129,10 +171,16 @@ def forecast(
     head: str = "direct",
     loss: str = "mse",
     evaluate_test: bool = False,
+    architecture: str = "a3tgcn",
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, evaluate_test)
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, architecture, evaluate_test)
     return train(
-        prepare(metr_la(device="CPU"), history=history, horizon=horizon),
+        prepare(
+            metr_la(device="CPU"),
+            history=history,
+            horizon=horizon,
+            feature_set=_feature_set(architecture),
+        ),
         device=device,
         topologies=topologies,
         seeds=seeds,
@@ -144,6 +192,7 @@ def forecast(
         head=head,
         loss=loss,
         evaluate_test=evaluate_test,
+        architecture=architecture,
     )
 
 
@@ -159,20 +208,27 @@ def smoke(
     learning_rate: float = 0.001,
     head: str = "direct",
     loss: str = "mse",
+    architecture: str = "a3tgcn",
 ) -> SmokeObservation:
-    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1, head, loss)
+    _validate(("true",), (seed,), 1, batch_size, hidden_features, learning_rate, 1, head, loss, architecture)
     if not isinstance(steps, int) or isinstance(steps, bool) or steps <= 0:
         raise ValueError("steps must be a positive integer")
-    protocol = prepare(metr_la(device="CPU"), history=history, horizon=horizon)
+    protocol = prepare(
+        metr_la(device="CPU"),
+        history=history,
+        horizon=horizon,
+        feature_set=_feature_set(architecture),
+    )
     maximum = (protocol.train.windows + batch_size - 1) // batch_size
     if steps > maximum:
         raise ValueError(f"steps must not exceed the {maximum} training batches")
 
     tensors = _execution_tensors(protocol, device)
     Tensor.manual_seed(seed)
-    model = Forecast(protocol.features.shape[2], hidden_features, history, horizon, head)
+    model = _model(architecture, protocol, hidden_features, head)
+    operator = _operators(protocol, architecture, device)["true"]
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, protocol.data.graph, optimizer, loss)
+    train_step = _training_step(model, operator, optimizer, loss)
     losses = []
     start = perf_counter()
     for batch in islice(batches(protocol, protocol.train, batch_size, shuffle=seed, tensors=tensors), steps):
@@ -180,6 +236,7 @@ def smoke(
         losses.append(float(train_step(batch.values, batch.anchor, batch.target, batch.observed).item()))
     return SmokeObservation(
         device,
+        architecture,
         head,
         loss,
         seed,
@@ -192,7 +249,7 @@ def smoke(
         protocol.data.graph.nodes,
         protocol.data.graph.edges,
         _parameter_count(model),
-        _sparse_calls(model, protocol.data.graph, protocol, device),
+        _sparse_calls(model, operator, protocol, device),
         losses[0],
         losses[-1],
         perf_counter() - start,
@@ -213,22 +270,19 @@ def train(
     head: str = "direct",
     loss: str = "mse",
     evaluate_test: bool = False,
+    architecture: str = "a3tgcn",
 ) -> ForecastObservation:
-    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, evaluate_test)
-    graphs, tensors, results = _graphs(protocol.data.graph), _execution_tensors(protocol, device), []
+    _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, architecture, evaluate_test)
+    if protocol.feature_set != _feature_set(architecture):
+        raise ValueError(f"{architecture} requires the {_feature_set(architecture)!r} feature set")
+    operators, tensors, results = _operators(protocol, architecture, device), _execution_tensors(protocol, device), []
     for topology in topologies:
         for seed in seeds:
             Tensor.manual_seed(seed)
-            model = Forecast(
-                protocol.features.shape[2],
-                hidden_features,
-                protocol.train.history,
-                protocol.train.horizon,
-                head,
-            )
+            model = _model(architecture, protocol, hidden_features, head)
             best_epoch, runtime, checkpoints, validation = _fit(
                 model,
-                graphs[topology],
+                operators[topology],
                 protocol,
                 tensors,
                 device=device,
@@ -245,14 +299,14 @@ def train(
                     seed,
                     best_epoch,
                     _parameter_count(model),
-                    _sparse_calls(model, graphs[topology], protocol, device),
+                    _sparse_calls(model, operators[topology], protocol, device),
                     runtime,
                     checkpoints,
                     validation,
                     (
                         _evaluate(
                             model,
-                            graphs[topology],
+                            operators[topology],
                             protocol,
                             protocol.test,
                             tensors,
@@ -266,6 +320,7 @@ def train(
             )
     return ForecastObservation(
         device,
+        architecture,
         head,
         loss,
         evaluate_test,
@@ -293,9 +348,50 @@ def _graphs(graph: Graph) -> dict[str, Graph]:
     }
 
 
+def _operators(
+    protocol: Protocol,
+    architecture: str,
+    device: str,
+) -> dict[str, Graph | DirectedDiffusion]:
+    graphs = _graphs(protocol.data.graph)
+    if architecture == "a3tgcn":
+        return graphs
+    affinity = protocol.data.affinity.to(device).realize()
+    operators = {
+        "true": DirectedDiffusion(graphs["true"], affinity),
+        "permuted": DirectedDiffusion(graphs["permuted"], affinity),
+        "self": DirectedDiffusion(
+            graphs["self"],
+            Tensor.ones(graphs["self"].edges, dtype=affinity.dtype, device=device),
+        ),
+    }
+    Tensor.realize(*(
+        weight
+        for operator in operators.values()
+        for weight in (operator.forward_weight, operator.reverse_weight)
+    ))
+    return operators
+
+
+def _model(
+    architecture: str,
+    protocol: Protocol,
+    hidden_features: int,
+    head: str,
+) -> A3Forecast | DiffusionForecast:
+    model = A3Forecast if architecture == "a3tgcn" else DiffusionForecast
+    return model(
+        protocol.features.shape[2],
+        hidden_features,
+        protocol.train.history,
+        protocol.train.horizon,
+        head,
+    )
+
+
 def _fit(
-    model: Forecast,
-    graph: Graph,
+    model: A3Forecast | DiffusionForecast,
+    operator: Graph | DirectedDiffusion,
     protocol: Protocol,
     tensors: tuple[Tensor, Tensor, Tensor],
     *,
@@ -308,12 +404,12 @@ def _fit(
     loss: str,
 ) -> tuple[int, float, tuple[Checkpoint, ...], Scores]:
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, graph, optimizer, loss)
+    train_step = _training_step(model, operator, optimizer, loss)
     start = perf_counter()
     best_epoch = 0
     best = _evaluate(
         model,
-        graph,
+        operator,
         protocol,
         protocol.validation,
         tensors,
@@ -335,7 +431,7 @@ def _fit(
             continue
         validation = _evaluate(
             model,
-            graph,
+            operator,
             protocol,
             protocol.validation,
             tensors,
@@ -350,12 +446,17 @@ def _fit(
     return best_epoch, runtime, tuple(checkpoints), best
 
 
-def _training_step(model: Forecast, graph: Graph, optimizer, loss: str) -> TinyJit:
+def _training_step(
+    model: A3Forecast | DiffusionForecast,
+    operator: Graph | DirectedDiffusion,
+    optimizer,
+    loss: str,
+) -> TinyJit:
     @TinyJit
     @Context(TRAINING=1)
     def step(values: Tensor, anchor: Tensor, target: Tensor, observed: Tensor) -> Tensor:
         optimizer.zero_grad()
-        objective = _objective(model(values, graph, anchor) - target, observed, loss).backward()
+        objective = _objective(model(values, operator, anchor) - target, observed, loss).backward()
         return objective.realize(*optimizer.schedule_step())
 
     return step
@@ -374,8 +475,8 @@ def _objective(error: Tensor, observed: Tensor, loss: str) -> Tensor:
 
 
 def _evaluate(
-    model: Forecast,
-    graph: Graph,
+    model: A3Forecast | DiffusionForecast,
+    operator: Graph | DirectedDiffusion,
     protocol: Protocol,
     span,
     tensors: tuple[Tensor, Tensor, Tensor],
@@ -391,7 +492,7 @@ def _evaluate(
             execution = _execution_batch(batch, device, batch_size)
             predict = predictors.get(execution.values.shape)
             if predict is None:
-                predictors[execution.values.shape] = predict = _predictor(model, graph)
+                predictors[execution.values.shape] = predict = _predictor(model, operator)
             prediction = predict(execution.values, execution.anchor)[:size].to(protocol.data.speed.device).realize()
             target = batch.target.to(protocol.data.speed.device).realize()
             yield protocol.standardizer.restore(prediction) - protocol.standardizer.restore(target), batch.observed.to(
@@ -401,10 +502,13 @@ def _evaluate(
     return score(errors())
 
 
-def _predictor(model: Forecast, graph: Graph):
+def _predictor(
+    model: A3Forecast | DiffusionForecast,
+    operator: Graph | DirectedDiffusion,
+):
     @TinyJit
     def predict(values: Tensor, anchor: Tensor) -> Tensor:
-        return model(values, graph, anchor).realize()
+        return model(values, operator, anchor).realize()
 
     return predict
 
@@ -433,21 +537,49 @@ def _execution_batch(batch: WindowBatch, device: str, batch_size: int) -> Window
     return WindowBatch(*values, batch.starts)
 
 
-def _snapshot(model: Forecast) -> dict[str, Tensor]:
+def _snapshot(model: A3Forecast | DiffusionForecast) -> dict[str, Tensor]:
     return {name: value.detach().clone().realize() for name, value in nn.state.get_state_dict(model).items()}
 
 
-def _parameter_count(model: Forecast) -> int:
+def _parameter_count(model: A3Forecast | DiffusionForecast) -> int:
     return sum(int(parameter.numel()) for parameter in nn.state.get_parameters(model))
 
 
-def _sparse_calls(model: Forecast, graph: Graph, protocol: Protocol, device: str) -> int:
+def _sparse_calls(
+    model: A3Forecast | DiffusionForecast,
+    operator: Graph | DirectedDiffusion,
+    protocol: Protocol,
+    device: str,
+) -> int:
     output = model(
-        Tensor.zeros(1, protocol.train.history, graph.nodes, protocol.features.shape[2], device=device),
-        graph,
-        Tensor.zeros(1, graph.nodes, 1, device=device),
+        Tensor.zeros(1, protocol.train.history, protocol.data.graph.nodes, protocol.features.shape[2], device=device),
+        operator,
+        Tensor.zeros(1, protocol.data.graph.nodes, 1, device=device),
     )
     return sum(uop.src[0].arg.name == "csr_sum" for uop in output.uop.toposort() if uop.op is Ops.CALL)
+
+
+def _zero(readout: nn.Linear) -> None:
+    readout.weight = Tensor.zeros_like(readout.weight)
+    assert readout.bias is not None
+    readout.bias = Tensor.zeros_like(readout.bias)
+
+
+def _output(forecast: Tensor, anchor: Tensor | None, head: str) -> Tensor:
+    if head == "direct":
+        return forecast
+    if anchor is None or anchor.shape != (*forecast.shape[:-1], 1):
+        raise ValueError(f"residual anchor must have shape {(*forecast.shape[:-1], 1)}")
+    return forecast + anchor
+
+
+def _feature_set(architecture: str) -> str:
+    return "linear_time" if architecture == "a3tgcn" else "calendar"
+
+
+def _validate_architecture(architecture: str) -> None:
+    if architecture not in ("a3tgcn", "diffusion_gru"):
+        raise ValueError("architecture must be 'a3tgcn' or 'diffusion_gru'")
 
 
 def _validate(
@@ -460,8 +592,10 @@ def _validate(
     checkpoint_every: int,
     head: str,
     loss: str,
+    architecture: str,
     evaluate_test: bool = False,
 ) -> None:
+    _validate_architecture(architecture)
     allowed = {"true", "permuted", "self"}
     if not topologies or any(topology not in allowed for topology in topologies):
         raise ValueError(f"topologies must be drawn from {sorted(allowed)}")
@@ -485,7 +619,8 @@ def _validate(
         raise ValueError("evaluate_test must be boolean")
 
 
-def main() -> None:
+def run(architecture: str = "a3tgcn") -> ProtocolObservation | ForecastObservation | SmokeObservation:
+    _validate_architecture(architecture)
     epochs, steps, evaluate_test = getenv("EPOCHS", 0), getenv("STEPS", 0), getenv("TEST", 0)
     if epochs and steps:
         raise SystemExit("EPOCHS and STEPS are mutually exclusive")
@@ -502,10 +637,11 @@ def main() -> None:
             learning_rate=getenv("LR", 0.001),
             head=getenv("HEAD", "direct"),
             loss=getenv("LOSS", "mse"),
+            architecture=architecture,
             **settings,
         )
     elif not epochs:
-        observation = observe(Device.DEFAULT, **settings)
+        observation = observe(Device.DEFAULT, architecture=architecture, **settings)
     else:
         topology, seed = getenv("MODEL", "all"), getenv("SEED", -1)
         observation = forecast(
@@ -520,9 +656,14 @@ def main() -> None:
             head=getenv("HEAD", "direct"),
             loss=getenv("LOSS", "mse"),
             evaluate_test=bool(evaluate_test),
+            architecture=architecture,
             **settings,
         )
-    print(json.dumps(asdict(observation), indent=2))
+    return observation
+
+
+def main() -> None:
+    print(json.dumps(asdict(run()), indent=2))
 
 
 if __name__ == "__main__":

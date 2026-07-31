@@ -57,7 +57,8 @@ source produces the same 34,249 sliding windows and the PyG example's 27,399
 The tutorial passes only `edge_index`, so both parity paths treat the selected
 edges as unit-weight. The loader's distance affinity remains aligned and
 available, but it is not evidence for this architecture; a weighted comparison
-requires its own matched control.
+requires its own matched control. The
+[directed-diffusion experiment](metr-la-diffusion.md) owns that next question.
 
 The trustworthy experiment deliberately differs after that structural parity:
 
