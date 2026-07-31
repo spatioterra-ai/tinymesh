@@ -135,14 +135,33 @@ class TGCN:
         return update * hidden + (1 - update) * candidate
 
 
+class PeriodAttention:
+    """Learned convex mixture over a fixed number of same-shaped states."""
+
+    def __init__(self, periods: int) -> None:
+        if periods <= 0:
+            raise ValueError("periods must be positive")
+        self.weight = Tensor.uniform(periods)
+        self.periods = periods
+
+    def __call__(self, *states: Tensor) -> Tensor:
+        if len(states) != self.periods:
+            raise ValueError(f"expected {self.periods} period states, got {len(states)}")
+        if any(state.shape != states[0].shape for state in states[1:]):
+            raise ValueError("period states must share one shape")
+        probability = self.weight.softmax(axis=0)
+        return sum(
+            (state * probability[period] for period, state in enumerate(states[1:], 1)),
+            start=states[0] * probability[0],
+        )
+
+
 class A3TGCN:
     """Attention over T-GCN encodings of a fixed number of periods."""
 
     def __init__(self, in_features: int, hidden_features: int, periods: int) -> None:
-        if periods <= 0:
-            raise ValueError("periods must be positive")
         self.cell = TGCN(in_features, hidden_features)
-        self.attention = Tensor.uniform(periods)
+        self.attention = PeriodAttention(periods)
         self.in_features, self.hidden_features, self.periods = in_features, hidden_features, periods
 
     def __call__(
@@ -154,12 +173,10 @@ class A3TGCN:
         expected = (self.periods, graph.nodes, self.in_features)
         if values.ndim < 3 or values.shape[-3:] != expected:
             raise ValueError(f"values must have shape [..., {self.periods}, {graph.nodes}, {self.in_features}], got {values.shape}")
-        probability = self.attention.softmax(axis=0)
-        states = [
-            self.cell(values[..., period, :, :], graph, hidden) * probability[period]
+        return self.attention(*(
+            self.cell(values[..., period, :, :], graph, hidden)
             for period in range(self.periods)
-        ]
-        return sum(states[1:], start=states[0])
+        ))
 
 
 class GConvGRU:

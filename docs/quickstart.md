@@ -303,20 +303,29 @@ final prediction also requires temporal memory. One SGD step lowers loss from
 `0.718740` to `0.686385`. Read [Time](concepts/time.md) for the data model and
 [T-GCN experiment](research/tgcn.md) for the exact evidence.
 
-Attention can mix independent T-GCN encodings across a fixed history:
+Period attention is independent of the encoder. It mixes any fixed number of
+same-shaped states with learned softmax weights:
 
 ```python
-from tinymesh.nn import A3TGCN
+from tinymesh.nn import A3TGCN, PeriodAttention
 
+states = tuple(cell(snapshot, temporal_graph) for snapshot in snapshots)
+attention = PeriodAttention(periods=len(states))
+print(attention(*states).shape)
+# (2, 1)
+
+# A3TGCN is the direct TGCN + PeriodAttention composition.
 encoder = A3TGCN(in_features=1, hidden_features=2, periods=2)
 history = Tensor.stack(*snapshots)
 print(encoder(history, temporal_graph).shape)
 # (2, 2)
 ```
 
-`A3TGCN` accepts `[..., P, N, F]`; one class handles unbatched and batched
-inputs. It uses one shared `TGCN`, learns `P` softmax coefficients, and does
-not carry hidden state from one period encoding into the next. The
+`PeriodAttention` owns one parameter vector and one invariant: exactly `P`
+same-shaped states. It knows nothing about graphs. `A3TGCN` accepts
+`[..., P, N, F]`; one class handles unbatched and batched inputs by applying
+one shared `TGCN` per period and then calling `PeriodAttention`. It does not
+carry hidden state from one period encoding into the next. The
 [METR-LA forecast](research/metr-la-forecast.md) explains its PyG Temporal
 origin, exact task use, and limits.
 

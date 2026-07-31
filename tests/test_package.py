@@ -26,6 +26,7 @@ class PackageTest(unittest.TestCase):
             "DiffusionGRU",
             "DirectedDiffusion",
             "GConvGRU",
+            "PeriodAttention",
             "TGCN",
         )))
 

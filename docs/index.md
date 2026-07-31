@@ -55,7 +55,7 @@ sparse execution, backward propagation, and five trainable layer families.
 | Import | Owns |
 | --- | --- |
 | `tinymesh` | `Graph`, `StaticGraphTemporalSignal` |
-| `tinymesh.nn` | `SAGEConv`, `GCNConv`, `GATConv`, `ChebConv`, `TGCN`, `A3TGCN`, `GConvGRU`, `DirectedDiffusion`, `DiffusionGRU` |
+| `tinymesh.nn` | `SAGEConv`, `GCNConv`, `GATConv`, `ChebConv`, `TGCN`, `PeriodAttention`, `A3TGCN`, `GConvGRU`, `DirectedDiffusion`, `DiffusionGRU` |
 | `tinymesh.datasets` | pinned source validation and tensor lowering |
 | `experiments` | non-runtime catalog, training policy, controls, and observations |
 
@@ -90,13 +90,28 @@ temporal alignment     one Graph + x[T,N,F] + y[T,N,Y]
 causal windows         values[B,L,N,F] + target[B,N,Y]
     |
     v
-model composition      GraphSAGE, GCN, GAT, LSTM, T-GCN, A3T-GCN, GConvGRU, DiffusionGRU
+model composition      GraphSAGE, GCN, GAT, LSTM, T-GCN, PeriodAttention, A3T-GCN, GConvGRU, DiffusionGRU
 ```
 
 [tinygrad](https://github.com/tinygrad/tinygrad) owns tensors, autograd,
 compilation, and device execution. tinymesh owns sparse topology, mesh
 semantics, and the model compositions that need them. It is not a PyTorch
 Geometric compatibility layer.
+
+Composition is ordinary Python, not a model factory:
+
+```text
+spatial state -----+
+spectral state ----+--> same-shaped tensors --> sum / concat / PeriodAttention --> task head
+temporal state ----+
+future multiscale -+
+```
+
+`ChebConv` is the current polynomial graph-spectral component.
+`PeriodAttention` owns a learned convex mixture over a fixed number of states.
+Wavelet, richer harmonic, and fractal operators enter only after their own
+equations, invariants, gradients, sparse-work evidence, and live caller exist.
+Task heads and combination choices remain application code.
 
 The current core stores `O(N + E)` topology. Sum performs `O((N + E)H)` work for
 `N` nodes, `E` edges, and feature width `H` without an `[N, N]` or `[E, H]`
@@ -122,8 +137,9 @@ field; no operation constructs an `N * E` axis.
   through endpoint projection, softmax, and weighted sum;
 - `TGCN`, whose hidden state and parameter gradient cross space
   and time;
-- `A3TGCN`, which learns a softmax mixture of shared T-GCN period encodings
-  across arbitrary leading batch axes;
+- `PeriodAttention`, which learns a convex mixture of same-shaped tensor states,
+  and `A3TGCN`, which applies it to shared T-GCN period encodings across
+  arbitrary leading batch axes;
 - `ChebConv` and `GConvGRU`, which apply sparse Chebyshev filters to input and
   hidden state;
 - `DirectedDiffusion` and `DiffusionGRU`, which propagate source-normalized

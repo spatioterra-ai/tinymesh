@@ -57,8 +57,9 @@ COO connectivity + scalar edge facts
   path constructs `[N, N]` or `[E, H]` intermediates.
 - `SAGEConv`, `GCNConv`, and `GATConv` compose direct tinygrad parameters over
   the same sparse graph operations.
-- `TGCN`, `A3TGCN`, `ChebConv`, and `GConvGRU` reuse one graph across ordered
-  node snapshots and send parameter gradients through space and time.
+- `PeriodAttention` learns one normalized scalar per same-shaped period state;
+  `A3TGCN` composes it with `TGCN` while `ChebConv` and `GConvGRU` provide
+  polynomial graph filters and recurrent state.
 - A fixed-graph temporal signal and pinned PyG Temporal chickenpox loader keep
   graph, node, time, feature, target, and edge axes aligned on tinygrad tensors.
 - A pinned Montevideo loader adds raw hourly values, projected node positions,
@@ -226,6 +227,10 @@ timestamps and a derived missingness mask before task policy exists; its
 forecast protocol remains research-owned.
 `tinymesh.nn` owns equations and parameters; experiments own data policy,
 unrolling, training, controls, and claims.
+Components remain ordinary callable objects over tensors. Spatial, temporal,
+spectral, and future multiscale states compose directly in Python; Tinymesh
+adds a class only when it owns parameters or invariants that inline tensor math
+cannot.
 The alpha kernel and optimizer boundary still block stability. Vectorized
 attention heads, external vector edge features, batching different graphs,
 changing topology, and generic timestamp and missingness containers remain

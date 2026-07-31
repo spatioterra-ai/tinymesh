@@ -154,15 +154,20 @@ Three fixed-graph cells now expose two architectural choices:
 
 ```text
 T-GCN       graph-mix X_t, then combine node-local H_(t-1)
-A3T-GCN     attend over shared T-GCN encodings from fixed H_0
+PeriodAttention
+            mix P same-shaped states; no graph assumption
+A3T-GCN     T-GCN each period from fixed H_0, then PeriodAttention
 GConvGRU    graph-mix X_t and H_(t-1) inside the gates
 ```
 
-T-GCN is cheaper. A3T-GCN mixes independent period encodings rather than
-carrying hidden state through them. GConvGRU lets a node's remembered state affect neighboring
-nodes before the next update. Whether that extra path helps is a model and data
-question, not a data-container question. Both consume the same explicit
-`Graph`, snapshots, and hidden tensor.
+`PeriodAttention` is the composable temporal primitive: it can mix states from
+any encoder without knowing whether they came from a graph, spectral filter, or
+future multiscale operator. A3T-GCN mixes independent T-GCN period encodings
+rather than carrying hidden state through them. GConvGRU lets a node's
+remembered state affect neighboring nodes before the next update. Whether
+either extra path helps is a model and data question, not a data-container
+question. The graph cells consume the same explicit `Graph`, snapshots, and
+hidden tensor.
 
 The exact checked result lives in the
 [T-GCN experiment](../research/tgcn.md). The controlled architectural
