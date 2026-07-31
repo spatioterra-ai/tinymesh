@@ -13,7 +13,7 @@ GRAPH = Graph(3, [0, 1, 2, 0, 1, 2], [0, 1, 2, 1, 2, 0])
 class A3TGCNTest(unittest.TestCase):
     def test_attention_weights_independent_period_encodings(self) -> None:
         model = A3TGCN(1, 2, periods=3)
-        model.attention = Tensor([-1.0, 0.5, 2.0], device=Device.DEFAULT).realize()
+        model.attention.weight = Tensor([-1.0, 0.5, 2.0], device=Device.DEFAULT).realize()
         values = Tensor(
             [
                 [[1.0], [2.0], [3.0]],
@@ -23,7 +23,7 @@ class A3TGCNTest(unittest.TestCase):
             device=Device.DEFAULT,
         ).realize()
 
-        probability = model.attention.softmax(axis=0)
+        probability = model.attention.weight.softmax(axis=0)
         expected = sum(
             (
                 model.cell(values[period], GRAPH) * probability[period]
@@ -74,9 +74,9 @@ class A3TGCNTest(unittest.TestCase):
 
         model(values, GRAPH).square().sum().backward()
 
-        self.assertIsNotNone(model.attention.grad)
+        self.assertIsNotNone(model.attention.weight.grad)
         self.assertIsNotNone(model.cell.graph_projection.linear.weight.grad)
-        self.assertGreater(float(model.attention.grad.abs().sum().item()), 0)
+        self.assertGreater(float(model.attention.weight.grad.abs().sum().item()), 0)
 
     def test_rejects_invalid_periods_or_shape(self) -> None:
         with self.assertRaisesRegex(ValueError, "periods must be positive"):

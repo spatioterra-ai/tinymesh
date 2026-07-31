@@ -21,9 +21,10 @@ x[t-10] -- TGCN(H0) -- a[1] --+
 x[t]    -- TGCN(H0) -- a[11] --+
 ```
 
-`tinymesh.nn.A3TGCN` is the same composition over the existing `TGCN`. One
-class handles both `[P,N,F]` and `[B,P,N,F]` because Tinymesh graph operations
-already preserve arbitrary leading axes; no batch-size constructor argument or
+`tinymesh.nn.PeriodAttention` owns the learned convex mixture over `P`
+same-shaped states. `A3TGCN` composes it with the existing `TGCN`. One class
+handles both `[P,N,F]` and `[B,P,N,F]` because Tinymesh graph operations already
+preserve arbitrary leading axes; no batch-size constructor argument or
 `A3TGCN2` alias is needed.
 
 The 2→32 encoder plus 32→12 task head has 6,840 parameters and 12 sparse calls
@@ -186,7 +187,9 @@ validation-only; `TEST=1` is now an explicit final-evaluation boundary.
 
 ## Promotion and limits
 
-`A3TGCN` is public because it is a small standard composition with batched and
+`PeriodAttention` is public because it owns one parameterized equation and one
+shape invariant independent of T-GCN. `A3TGCN` is public because it is the
+small standard `TGCN` plus `PeriodAttention` composition with batched and
 unbatched shape, gradient, sparse-call, and live METR-LA evidence. The task
 head, persistence anchor, objectives, target-time split, normalization, mask
 policy, baselines, checkpointing, false graphs, and run modes remain under
