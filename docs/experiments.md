@@ -57,8 +57,9 @@ sequential `DiffusionGRU`, real affinity, and cyclical calendar inputs. Keeping
 it as a separate catalog entry preserves the A3T-GCN evidence contract.
 
 `metr_la_local_diffusion` keeps node-local recurrence outside graph propagation
-and applies directed transport only through a zero-gated residual. It remains
-research-only until matched topology controls earn a smaller public owner.
+and applies directed transport only through a zero-gated residual. Matched
+controls identify a topology signal, but the composition remains research-only
+because it does not beat the incumbent.
 
 Training emits validation evidence only. `TEST=1` explicitly opens final test
 evaluation after the head, loss, topology set, seeds, and budget are frozen.

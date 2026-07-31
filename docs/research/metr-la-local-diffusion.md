@@ -1,9 +1,9 @@
 # METR-LA local diffusion
 
-This experiment asks whether directed transport can improve METR-LA's
-long-horizon RMSE without giving up the lower MAE of node-local recurrence.
-It composes existing sparse diffusion inside the experiment; it adds no public
-API.
+True directed transport beats both matched controls on every declared metric
+in seeds 0 and 1. The earlier self-only `DiffusionGRU` still has lower MAE and
+RMSE than this factorized model. The result isolates a repeatable topology
+signal; it does not improve the best forecaster or add a public API.
 
 ## Factorization
 
@@ -72,21 +72,85 @@ True topology advances only if it beats both controls on overall RMSE and
 30/60-minute RMSE without exceeding self-only overall MAE in at least two of
 three matched seeds. Stop once that gate is satisfied or impossible.
 
+## Validation result
+
+Values are mean ± sample standard deviation across seeds 0 and 1:
+
+| Topology | Validation MAE | Validation RMSE |
+| --- | ---: | ---: |
+| true transport | **3.5159 ± 0.0185** | **7.1642 ± 0.0085** |
+| permuted transport | 3.5317 ± 0.0084 | 7.2086 ± 0.0001 |
+| self-only transport | 3.5456 ± 0.0076 | 7.2256 ± 0.0042 |
+
+Across two seeds, two metrics, and two controls, true transport wins all eight
+paired overall comparisons. Its mean MAE is 0.45% lower than permuted and 0.84%
+lower than self-only; its mean RMSE is 0.62% and 0.85% lower.
+
+Mean validation RMSE shows the topology signal at every reported horizon:
+
+| Topology | 15 minutes | 30 minutes | 60 minutes |
+| --- | ---: | ---: | ---: |
+| true transport | **5.6689** | **7.0878** | **8.9371** |
+| permuted transport | 5.7105 | 7.1389 | 8.9789 |
+| self-only transport | 5.7180 | 7.1561 | 8.9984 |
+
+True transport beats both controls at 30 and 60 minutes in each seed, satisfies
+the declared gate twice, and stops the protocol before seed 2.
+
+## Incumbent comparison
+
+Passing a topology-identification gate is not the same as improving the model:
+
+| Architecture | Validation MAE | Validation RMSE |
+| --- | ---: | ---: |
+| earlier self-only `DiffusionGRU` | **3.4560 ± 0.0085** | 7.1330 ± 0.0277 |
+| earlier true `DiffusionGRU` | 3.5264 ± 0.0212 | **7.0685 ± 0.0071** |
+| factorized true transport | 3.5159 ± 0.0185 | 7.1642 ± 0.0085 |
+
+The earlier self-only model dominates the factorized model: its MAE is 1.73%
+lower and its RMSE is 0.44% lower. Factorization improves MAE by 0.30% relative
+to the earlier true graph model but worsens RMSE by 1.35%.
+
+Every factorized curve is still improving at epoch 3. The frozen comparison
+proves the topology signal at that budget; it does not establish converged or
+equal-time model quality.
+
+## Decision
+
+```text
+topology identification   pass
+predictive improvement    fail against incumbent
+public API promotion      no
+model test                closed
+```
+
+The next experiment should first compare models at a bounded plateau or equal
+execution budget. If the local floor still degrades, train and freeze the
+incumbent local forecast before fitting a zero-gated transport residual to its
+errors. Do not add dynamic edges, node identity, or learned adjacency yet.
+
 ## Ownership
 
 `DirectedDiffusion` remains the public spatial primitive. The local cell,
-readouts, and horizon gate remain experiment-owned until repeated evidence
-reveals a smaller stable API. This separation follows the motivation of
+readouts, and horizon gate remain experiment-owned because the composition does
+not improve the incumbent. This separation follows the motivation of
 [D2STGNN](https://arxiv.org/abs/2206.09112), not an implementation claim of
 paper parity.
 
 ## Reproduce
 
-Inspect the protocol or run one bounded optimizer step:
+The matched Metal comparison used:
 
 ```console
-uv run --locked python -m experiments.run metr_la_local_diffusion DEV=CPU
-uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
+uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL EPOCHS=3 MODEL=true HEAD=residual LOSS=mae SEED=0 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
+uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL EPOCHS=3 MODEL=permuted HEAD=residual LOSS=mae SEED=0 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
+uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL EPOCHS=3 MODEL=self HEAD=residual LOSS=mae SEED=0 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
+uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL EPOCHS=3 MODEL=true HEAD=residual LOSS=mae SEED=1 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
+uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL EPOCHS=3 MODEL=permuted HEAD=residual LOSS=mae SEED=1 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
+uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL EPOCHS=3 MODEL=self HEAD=residual LOSS=mae SEED=1 BS=512 HIDDEN=32 LR=0.001 CHECKPOINT_EVERY=1
 ```
 
-Matched validation begins only after the implementation revision is merged.
+All runs use revision
+[`b62ca7c6`](https://github.com/spatioterra-ai/tinymesh/commit/b62ca7c68d4fafc4875b2da9fc11fd5ff11d3777),
+record `evaluate_test=false` and `test=null`, and finish inside the fixed
+600-second bound.

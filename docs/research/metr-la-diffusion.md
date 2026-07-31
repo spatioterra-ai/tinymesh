@@ -148,15 +148,14 @@ local recurrence     lower typical absolute error
 directed diffusion   lower large and long-horizon error
                                   |
                                   v
-next: explicit local path + gated spatial residual
+factorized follow-up identifies topology but loses to the incumbent
 ```
 
-The current GRU concatenates local and transported fields inside every gate.
-The next architecture should keep the inherent/local forecast intact and add
-a zero-initialized spatial correction, then repeat true, permuted, and
-self-only controls. This follows the separation motivation in
-[D2STGNN](https://arxiv.org/abs/2206.09112) without yet adding dynamic edges,
-node identity, or a learned graph.
+The [factorized follow-up](metr-la-local-diffusion.md) keeps local recurrence
+outside graph propagation and adds a zero-initialized transported residual.
+True topology beats both of its matched controls, but the earlier self-only
+`DiffusionGRU` still has lower MAE and RMSE. This strengthens the topology
+signal without earning a model or API promotion.
 
 Typed relations, hierarchy, and physical integration from
 [MeshGraphNets](https://huggingface.co/papers/2010.03409),

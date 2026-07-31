@@ -11,7 +11,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Can sparse graph learning stay native to tinygrad? | Unit and scalar-weighted aggregation, endpoint projection, target softmax, and first-order gradients remain sparse on CPU and Metal. | Yes, for fixed topology. Keep the CSR backend private while `Tensor.custom_kernel` remains alpha. |
 | Does metric geometry require a geo dependency? | Position tensors compose into displacement, distance, radial weights, and sparse messages. | No. Data adapters own coordinate frames and units; add a type only when it must own a new invariant. |
 | Can the models use spatial structure? | True-topology diffusion wins controlled transport and transfers to unseen graph sizes. | Yes under an identifiable local law. Preserve false-topology and node-local controls. |
-| Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model; Montevideo geometry loses to persistence; METR-LA directed affinity lowers 30/60-minute RMSE but self-only remains better on MAE. | Partially. Preserve the METR-LA spatial signal, reject a general win, and separate local and transported forecasts before adding graph complexity. |
+| Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model and Montevideo geometry loses to persistence. On METR-LA, factorized true transport beats both topology controls on MAE and RMSE in two seeds, but the earlier self-only model still dominates it. | Graph structure measurably affects METR-LA forecasts; it has not improved the best model. Compare bounded convergence before changing architecture or API. |
 
 ## Sparse core
 
@@ -62,7 +62,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 - [METR-LA directed diffusion](metr-la-diffusion.md) — topology-specific
   long-horizon RMSE gains with a remaining local-MAE tradeoff.
 - [METR-LA local diffusion](metr-la-local-diffusion.md) — a zero-gated
-  transported residual over an intact node-local forecast.
+  transported residual that identifies topology but loses to the incumbent.
 - [Controlled transport](transport-forecast.md) — a positive identifiable
   topology witness.
 - [Controlled transfer](transport-transfer.md) — frozen local parameters on
