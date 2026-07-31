@@ -150,7 +150,7 @@ enough to enlarge `StaticGraphTemporalSignal`. Read the
 
 ## Where spatial mixing happens
 
-Three fixed-graph cells now expose two architectural choices:
+The fixed-graph temporal components expose three architectural choices:
 
 ```text
 T-GCN       graph-mix X_t, then combine node-local H_(t-1)
