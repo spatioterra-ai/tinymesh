@@ -6,6 +6,7 @@ on:
       - ".github/workflows/docs.yml"
       - "docs/**"
       - "pyproject.toml"
+      - "src/tinymesh/**"
       - "uv.lock"
       - "zensical.toml"
   push:
@@ -15,6 +16,7 @@ on:
       - ".github/workflows/docs.yml"
       - "docs/**"
       - "pyproject.toml"
+      - "src/tinymesh/**"
       - "uv.lock"
       - "zensical.toml"
 

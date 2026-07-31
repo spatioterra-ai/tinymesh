@@ -122,6 +122,21 @@ observation. See [Experiments](docs/experiments.md).
 - [Research](docs/research/index.md) owns the current decision ledger and links
   every revision-bound record.
 
+## Repository
+
+```text
+src/tinymesh/    public runtime: sparse math, direct layers, data boundaries
+experiments/     revision-bound policy, controls, training, measurements
+tests/           executable contracts
+docs/concepts/   durable theory
+docs/research/   exact evidence and current decisions
+submodules/      pinned read-only references
+```
+
+The runtime never imports experiments or submodules. Research may use public
+runtime objects; results change the API only after the documented graduation
+gate passes.
+
 ## Development
 
 ```console
