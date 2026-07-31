@@ -2,15 +2,17 @@ import unittest
 from datetime import datetime, timedelta
 from math import isfinite
 
-from tinygrad import Device, Tensor
+from tinygrad import Context, Device, Tensor, nn
 
 from experiments.metr_la_forecast import (
     A3Forecast,
     DiffusionForecast,
+    LocalDiffusionForecast,
     _execution_batch,
     _graphs,
     _objective,
     _operators,
+    _transport,
     forecast,
     train,
 )
@@ -155,11 +157,66 @@ class METRLAForecastTest(unittest.TestCase):
 
         self.assertEqual(prediction.tolist(), expected.tolist())
 
+    def test_local_diffusion_starts_at_persistence_with_a_closed_gate(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
+        batch = next(batches(protocol, protocol.train, batch_size=17))
+        diffusion = _operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
+        model = LocalDiffusionForecast(6, 2, 2, 3, head="residual")
+
+        prediction = model(batch.values, diffusion, batch.anchor)
+        expected = batch.anchor.expand(*prediction.shape)
+
+        self.assertEqual(model.spatial_gate.tolist(), [0.0, 0.0, 0.0])
+        self.assertEqual(prediction.tolist(), expected.tolist())
+
+    def test_transport_is_zero_only_for_self_diffusion(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
+        values = protocol.features[2]
+        operators = _operators(protocol, "local_diffusion", Device.DEFAULT)
+
+        self.assertEqual(_transport(values, operators["self"]).abs().max().item(), 0.0)
+        self.assertGreater(_transport(values, operators["true"]).abs().max().item(), 0.0)
+
+    def test_closed_spatial_gate_opens_before_training_transport(self) -> None:
+        Tensor.manual_seed(0)
+        protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
+        batch = next(batches(protocol, protocol.train, batch_size=17))
+        diffusion = _operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
+        model = LocalDiffusionForecast(6, 2, 2, 3, head="residual")
+        optimizer = nn.optim.SGD(nn.state.get_parameters(model), lr=0.01)
+
+        with Context(TRAINING=1):
+            optimizer.zero_grad()
+            loss = (model(batch.values, diffusion, batch.anchor) - batch.target).square().mean().backward()
+            assert model.spatial_gate.grad is not None
+            self.assertGreater(model.spatial_gate.grad.abs().sum().item(), 0.0)
+            loss.realize(*optimizer.schedule_step())
+        self.assertGreater(model.spatial_gate.abs().sum().item(), 0.0)
+
+        with Context(TRAINING=1):
+            optimizer.zero_grad()
+            (model(batch.values, diffusion, batch.anchor) - batch.target).square().mean().backward()
+            assert model.spatial.candidate.weight.grad is not None
+            self.assertGreater(model.spatial.candidate.weight.grad.abs().sum().item(), 0.0)
+
     def test_diffusion_forecast_does_not_materialize_product_adjacency(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         batch = next(batches(protocol, protocol.train, batch_size=2))
         diffusion = _operators(protocol, "diffusion_gru", Device.DEFAULT)["true"]
         output = DiffusionForecast(6, 2, 2, 3)(batch.values, diffusion)
+        shapes = {
+            tuple(int(size) for size in uop._shape)
+            for uop in output.uop.toposort()
+            if uop._shape is not None
+        }
+
+        self.assertTrue({(4, 4), (4, 8), (8, 8)}.isdisjoint(shapes))
+
+    def test_local_diffusion_does_not_materialize_product_adjacency(self) -> None:
+        protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
+        batch = next(batches(protocol, protocol.train, batch_size=2))
+        diffusion = _operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
+        output = LocalDiffusionForecast(6, 3, 2, 3)(batch.values, diffusion)
         shapes = {
             tuple(int(size) for size in uop._shape)
             for uop in output.uop.toposort()
@@ -231,6 +288,25 @@ class METRLAForecastTest(unittest.TestCase):
         self.assertEqual(result.results[0].sparse_calls, 8)
         self.assertTrue(isfinite(result.results[0].validation.overall.rmse))
 
+    def test_tiny_forecast_trains_through_local_diffusion(self) -> None:
+        result = train(
+            prepare(dataset(steps=60), history=2, horizon=3, feature_set="calendar"),
+            topologies=("true",),
+            seeds=(0,),
+            epochs=1,
+            batch_size=38,
+            hidden_features=2,
+            learning_rate=0.01,
+            checkpoint_every=1,
+            head="residual",
+            loss="mae",
+            architecture="local_diffusion",
+        )
+
+        self.assertEqual(result.architecture, "local_diffusion")
+        self.assertEqual(result.results[0].sparse_calls, 4)
+        self.assertTrue(isfinite(result.results[0].validation.overall.rmse))
+
     def test_checkpoint_evaluation_observes_training(self) -> None:
         result = train(
             prepare(dataset(steps=60), history=2, horizon=3),
@@ -258,7 +334,7 @@ class METRLAForecastTest(unittest.TestCase):
             forecast(Device.DEFAULT, loss="other")
         with self.assertRaisesRegex(ValueError, "boolean"):
             forecast(Device.DEFAULT, evaluate_test=1)  # type: ignore[arg-type]
-        with self.assertRaisesRegex(ValueError, "a3tgcn.*diffusion_gru"):
+        with self.assertRaisesRegex(ValueError, "a3tgcn.*diffusion_gru.*local_diffusion"):
             forecast(Device.DEFAULT, architecture="other")
         with self.assertRaisesRegex(ValueError, "calendar"):
             train(

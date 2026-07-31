@@ -32,6 +32,7 @@ nav = [
     "research/metr-la-data.md",
     "research/metr-la-forecast.md",
     "research/metr-la-diffusion.md",
+    "research/metr-la-local-diffusion.md",
     "research/montevideo-forecast.md",
     "research/montevideo-seasonal.md",
     "research/montevideo-delayed-edges.md",

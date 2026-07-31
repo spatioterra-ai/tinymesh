@@ -83,6 +83,52 @@ class DiffusionForecast:
         return _output(self.readout(hidden.relu()), anchor, self.head)
 
 
+class LocalDiffusionForecast:
+    """Node-local recurrence plus a gated residual over directed transport."""
+
+    def __init__(
+        self,
+        in_features: int,
+        hidden_features: int,
+        periods: int,
+        horizon: int,
+        head: str = "direct",
+    ) -> None:
+        if head not in ("direct", "residual"):
+            raise ValueError("head must be 'direct' or 'residual'")
+        self.local = _GRU(in_features, hidden_features)
+        self.spatial = _GRU(2 * in_features, hidden_features)
+        self.local_readout = nn.Linear(hidden_features, horizon)
+        self.spatial_readout = nn.Linear(hidden_features, horizon)
+        self.spatial_gate = Tensor.zeros(horizon)
+        if head == "residual":
+            _zero(self.local_readout)
+        self.in_features, self.periods, self.head = in_features, periods, head
+
+    def __call__(
+        self,
+        values: Tensor,
+        diffusion: DirectedDiffusion,
+        anchor: Tensor | None = None,
+    ) -> Tensor:
+        expected = (self.periods, diffusion.graph.nodes, self.in_features)
+        if values.ndim < 3 or values.shape[-3:] != expected:
+            raise ValueError(
+                f"values must have shape [..., {self.periods}, "
+                f"{diffusion.graph.nodes}, {self.in_features}], got {values.shape}"
+            )
+        local = spatial = None
+        for period in range(self.periods):
+            current = values[..., period, :, :]
+            local = self.local(current, local)
+            spatial = self.spatial(_transport(current, diffusion), spatial)
+        prediction = self.local_readout(local.relu()) + self.spatial_readout(spatial.relu()) * self.spatial_gate.tanh()
+        return _output(prediction, anchor, self.head)
+
+
+Forecast = A3Forecast | DiffusionForecast | LocalDiffusionForecast
+
+
 @dataclass(frozen=True)
 class Checkpoint:
     epoch: int
@@ -378,8 +424,12 @@ def _model(
     protocol: Protocol,
     hidden_features: int,
     head: str,
-) -> A3Forecast | DiffusionForecast:
-    model = A3Forecast if architecture == "a3tgcn" else DiffusionForecast
+) -> Forecast:
+    model = {
+        "a3tgcn": A3Forecast,
+        "diffusion_gru": DiffusionForecast,
+        "local_diffusion": LocalDiffusionForecast,
+    }[architecture]
     return model(
         protocol.features.shape[2],
         hidden_features,
@@ -390,7 +440,7 @@ def _model(
 
 
 def _fit(
-    model: A3Forecast | DiffusionForecast,
+    model: Forecast,
     operator: Graph | DirectedDiffusion,
     protocol: Protocol,
     tensors: tuple[Tensor, Tensor, Tensor],
@@ -447,7 +497,7 @@ def _fit(
 
 
 def _training_step(
-    model: A3Forecast | DiffusionForecast,
+    model: Forecast,
     operator: Graph | DirectedDiffusion,
     optimizer,
     loss: str,
@@ -475,7 +525,7 @@ def _objective(error: Tensor, observed: Tensor, loss: str) -> Tensor:
 
 
 def _evaluate(
-    model: A3Forecast | DiffusionForecast,
+    model: Forecast,
     operator: Graph | DirectedDiffusion,
     protocol: Protocol,
     span,
@@ -503,7 +553,7 @@ def _evaluate(
 
 
 def _predictor(
-    model: A3Forecast | DiffusionForecast,
+    model: Forecast,
     operator: Graph | DirectedDiffusion,
 ):
     @TinyJit
@@ -537,16 +587,57 @@ def _execution_batch(batch: WindowBatch, device: str, batch_size: int) -> Window
     return WindowBatch(*values, batch.starts)
 
 
-def _snapshot(model: A3Forecast | DiffusionForecast) -> dict[str, Tensor]:
+class _GRU:
+    def __init__(self, in_features: int, hidden_features: int) -> None:
+        width = in_features + hidden_features
+        self.gates = nn.Linear(width, 2 * hidden_features)
+        self.candidate = nn.Linear(width, hidden_features)
+        self.in_features, self.hidden_features = in_features, hidden_features
+
+    def __call__(self, values: Tensor, hidden: Tensor | None = None) -> Tensor:
+        if values.ndim < 1 or values.shape[-1] != self.in_features:
+            raise ValueError(
+                f"values must have shape [..., {self.in_features}], got {values.shape}"
+            )
+        hidden = _state(values, hidden, self.hidden_features)
+        gates = self.gates(values.cat(hidden, dim=-1))
+        update = gates[..., :self.hidden_features].sigmoid()
+        reset = gates[..., self.hidden_features:].sigmoid()
+        candidate = self.candidate(values.cat(hidden * reset, dim=-1)).tanh()
+        return update * hidden + (1 - update) * candidate
+
+
+def _transport(values: Tensor, diffusion: DirectedDiffusion) -> Tensor:
+    forward, reverse = diffusion(values)
+    return (forward - values).cat(reverse - values, dim=-1)
+
+
+def _state(values: Tensor, hidden: Tensor | None, features: int) -> Tensor:
+    if hidden is None:
+        return Tensor.zeros(
+            *values.shape[:-1],
+            features,
+            dtype=values.dtype,
+            device=values.device,
+        )
+    expected = (*values.shape[:-1], features)
+    if hidden.shape != expected:
+        raise ValueError(f"hidden must have shape {expected}, got {hidden.shape}")
+    if hidden.dtype != values.dtype or hidden.device != values.device:
+        raise ValueError("hidden and values must share dtype and device")
+    return hidden
+
+
+def _snapshot(model: Forecast) -> dict[str, Tensor]:
     return {name: value.detach().clone().realize() for name, value in nn.state.get_state_dict(model).items()}
 
 
-def _parameter_count(model: A3Forecast | DiffusionForecast) -> int:
+def _parameter_count(model: Forecast) -> int:
     return sum(int(parameter.numel()) for parameter in nn.state.get_parameters(model))
 
 
 def _sparse_calls(
-    model: A3Forecast | DiffusionForecast,
+    model: Forecast,
     operator: Graph | DirectedDiffusion,
     protocol: Protocol,
     device: str,
@@ -578,8 +669,10 @@ def _feature_set(architecture: str) -> str:
 
 
 def _validate_architecture(architecture: str) -> None:
-    if architecture not in ("a3tgcn", "diffusion_gru"):
-        raise ValueError("architecture must be 'a3tgcn' or 'diffusion_gru'")
+    if architecture not in ("a3tgcn", "diffusion_gru", "local_diffusion"):
+        raise ValueError(
+            "architecture must be 'a3tgcn', 'diffusion_gru', or 'local_diffusion'"
+        )
 
 
 def _validate(

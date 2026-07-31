@@ -42,6 +42,7 @@ class CatalogTest(unittest.TestCase):
         self.assertTrue(all(experiment.timeout_seconds > 0 for experiment in CATALOG.values()))
         self.assertEqual(CATALOG["mean_sage"].timeout_seconds, 600)
         self.assertEqual(CATALOG["metr_la_diffusion"].timeout_seconds, 900)
+        self.assertEqual(CATALOG["metr_la_local_diffusion"].timeout_seconds, 600)
 
     def test_documented_runs_use_the_locked_runner(self) -> None:
         paths = [

@@ -61,6 +61,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   evaluation, and a temporal rather than spatial gain.
 - [METR-LA directed diffusion](metr-la-diffusion.md) — topology-specific
   long-horizon RMSE gains with a remaining local-MAE tradeoff.
+- [METR-LA local diffusion](metr-la-local-diffusion.md) — a zero-gated
+  transported residual over an intact node-local forecast.
 - [Controlled transport](transport-forecast.md) — a positive identifiable
   topology witness.
 - [Controlled transfer](transport-transfer.md) — frozen local parameters on

@@ -60,6 +60,11 @@ CATALOG = {
         METR_LA_SETTINGS,
         timeout_seconds=900,
     ),
+    "metr_la_local_diffusion": Experiment(
+        "forecast",
+        "research-only",
+        METR_LA_SETTINGS,
+    ),
     "chickenpox_forecast": Experiment(
         "forecast",
         "research-only",
