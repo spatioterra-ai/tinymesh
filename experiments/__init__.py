@@ -8,6 +8,7 @@ class Experiment:
     group: str
     owner: str
     settings: tuple[str, ...] = ("DEV",)
+    timeout_seconds: int = 600
 
 
 METR_LA_SETTINGS = (
@@ -57,6 +58,7 @@ CATALOG = {
         "forecast",
         "tinymesh.nn.DiffusionGRU",
         METR_LA_SETTINGS,
+        timeout_seconds=900,
     ),
     "chickenpox_forecast": Experiment(
         "forecast",
