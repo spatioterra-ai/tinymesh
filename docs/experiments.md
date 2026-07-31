@@ -32,9 +32,10 @@ uv run --locked python -m experiments.run metr_la_diffusion DEV=METAL STEPS=1 SE
 ```
 
 The runner refuses a dirty tracked worktree, clears inherited experiment
-settings, accepts only settings declared by the catalog, and bounds execution
-at 600 seconds. A successful run writes an ignored JSON envelope under
-`experiments/runs/` containing:
+settings, accepts only settings declared by the catalog, and applies the
+cataloged positive timeout. The default is 600 seconds; `metr_la_diffusion`
+uses a measured 900-second bound. A successful run writes an ignored JSON
+envelope under `experiments/runs/` containing:
 
 - the tinymesh revision and all five reference gitlinks;
 - the experiment group and API owner;

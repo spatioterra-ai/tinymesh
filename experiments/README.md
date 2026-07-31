@@ -27,6 +27,10 @@ Every stage follows the repository
 [closure gate](../docs/experiments.md#close-a-stage) before another dataset or
 architecture begins.
 
+Every catalog entry owns a fixed positive timeout. The default is 600 seconds;
+`metr_la_diffusion` uses 900 seconds because full matched controls exceed the
+default on the reference Metal path. A CLI setting cannot weaken either bound.
+
 ## Record a run
 
 Pass experiment settings explicitly:

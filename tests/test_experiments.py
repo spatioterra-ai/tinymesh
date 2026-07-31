@@ -38,6 +38,11 @@ class CatalogTest(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "not a setting"):
             _settings(experiment, ["TOKEN=secret"])
 
+    def test_experiment_timeouts_are_positive_and_revisioned(self) -> None:
+        self.assertTrue(all(experiment.timeout_seconds > 0 for experiment in CATALOG.values()))
+        self.assertEqual(CATALOG["mean_sage"].timeout_seconds, 600)
+        self.assertEqual(CATALOG["metr_la_diffusion"].timeout_seconds, 900)
+
     def test_documented_runs_use_the_locked_runner(self) -> None:
         paths = [
             ROOT / "README.md",

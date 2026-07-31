@@ -16,7 +16,6 @@ from experiments import CATALOG, Experiment
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "experiments" / "runs"
-DEFAULT_TIMEOUT = 600
 
 
 def main() -> None:
@@ -34,7 +33,8 @@ def main() -> None:
     settings = _settings(CATALOG[name], raw_settings)
     started_at = datetime.now(timezone.utc)
     start = perf_counter()
-    result = _run(name, settings, DEFAULT_TIMEOUT)
+    timeout = CATALOG[name].timeout_seconds
+    result = _run(name, settings, timeout)
     elapsed = perf_counter() - start
     envelope = {
         "schema": 1,
@@ -43,7 +43,7 @@ def main() -> None:
         "owner": CATALOG[name].owner,
         "started_at": started_at.isoformat(),
         "elapsed_seconds": round(elapsed, 6),
-        "timeout_seconds": DEFAULT_TIMEOUT,
+        "timeout_seconds": timeout,
         "python": platform.python_version(),
         "revision": revision,
         "references": references,
@@ -124,4 +124,3 @@ def _git(*args: str) -> str:
 
 if __name__ == "__main__":
     main()
-
