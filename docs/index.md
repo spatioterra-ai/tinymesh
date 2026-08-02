@@ -25,6 +25,7 @@ that structure without replacing the sparse core.
 | Understand core theory | [Topology](concepts/topology.md), [message passing](concepts/message-passing.md), [time](concepts/time.md) |
 | See what the evidence supports | [Research](research/index.md) |
 | Reproduce an observation | [Experiments](experiments.md) |
+| Read an implementation source | [Papers](papers.md) |
 
 ## Public boundary
 
