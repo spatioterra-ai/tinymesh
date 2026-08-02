@@ -9,6 +9,7 @@ nav = [
   "quickstart.md",
   "api.md",
   "experiments.md",
+  "papers.md",
   "reference-projects.md",
   {"Concepts" = [
     "concepts/topology.md",

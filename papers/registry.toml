@@ -1,0 +1,27 @@
+[paper."i-jepa"]
+arxiv = "2301.08243v3"
+license = "https://arxiv.org/licenses/nonexclusive-distrib/1.0/"
+
+[paper."i-jepa".citation]
+type = "inproceedings"
+key = "Assran_2023_CVPR"
+title = "Self-Supervised Learning From Images With a Joint-Embedding Predictive Architecture"
+author = "Assran, Mahmoud and Duval, Quentin and Misra, Ishan and Bojanowski, Piotr and Vincent, Pascal and Rabbat, Michael and LeCun, Yann and Ballas, Nicolas"
+booktitle = "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)"
+month = "June"
+year = "2023"
+pages = "15619--15629"
+url = "https://openaccess.thecvf.com/content/CVPR2023/html/Assran_Self-Supervised_Learning_From_Images_With_a_Joint-Embedding_Predictive_Architecture_CVPR_2023_paper.html"
+
+[paper."graph-jepa"]
+arxiv = "2309.16014v3"
+license = "https://creativecommons.org/licenses/by/4.0/"
+
+[paper."graph-jepa".citation]
+type = "article"
+key = "skenderi2025graph"
+title = "Graph-level Representation Learning with Joint-Embedding Predictive Architectures"
+author = "Skenderi, Geri and Li, Hang and Tang, Jiliang and Cristani, Marco"
+journal = "Transactions on Machine Learning Research"
+year = "2025"
+url = "https://openreview.net/forum?id=v47f4DwYZb"

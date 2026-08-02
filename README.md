@@ -121,6 +121,8 @@ observation. See [Experiments](docs/experiments.md).
   [time](docs/concepts/time.md).
 - [Research](docs/research/index.md) owns the current decision ledger and links
   every revision-bound record.
+- [Papers](docs/papers.md) pins publication metadata and exact source revisions
+  without committing downloaded PDFs or TeX.
 
 ## Repository
 
@@ -130,6 +132,7 @@ experiments/     revision-bound policy, controls, training, measurements
 tests/           executable contracts
 docs/concepts/   durable theory
 docs/research/   exact evidence and current decisions
+papers/          tracked citations and exact-source fetch, ignored cache
 submodules/      pinned read-only references
 ```
 
