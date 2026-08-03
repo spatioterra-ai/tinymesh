@@ -16,6 +16,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Can variable-size graph collections stay dependency-free and sparse? | MUTAG lowers 188 graphs and 7,442 labeled directed edges identically on CPU and Metal from one bounded, pinned archive. | Yes. Keep source labels canonical and derive model features with tinygrad operations. |
 | Does Graph-JEPA improve MUTAG representations? | Positionless patch prediction gains 2.48 points over its paired random encoder in all three seeds; RWSE-conditioned arms regress, and every learned arm trails the fixed graph summary. | Continue the minimal positionless mechanism on a temporal task. Keep position and every JEPA component research-only. |
 | Can one sparse graph represent a bounded node-time mesh? | Cartesian products, batched endpoint gathers, and batched GINE pass 30 focused tests on CPU and Metal without dense adjacency. | Yes when joint message passing needs explicit node-time vertices. Keep long fixed-topology sequences factorized. |
+| Does causal JEPA learn a useful node-time representation? | The true-mesh encoder improves over its paired random initialization in all three seeds and test agrees, but spatial-only features beat the joint product in two of three. | Continue the objective as research; reject explicit temporal edges as the incumbent on this task. Promote no JEPA API. |
 
 ## Sparse core
 
@@ -54,6 +55,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   random-encoder and non-neural controls.
 - [MUTAG Graph-JEPA ablation](mutag-graph-jepa.md) — graph patches, structural
   position, and latent objective under one frozen probe protocol.
+- [Controlled node-time JEPA](transport-jepa.md) — causal latent prediction over
+  sparse product meshes with matched space and time controls.
 
 ## Data boundaries
 
