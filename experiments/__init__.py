@@ -45,6 +45,7 @@ CATALOG = {
     ),
     "mean_sage": Experiment("layer", "tinymesh.nn.SAGEConv"),
     "gcn": Experiment("layer", "tinymesh.nn.GCNConv"),
+    "gine": Experiment("layer", "tinymesh.nn.GINEConv"),
     "gat": Experiment("layer", "tinymesh.nn.GATConv"),
     "multi_head_gat": Experiment("layer", "tinymesh.nn.GATConv"),
     "tgcn": Experiment("layer", "tinymesh.nn.TGCN"),

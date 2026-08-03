@@ -8,7 +8,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 
 | Question | Current evidence | Decision |
 | --- | --- | --- |
-| Can sparse graph learning stay native to tinygrad? | Unit and scalar-weighted aggregation, endpoint projection, target softmax, and first-order gradients remain sparse on CPU and Metal. | Yes, for fixed topology. Keep the CSR backend private while `Tensor.custom_kernel` remains alpha. |
+| Can sparse graph learning stay native to tinygrad? | Unit, scalar-weighted, and edge-vector aggregation, endpoint projection, target softmax, and first-order gradients remain sparse on CPU and Metal. | Yes, for fixed topology. Keep the CSR backend private while `Tensor.custom_kernel` remains alpha. |
 | Does metric geometry require a geo dependency? | Position tensors compose into displacement, distance, radial weights, and sparse messages. | No. Data adapters own coordinate frames and units; add a type only when it must own a new invariant. |
 | Can the models use spatial structure? | True-topology diffusion wins controlled transport and transfers to unseen graph sizes. | Yes under an identifiable local law. Preserve false-topology and node-local controls. |
 | Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model and Montevideo geometry loses to persistence. On METR-LA, factorized true transport beats both topology controls on MAE and RMSE in two seeds, but the earlier self-only model still dominates it. | Graph structure measurably affects METR-LA forecasts; it has not improved the best model. Compare bounded convergence before changing architecture or API. |
@@ -21,6 +21,7 @@ They are evidence, not API promises. This page is the current decision ledger;
   backward, scaling evidence, and the alpha-kernel boundary.
 - [Mean GraphSAGE](mean-sage.md) — the first trainable caller of sparse mean.
 - [GCN](gcn.md) — degree normalization composed around the same sum.
+- [GINE](gine.md) — learned edge-vector messages over sparse COO-to-CSR reduction.
 - [Weighted aggregation](weighted-aggregation.md) — COO edge identity through
   forward, node gradients, and scalar edge gradients.
 - [Sparse attention](attention.md) — endpoint projection, target softmax, and

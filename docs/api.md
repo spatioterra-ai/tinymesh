@@ -13,6 +13,8 @@ factory, trainer, or PyTorch compatibility layer.
 
 ::: tinymesh.nn.SAGEConv
 
+::: tinymesh.nn.GINEConv
+
 ::: tinymesh.nn.GCNConv
 
 ::: tinymesh.nn.GATConv

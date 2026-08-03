@@ -19,7 +19,7 @@ class PackageTest(unittest.TestCase):
 
         self.assertEqual(
             {name for name in vars(nn) if name.endswith("Conv")},
-            {"ChebConv", "GATConv", "GCNConv", "SAGEConv"},
+            {"ChebConv", "GATConv", "GCNConv", "GINEConv", "SAGEConv"},
         )
         self.assertTrue(all(hasattr(nn, name) for name in (
             "A3TGCN",

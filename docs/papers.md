@@ -29,11 +29,13 @@ With no paper names, each command selects the whole registry. Fetches are
 bounded, atomic, and stored under the paper key and exact arXiv revision. The
 command prints a SHA-256 digest for every local file.
 
-The initial sources are
+The current sources are
 [I-JEPA v3](https://arxiv.org/abs/2301.08243v3), published at
 [CVPR 2023](https://openaccess.thecvf.com/content/CVPR2023/html/Assran_Self-Supervised_Learning_From_Images_With_a_Joint-Embedding_Predictive_Architecture_CVPR_2023_paper.html),
 and [Graph-JEPA v3](https://arxiv.org/abs/2309.16014v3), published in
-[TMLR](https://openreview.net/forum?id=v47f4DwYZb).
+[TMLR](https://openreview.net/forum?id=v47f4DwYZb), plus
+[GINE v3](https://arxiv.org/abs/1905.12265v3), published at
+[ICLR 2020](https://openreview.net/forum?id=HJlWWJSFDH).
 
 ## Source rule
 
