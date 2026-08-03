@@ -12,6 +12,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Does metric geometry require a geo dependency? | Position tensors compose into displacement, distance, radial weights, and sparse messages. | No. Data adapters own coordinate frames and units; add a type only when it must own a new invariant. |
 | Can the models use spatial structure? | True-topology diffusion wins controlled transport and transfers to unseen graph sizes. | Yes under an identifiable local law. Preserve false-topology and node-local controls. |
 | Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model and Montevideo geometry loses to persistence. On METR-LA, factorized true transport beats both topology controls on MAE and RMSE in two seeds, but the earlier self-only model still dominates it. | Graph structure measurably affects METR-LA forecasts; it has not improved the best model. Compare bounded convergence before changing architecture or API. |
+| Can tinygrad express JEPA learning over graph patches? | Aligned latent loss falls 90.9%; reversed and positionless controls lose on CPU and Metal while the EMA target receives zero gradient. | Yes. Keep the mechanism research-only until a real representation task justifies a reusable owner. |
 
 ## Sparse core
 
@@ -38,6 +39,11 @@ They are evidence, not API promises. This page is the current decision ledger;
 - [T-GCN](tgcn.md) — fixed-graph recurrence through one spatial and temporal
   transition.
 - [GConvGRU](gconv-gru.md) — Chebyshev graph mixing inside recurrent gates.
+
+## Representation
+
+- [JEPA mechanics](jepa-mechanics.md) — asymmetric latent prediction over graph
+  patches with an EMA target and shortcut controls.
 
 ## Data boundaries
 
