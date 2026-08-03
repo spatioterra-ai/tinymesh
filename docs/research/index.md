@@ -17,6 +17,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Does Graph-JEPA improve MUTAG representations? | Positionless patch prediction gains 2.48 points over its paired random encoder in all three seeds; RWSE-conditioned arms regress, and every learned arm trails the fixed graph summary. | Continue the minimal positionless mechanism on a temporal task. Keep position and every JEPA component research-only. |
 | Can one sparse graph represent a bounded node-time mesh? | Cartesian products, batched endpoint gathers, and batched GINE pass 30 focused tests on CPU and Metal without dense adjacency. | Yes when joint message passing needs explicit node-time vertices. Keep long fixed-topology sequences factorized. |
 | Does causal JEPA learn a useful node-time representation? | The true-mesh encoder improves over its paired random initialization in all three seeds and test agrees, but spatial-only features beat the joint product in two of three. | Continue the objective as research; reject explicit temporal edges as the incumbent on this task. Promote no JEPA API. |
+| Does real traffic support factorized causal JEPA? | A matched METR-LA protocol is registered; formal seeds have not run. | No decision yet. Keep the encoder and objective research-only. |
 
 ## Sparse core
 
@@ -57,6 +58,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   position, and latent objective under one frozen probe protocol.
 - [Controlled node-time JEPA](transport-jepa.md) — causal latent prediction over
   sparse product meshes with matched space and time controls.
+- [METR-LA factorized JEPA](metr-la-jepa.md) — real causal traffic blocks with
+  sparse space, bounded time, and paired representation controls.
 
 ## Data boundaries
 

@@ -29,6 +29,7 @@ uv run --locked python -m experiments.run mutag_data DEV=CPU
 uv run --locked python -m experiments.run mutag_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.01 MASK_EVERY=3 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100
 uv run --locked python -m experiments.run mutag_graph_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.005 PATCHES=8 PROBE_LR=0.05 PROBE_STEPS=150 RW=8 SEED=0 STEPS=80 TARGETS=3
 uv run --locked python -m experiments.run transport_jepa DEV=METAL EMA=0.998 HIDDEN=8 HISTORY=4 HORIZON=4 LR=0.001 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100
+uv run --locked python -m experiments.run metr_la_jepa DEV=METAL BS=64 EMA=0.998 EVAL_SAMPLES=512 HIDDEN=8 HISTORY=12 HORIZON=12 LR=0.001 PROBE_LR=0.01 PROBE_STEPS=100 SAMPLES=512 SEED=0 STEPS=100 TEST=0
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
 uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
 uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
@@ -66,6 +67,12 @@ it as a separate catalog entry preserves the A3T-GCN evidence contract.
 and applies directed transport only through a zero-gated residual. Matched
 controls identify a topology signal, but the composition remains research-only
 because it does not beat the incumbent.
+
+`metr_la_jepa` masks one causal future block and evaluates frozen factorized
+representations against their identical random encoders. The target encoder sees
+normalized speed and explicit missingness, never calendar features or test rows;
+every arm uses the same fixed 512-window validation sample. `TEST=1` opens the
+matching fixed test sample only after validation decides.
 
 Training emits validation evidence only. `TEST=1` explicitly opens final test
 evaluation after the head, loss, topology set, seeds, and budget are frozen.
