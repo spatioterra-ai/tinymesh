@@ -55,6 +55,11 @@ CATALOG = {
     "montevideo_data": Experiment("data", "tinymesh.datasets"),
     "metr_la_data": Experiment("data", "tinymesh.datasets"),
     "mutag_data": Experiment("data", "tinymesh.datasets"),
+    "mutag_jepa": Experiment(
+        "representation",
+        "research-only",
+        ("DEV", "EMA", "FOLDS", "HIDDEN", "LR", "MASK_EVERY", "PROBE_LR", "PROBE_STEPS", "SEED", "STEPS"),
+    ),
     "metr_la_forecast": Experiment(
         "forecast",
         "tinymesh.nn.A3TGCN",
