@@ -6,7 +6,7 @@ imports.
 
 | Project | Revision | What tinymesh studies | What tinymesh does not copy |
 | --- | --- | --- | --- |
-| tinygrad | [`23c7813f`](https://github.com/tinygrad/tinygrad/tree/23c7813f444c2bdcf0142419ccaeb7800d20d17c) | Tensor, autograd, compilation, devices, direct module shape, minimal code | mesh semantics or a compatibility wrapper |
+| tinygrad | [`33755a34`](https://github.com/tinygrad/tinygrad/tree/33755a34657d25920914badbe32a9d70489669c7) | Tensor, autograd, compilation, devices, direct module shape, minimal code | mesh semantics or a compatibility wrapper |
 | PyTorch Geometric | [`726310a4`](https://github.com/pyg-team/pytorch_geometric/tree/726310a486eae37a89cd6359072b82bbbbb71579) | graph-layer equations, conventional names, host and dense comparisons | PyTorch, `MessagePassing`, registries, aggregation plug-ins |
 | PyTorch Geometric Temporal | [`fe555bc3`](https://github.com/benedekrozemberczki/pytorch_geometric_temporal/tree/fe555bc30ee197755c4b58a89407033a5f383415) | recurrent and period-attention equations, pinned temporal datasets | PyTorch, batch-specific aliases, trainer surfaces, dense adjacency construction |
 | TorchGeo | [`468c670b`](https://github.com/torchgeo/torchgeo/tree/468c670bc94c961eb80e6c0ad32ed147852c367b) | explicit geospatial query, dataset, and sampling boundaries | GIS dependencies or general coordinate types without a caller |
