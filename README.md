@@ -29,7 +29,7 @@ compatibility layer over another machine-learning framework.
 ## What works
 
 ```text
-ordered COO edges + node tensors
+ordered COO edges / products + node tensors
                |
           lower once
                v
@@ -47,11 +47,13 @@ ordered COO edges + node tensors
      spatial + temporal components
 ```
 
-- `Graph` owns deterministic directed topology, sparse node and edge sums,
-  endpoint projection, target softmax, in-degree, and scalar edge identity.
+- `Graph` owns deterministic directed topology, Cartesian products, sparse node
+  and edge sums, endpoint projection, target softmax, in-degree, and edge
+  identity.
 - Forward and first-order backward store `O(N + E)` topology and perform
   `O((N + E)H)` work without dense adjacency or node-edge carriers.
-- Leading axes share one graph, so `Graph.sum` accepts `[..., N, H]`.
+- Leading axes share one graph, so node sums and endpoint gathers accept
+  `[..., N, H]`.
 - `tinymesh.nn` composes direct tinygrad-style node- and edge-aware graph
   convolution, attention, recurrence, period attention, and directed diffusion.
 - `StaticGraphTemporalSignal` and the pinned Chickenpox, Montevideo, and
@@ -65,7 +67,7 @@ evidence supports:
 ```text
 controlled transport   correct topology matters and transfers across graph size
 real forecasts         METR-LA topology signal; incumbent local model still wins
-implementation         fixed-topology first-order core; alpha custom kernel
+implementation         sparse products + fixed-topology first-order core
 ```
 
 This is experimental 0.x code, not a stability promise. The private CSR backend

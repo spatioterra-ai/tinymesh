@@ -74,10 +74,22 @@ class EdgeValuesTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source.*target"):
             graph.edge_values(Tensor.ones(2, 1), endpoint="edge")  # type: ignore[arg-type]
 
-    def test_rejects_batch_axes(self):
-        graph = Graph(2, [0], [1])
-        with self.assertRaisesRegex(ValueError, r"shape \[N, H\]"):
-            graph.edge_values(Tensor.ones(3, 2, 1), endpoint="source")
+    def test_batch_axes_share_one_sparse_gather(self):
+        graph = Graph(3, [0, 2], [1, 1])
+        values = Tensor(
+            [
+                [[1.0], [2.0], [3.0]],
+                [[4.0], [5.0], [6.0]],
+            ],
+            device=Device.DEFAULT,
+        ).realize()
+        output = graph.edge_values(values, endpoint="source")
+        gradient = output.sum().gradient(values)[0]
+
+        self._assert_edge_kernel(output, nodes=3, edges=2, width=2)
+        self._assert_csr_kernel(gradient, nodes=3, edges=2, width=2)
+        self.assertEqual(output.tolist(), [[[1.0], [3.0]], [[4.0], [6.0]]])
+        self.assertEqual(gradient.tolist(), [[[1.0], [0.0], [1.0]], [[1.0], [0.0], [1.0]]])
 
     def test_forward_and_backward_have_sparse_structure(self):
         source = [0, 1, 1, 2, 3, 4, 4]
@@ -93,12 +105,12 @@ class EdgeValuesTest(unittest.TestCase):
         self._assert_edge_kernel(output, edges=7, width=3)
         self._assert_csr_kernel(gradient, nodes=5, edges=7, width=3)
 
-    def _assert_edge_kernel(self, tensor: Tensor, *, edges: int, width: int) -> None:
+    def _assert_edge_kernel(self, tensor: Tensor, *, edges: int, width: int, nodes: int = 0) -> None:
         body = self._kernel_body(tensor)
         ranges = [uop for uop in body.toposort() if uop.op is Ops.RANGE]
         self.assertEqual(len(ranges), 1)
         self.assertEqual(int(ranges[0].src[0]), edges * width)
-        self._assert_sparse_shapes(body, nodes=0, edges=edges, width=width)
+        self._assert_sparse_shapes(body, nodes=nodes, edges=edges, width=width)
 
     def _assert_csr_kernel(self, tensor: Tensor, *, nodes: int, edges: int, width: int) -> None:
         body = self._kernel_body(tensor)

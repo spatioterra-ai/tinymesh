@@ -59,6 +59,16 @@ class GraphTest(unittest.TestCase):
         degree.assign(Tensor.zeros(6, dtype=degree.dtype, device=Device.DEFAULT)).realize()
         self.assertEqual(graph.in_degree(device=Device.DEFAULT).tolist(), expected)
 
+    def test_cartesian_product_is_left_major_and_sparse(self):
+        time = Graph(3, [0, 1], [1, 2])
+        space = Graph(2, [0, 1], [1, 0])
+        product = time.cartesian(space)
+
+        self.assertEqual(product.nodes, 6)
+        self.assertEqual(product.source, (0, 1, 2, 3, 0, 1, 2, 3, 4, 5))
+        self.assertEqual(product.target, (2, 3, 4, 5, 1, 0, 3, 2, 5, 4))
+        self.assertEqual(product.edges, time.edges * space.nodes + time.nodes * space.edges)
+
 
 class CSRBackendTest(unittest.TestCase):
     def test_groups_both_directions_without_merging_duplicates(self):

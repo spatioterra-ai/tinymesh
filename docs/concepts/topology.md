@@ -183,6 +183,22 @@ Fixed topology can reuse its realized execution form across training steps;
 cache ownership and measurements belong to the revision-bound research
 records.
 
+## Products compose domains
+
+`Graph.cartesian` turns two directed graphs into one graph over ordered node
+pairs. Its left-major node identity makes tensor lowering a reshape:
+
+```text
+left node a, right node b  ->  a * right.nodes + b
+```
+
+Each edge changes exactly one coordinate. The product stores
+`left.edges * right.nodes + left.nodes * right.edges` edges, never a dense
+node-pair adjacency. Time paths, spatial graphs, grids, and other product
+domains can therefore reuse the same `Graph` and sparse operations. The
+[time concept](time.md#a-node-time-mesh-is-a-graph-product) gives the concrete
+node-time construction and its factorized alternative.
+
 The current sparse invariant is:
 
 > Network-scale graph computation may store or visit node and edge lanes, but

@@ -44,9 +44,11 @@ output [B, L, N, H]
 lane into feature width, runs the existing two-dimensional CSR operation once,
 and restores the original axes. The graph and its device buffers remain shared.
 Static scalar edge weights are also shared; their gradient sums over all lanes.
+`Graph.edge_values` follows the same rule, so `GINEConv` can share one fixed
+edge-feature tensor across batch and time lanes.
 
 This is batching tensor fields over one graph. Batching different graphs,
-changing edge weights per batch, and batched attention scores are separate
+changing edge values per batch, and batched attention scores are separate
 contracts and remain unimplemented.
 
 ## Recurrence is causal
@@ -115,7 +117,7 @@ alignment, and cache lifetime.
 
 Proving fixed-topology recurrence does not prove dynamic graphs.
 
-## The product mesh stays factorized
+## A node-time mesh is a graph product
 
 A fixed graph observed at ordered times has a conceptual joint domain:
 
@@ -134,10 +136,8 @@ Laplacian as a Kronecker sum:
 L_J = L_T ⊗ I_N + I_T ⊗ L_G
 ```
 
-This is a mathematical description, not a storage instruction. Materializing
-`N*T` joint nodes or a product adjacency would duplicate one fixed topology.
-Tinymesh instead keeps `X[T,N,F]`, applies the spatial operator over `N`, and
-advances causal state over `T`:
+The default execution stays factorized: keep `X[T,N,F]`, apply the spatial
+operator over `N`, and advance causal state over `T`:
 
 ```text
 for t:
@@ -147,8 +147,39 @@ for t:
 Topology and spatial transport remain proportional to the snapshots and sparse
 support, `O(T * (N + E) * H)`; learned feature projections add their ordinary
 tensor cost. A changing edge field, delayed cross-time edge, or changing
-topology needs its own aligned contract; the conceptual product does not make
-those facts implicit.
+topology needs its own aligned contract.
+
+Some algorithms need the joint nodes to exchange messages directly. For a
+bounded window, `Graph.cartesian` lowers that same product without constructing
+a dense adjacency:
+
+```python
+time = Graph(3, [0, 1], [1, 2])
+space = Graph(2, [0, 1], [1, 0])
+mesh = time.cartesian(space)
+
+values = values.reshape(batch, time.nodes * space.nodes, features)
+```
+
+```text
+flat node       (t, v) -> t * N + v
+joint nodes     T * N
+joint edges     E_T * N + T * E_G
+
+time edge       t -> u    becomes (t, v) -> (u, v) for every v
+space edge      v -> w    becomes (t, v) -> (t, w) for every t
+```
+
+Left-factor edges come first in COO order, each repeated across the right
+factor's nodes; right-factor edges follow, each repeated across the left
+factor's nodes. Callers can therefore align edge types and values without a
+second topology map. For `time.cartesian(space)`, temporal edges precede
+spatial edges.
+
+This explicit form costs `O(TN + E_T N + T E_G)` storage. Use it when a joint
+message-passing rule needs it and keep long fixed-topology sequences
+factorized. The Cartesian product is a lowering choice, not permission to
+materialize an `[TN,TN]` matrix.
 
 ## The fixed-graph signal
 

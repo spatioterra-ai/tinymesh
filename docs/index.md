@@ -43,13 +43,13 @@ compatibility surface.
 ## The stack
 
 ```text
-edge facts             source -> target, optional COO scalar
+edge facts             source -> target, optional COO values
     |
     v
-topology lowering      COO -> CSR(A) + CSR(A.T) + edge maps
+topology lowering      COO / graph products -> CSR(A) + CSR(A.T) + edge maps
     |
     v
-sparse operations      endpoint fields, target softmax, sum / mean
+sparse operations      endpoint fields, target softmax, node / edge sums
     |
     v
 spatial composition    position -> displacement -> distance -> weight
@@ -79,16 +79,17 @@ reusable invariant needs an owner.
 
 ## Current boundary
 
-The fixed-topology core supports unit and scalar-weighted aggregation,
-first-order gradients, target-normalized attention, fixed-graph temporal
-signals, and direct graph-temporal components on CPU and Metal. It stores
-`O(N + E)` topology and never constructs dense adjacency.
+The fixed-topology core supports unit, scalar-weighted, and edge-vector
+aggregation, first-order gradients, target-normalized attention, sparse graph
+products, fixed-graph temporal signals, and direct graph-temporal components
+on CPU and Metal. It stores sparse topology and never constructs dense
+adjacency.
 
 The private CSR backend uses alpha tinygrad `Tensor.custom_kernel` and disables
 default kernel optimization for its data-dependent loop. Batching different
-graphs, changing topology, vector edge messages, higher-order gradients,
-general coordinate-reference machinery, geodesy, and higher-dimensional cells
-remain outside the current contract.
+graphs, per-lane edge values, changing topology, higher-order gradients, general
+coordinate-reference machinery, geodesy, and higher-dimensional cells remain
+outside the current contract.
 
 Concept pages hold durable theory. Research records bind claims to exact
 revisions and measurements. Source and tests own current behavior.
