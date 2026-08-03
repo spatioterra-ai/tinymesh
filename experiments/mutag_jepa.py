@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from math import sqrt
-from random import Random
-from statistics import fmean
 
 from tinygrad import Context, Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 
+from experiments.mutag_protocol import Metric, Probe, linear_probe, metric, molecular_summary, stratified_folds
 from tinymesh import Graph
 from tinymesh.datasets import MUTAG, mutag
 from tinymesh.nn import SAGEConv
@@ -64,19 +62,6 @@ class Predictor:
 
     def __call__(self, values: Tensor) -> Tensor:
         return self.output(self.hidden(values).relu())
-
-
-@dataclass(frozen=True)
-class Metric:
-    values: tuple[float, ...]
-    mean: float
-    standard_deviation: float
-
-
-@dataclass(frozen=True)
-class Probe:
-    train_accuracy: float
-    test_accuracy: float
 
 
 @dataclass(frozen=True)
@@ -140,10 +125,10 @@ def compare(
     if learning_rate <= 0 or probe_learning_rate <= 0 or not 0 <= ema_decay < 1:
         raise ValueError("learning rates must be positive and EMA decay must be in [0, 1)")
 
-    partitions = _folds(data.labels, folds, seed)
+    partitions = stratified_folds(data.labels, folds, seed)
     indices = tuple(range(len(data)))
     all_graphs = GraphBatch(data, indices, mask_every=mask_every, seed=0)
-    summary = _summary(data)
+    summary = molecular_summary(data)
     results = []
     parameters = 0
     for fold, test in enumerate(partitions):
@@ -180,16 +165,16 @@ def compare(
         ema_decay=ema_decay,
         probe_learning_rate=probe_learning_rate,
         parameters=parameters,
-        initial_loss=_metric(tuple(result.initial_loss for result in results)),
-        final_loss=_metric(tuple(result.final_loss for result in results)),
-        initial_target_sample_std=_metric(tuple(result.initial_target_sample_std for result in results)),
-        target_sample_std=_metric(tuple(result.target_sample_std for result in results)),
-        target_parameter_delta=_metric(tuple(result.target_parameter_delta for result in results)),
-        target_gradient=_metric(tuple(result.target_gradient for result in results)),
-        majority_accuracy=_metric(tuple(result.majority_accuracy for result in results)),
-        summary_accuracy=_metric(tuple(result.summary.test_accuracy for result in results)),
-        random_encoder_accuracy=_metric(tuple(result.random_encoder.test_accuracy for result in results)),
-        jepa_encoder_accuracy=_metric(tuple(result.jepa_encoder.test_accuracy for result in results)),
+        initial_loss=metric(tuple(result.initial_loss for result in results)),
+        final_loss=metric(tuple(result.final_loss for result in results)),
+        initial_target_sample_std=metric(tuple(result.initial_target_sample_std for result in results)),
+        target_sample_std=metric(tuple(result.target_sample_std for result in results)),
+        target_parameter_delta=metric(tuple(result.target_parameter_delta for result in results)),
+        target_gradient=metric(tuple(result.target_gradient for result in results)),
+        majority_accuracy=metric(tuple(result.majority_accuracy for result in results)),
+        summary_accuracy=metric(tuple(result.summary.test_accuracy for result in results)),
+        random_encoder_accuracy=metric(tuple(result.random_encoder.test_accuracy for result in results)),
+        jepa_encoder_accuracy=metric(tuple(result.jepa_encoder.test_accuracy for result in results)),
         results=results,
     )
 
@@ -264,8 +249,8 @@ def _run_fold(
             for value in nn.state.get_parameters(target)
         ),
         majority_accuracy=sum(data.labels[index] == majority for index in test) / len(test),
-        summary=_probe(summary, data.labels, train, test, steps=probe_steps, learning_rate=probe_learning_rate, seed=probe_seed),
-        random_encoder=_probe(
+        summary=linear_probe(summary, data.labels, train, test, steps=probe_steps, learning_rate=probe_learning_rate, seed=probe_seed),
+        random_encoder=linear_probe(
             random_embedding,
             data.labels,
             train,
@@ -274,7 +259,7 @@ def _run_fold(
             learning_rate=probe_learning_rate,
             seed=probe_seed,
         ),
-        jepa_encoder=_probe(
+        jepa_encoder=linear_probe(
             trained_embedding,
             data.labels,
             train,
@@ -288,82 +273,10 @@ def _run_fold(
     return result, parameters
 
 
-def _probe(
-    features: Tensor,
-    labels: tuple[int, ...],
-    train: tuple[int, ...],
-    test: tuple[int, ...],
-    *,
-    steps: int,
-    learning_rate: float,
-    seed: int,
-) -> Probe:
-    rows = features.tolist()
-    device = str(features.device)
-    train_x = Tensor([rows[index] for index in train], device=device).clone().realize()
-    test_x = Tensor([rows[index] for index in test], device=device).clone().realize()
-    train_y = Tensor([labels[index] for index in train], device=device).clone().realize()
-    test_y = Tensor([labels[index] for index in test], device=device).clone().realize()
-    mean, std = train_x.mean(axis=0), train_x.std(axis=0)
-    scale = (std > 1e-6).where(std, 1)
-    train_x = ((train_x - mean) / scale).clone().realize()
-    test_x = ((test_x - mean) / scale).clone().realize()
-
-    Tensor.manual_seed(seed)
-    model = nn.Linear(train_x.shape[1], 2)
-    optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-
-    @TinyJit
-    @Context(TRAINING=1)
-    def step(values: Tensor, target: Tensor) -> Tensor:
-        optimizer.zero_grad()
-        loss = model(values).sparse_categorical_crossentropy(target).backward()
-        return loss.realize(*optimizer.schedule_step())
-
-    for _ in range(steps):
-        step(train_x, train_y)
-    return Probe(_accuracy(model(train_x), train_y), _accuracy(model(test_x), test_y))
-
-
-def _folds(labels: tuple[int, ...], folds: int, seed: int) -> tuple[tuple[int, ...], ...]:
-    counts = [labels.count(label) for label in range(2)]
-    if folds < 2 or folds > min(counts):
-        raise ValueError(f"folds must be in [2, {min(counts)}]")
-    random = Random(seed)
-    partitions = [[] for _ in range(folds)]
-    for label in range(2):
-        indices = [index for index, value in enumerate(labels) if value == label]
-        random.shuffle(indices)
-        for position, index in enumerate(indices):
-            partitions[position % folds].append(index)
-    return tuple(tuple(sorted(partition)) for partition in partitions)
-
-
-def _summary(data: MUTAG) -> Tensor:
-    rows = []
-    for graph, node_label, edge_label, _ in (data[index] for index in range(len(data))):
-        nodes, edges = node_label.tolist(), edge_label.tolist()
-        rows.append(
-            [nodes.count(label) / len(nodes) for label in range(len(data.node_types))]
-            + [edges.count(label) / len(edges) for label in range(len(data.bond_types))]
-            + [float(graph.nodes)]
-        )
-    return Tensor(rows, device=str(data.node_labels[0].device)).clone().realize()
-
-
 def _update_target(online: Encoder, target: Encoder, decay: float) -> None:
     source = nn.state.get_state_dict(online)
     for name, value in nn.state.get_state_dict(target).items():
         value.assign(decay * value + (1 - decay) * source[name].detach()).realize()
-
-
-def _metric(values: tuple[float, ...]) -> Metric:
-    mean = fmean(values)
-    return Metric(values, mean, sqrt(fmean((value - mean) ** 2 for value in values)))
-
-
-def _accuracy(prediction: Tensor, target: Tensor) -> float:
-    return (prediction.argmax(axis=1) == target).mean().item()
 
 
 def main() -> None:
