@@ -15,6 +15,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Can tinygrad express JEPA learning over graph patches? | Aligned latent loss falls 90.9%; reversed and positionless controls lose on CPU and Metal while the EMA target receives zero gradient. | Yes. Keep the mechanism research-only until a real representation task justifies a reusable owner. |
 | Can variable-size graph collections stay dependency-free and sparse? | MUTAG lowers 188 graphs and 7,442 labeled directed edges identically on CPU and Metal from one bounded, pinned archive. | Yes. Keep source labels canonical and derive model features with tinygrad operations. |
 | Does Graph-JEPA improve MUTAG representations? | Positionless patch prediction gains 2.48 points over its paired random encoder in all three seeds; RWSE-conditioned arms regress, and every learned arm trails the fixed graph summary. | Continue the minimal positionless mechanism on a temporal task. Keep position and every JEPA component research-only. |
+| Can one sparse graph represent a bounded node-time mesh? | Cartesian products, batched endpoint gathers, and batched GINE pass 30 focused tests on CPU and Metal without dense adjacency. | Yes when joint message passing needs explicit node-time vertices. Keep long fixed-topology sequences factorized. |
 
 ## Sparse core
 
@@ -39,6 +40,8 @@ They are evidence, not API promises. This page is the current decision ledger;
 
 ## Time and recurrence
 
+- [Sparse Cartesian products](cartesian-product.md) — explicit product lowering,
+  edge order, batched edge messages, and the factorized alternative.
 - [T-GCN](tgcn.md) — fixed-graph recurrence through one spatial and temporal
   transition.
 - [GConvGRU](gconv-gru.md) — Chebyshev graph mixing inside recurrent gates.
