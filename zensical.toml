@@ -27,6 +27,7 @@ nav = [
     "research/gine.md",
     "research/weighted-aggregation.md",
     "research/attention.md",
+    "research/cartesian-product.md",
     "research/tgcn.md",
     "research/gconv-gru.md",
     "research/jepa-mechanics.md",

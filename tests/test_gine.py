@@ -33,6 +33,23 @@ class GINETest(unittest.TestCase):
     for actual, expected in zip(observation.hidden_weight, (0.55, 0.05)):
       self.assertAlmostEqual(actual, expected, places=6)
 
+  def test_batch_lanes_share_edge_features(self) -> None:
+    graph = Graph(3, [0, 2], [1, 1])
+    values = Tensor(
+      [[[1.0], [2.0], [3.0]], [[4.0], [5.0], [6.0]]],
+      device=Device.DEFAULT,
+    ).realize()
+    edges = Tensor([[0.5], [1.5]], device=Device.DEFAULT).realize()
+    model = GINEConv(1, 1, 2)
+
+    batched = model(values, edges, graph)
+    expected = Tensor.stack(*(model(values[row], edges, graph) for row in range(2)))
+    gradient = batched.sum().gradient(values)[0]
+    Tensor.realize(batched, expected, gradient)
+
+    self.assertLess((batched - expected).abs().max().item(), 1e-6)
+    self.assertEqual(gradient.shape, values.shape)
+
   def test_rejects_incompatible_shapes(self) -> None:
     graph = Graph(2, [0], [1])
     model = GINEConv(2, 1, 2)

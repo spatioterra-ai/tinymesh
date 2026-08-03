@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from math import prod
 from typing import Literal
@@ -38,6 +40,19 @@ class Graph:
     @property
     def edges(self) -> int:
         return len(self.source)
+
+    def cartesian(self, other: Graph) -> Graph:
+        """Return the directed Cartesian product over left-major node pairs.
+
+        Left-factor edges precede right-factor edges in the returned COO order.
+        """
+        return Graph(
+            self.nodes * other.nodes,
+            [source * other.nodes + node for source in self.source for node in range(other.nodes)]
+            + [node * other.nodes + source for node in range(self.nodes) for source in other.source],
+            [target * other.nodes + node for target in self.target for node in range(other.nodes)]
+            + [node * other.nodes + target for node in range(self.nodes) for target in other.target],
+        )
 
     def sum(self, values: Tensor, edge_weight: Tensor | None = None) -> Tensor:
         """Sum incoming values over node axis -2 with optional shared edge weights."""
@@ -96,12 +111,19 @@ class Graph:
         endpoint: Literal["source", "target"],
     ) -> Tensor:
         """Gather node values into original COO edge order."""
-        if values.ndim != 2:
-            raise ValueError(f"values must have shape [N, H], got {values.shape}")
         self._validate_node_values(values)
         if endpoint not in ("source", "target"):
             raise ValueError("endpoint must be 'source' or 'target'")
-        return self._csr.edge_values(values, source=endpoint == "source")
+
+        shape = values.shape
+        order = (values.ndim - 2, *range(values.ndim - 2), values.ndim - 1)
+        flat = values.permute(order).reshape(self.nodes, -1)
+        output = self._csr.edge_values(flat, source=endpoint == "source")
+        return output.reshape(self.edges, *shape[:-2], shape[-1]).permute(
+            *range(1, values.ndim - 1),
+            0,
+            values.ndim - 1,
+        )
 
     def softmax(self, edge_score: Tensor) -> Tensor:
         """Normalize scalar edge scores over each target's incoming edges."""

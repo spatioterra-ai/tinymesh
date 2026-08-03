@@ -17,7 +17,7 @@ class PapersTest(unittest.TestCase):
     def test_registry_pins_sources_and_citations(self) -> None:
         papers = tomllib.loads(REGISTRY.read_text())["paper"]
 
-        self.assertEqual(set(papers), {"i-jepa", "graph-jepa", "gine"})
+        self.assertEqual(set(papers), {"i-jepa", "graph-jepa", "gine", "v-jepa"})
         for name, paper in papers.items():
             with self.subTest(paper=name):
                 self.assertRegex(paper["arxiv"], r"^\d{4}\.\d{5}v\d+$")
@@ -35,10 +35,12 @@ class PapersTest(unittest.TestCase):
         self.assertIn("i-jepa       2301.08243v3", listing)
         self.assertIn("graph-jepa   2309.16014v3", listing)
         self.assertIn("gine         1905.12265v3", listing)
-        self.assertEqual(len(re.findall(r"^@", citations, re.MULTILINE)), 3)
+        self.assertIn("v-jepa       2404.08471v1", listing)
+        self.assertEqual(len(re.findall(r"^@", citations, re.MULTILINE)), 4)
         self.assertIn("@inproceedings{Assran_2023_CVPR,", citations)
         self.assertIn("@article{skenderi2025graph,", citations)
         self.assertIn("@inproceedings{Hu_2020_ICLR,", citations)
+        self.assertIn("@article{Bardes_2024_VJEPA,", citations)
 
     def test_cli_rejects_unknown_paper(self) -> None:
         process = subprocess.run(

@@ -20,7 +20,7 @@ class SAGEConv:
 
 
 class GINEConv:
-    """Edge-aware graph isomorphism convolution."""
+    """Edge-aware graph isomorphism convolution over shared edge features."""
 
     def __init__(self, node_features: int, edge_features: int, out_features: int, eps: float = 0.0) -> None:
         if node_features <= 0 or edge_features <= 0 or out_features <= 0:
@@ -31,8 +31,9 @@ class GINEConv:
         self.node_features, self.edge_features, self.eps = node_features, edge_features, eps
 
     def __call__(self, values: Tensor, edge_values: Tensor, graph: Graph) -> Tensor:
-        if values.shape != (graph.nodes, self.node_features):
-            raise ValueError(f"values must have shape [{graph.nodes}, {self.node_features}], got {values.shape}")
+        expected = (graph.nodes, self.node_features)
+        if values.ndim < 2 or values.shape[-2:] != expected:
+            raise ValueError(f"values must have shape [..., {graph.nodes}, {self.node_features}], got {values.shape}")
         if edge_values.shape != (graph.edges, self.edge_features):
             raise ValueError(f"edge_values must have shape [{graph.edges}, {self.edge_features}], got {edge_values.shape}")
         if values.dtype != edge_values.dtype or values.device != edge_values.device:
