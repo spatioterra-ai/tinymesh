@@ -25,6 +25,7 @@ Record a run by passing every experiment setting explicitly:
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run jepa_mechanics DEV=CPU EMA=0.99 HIDDEN=8 LR=0.01 SAMPLES=16 SEED=0 STEPS=80
 uv run --locked python -m experiments.run mutag_data DEV=CPU
+uv run --locked python -m experiments.run mutag_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.01 MASK_EVERY=3 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
 uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
 uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0

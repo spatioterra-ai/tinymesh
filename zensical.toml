@@ -29,6 +29,7 @@ nav = [
     "research/tgcn.md",
     "research/gconv-gru.md",
     "research/jepa-mechanics.md",
+    "research/mutag-jepa.md",
     "research/chickenpox-data.md",
     "research/montevideo-data.md",
     "research/metr-la-data.md",

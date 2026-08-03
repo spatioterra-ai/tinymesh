@@ -45,6 +45,8 @@ They are evidence, not API promises. This page is the current decision ledger;
 
 - [JEPA mechanics](jepa-mechanics.md) — asymmetric latent prediction over graph
   patches with an EMA target and shortcut controls.
+- [MUTAG masked JEPA](mutag-jepa.md) — frozen graph representations against
+  random-encoder and non-neural controls.
 
 ## Data boundaries
 
