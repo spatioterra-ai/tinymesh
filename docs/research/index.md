@@ -54,6 +54,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   random-encoder and non-neural controls.
 - [MUTAG Graph-JEPA ablation](mutag-graph-jepa.md) — graph patches, structural
   position, and latent objective under one frozen probe protocol.
+- [Controlled node-time JEPA](transport-jepa.md) — causal latent prediction over
+  sparse product meshes with matched space and time controls.
 
 ## Data boundaries
 

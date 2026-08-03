@@ -67,6 +67,12 @@ CATALOG = {
         ("DEV", "EMA", "FOLDS", "HIDDEN", "LR", "PATCHES", "PROBE_LR", "PROBE_STEPS", "RW", "SEED", "STEPS", "TARGETS"),
         timeout_seconds=1800,
     ),
+    "transport_jepa": Experiment(
+        "representation",
+        "research-only",
+        ("DEV", "EMA", "HIDDEN", "HISTORY", "HORIZON", "LR", "PROBE_LR", "PROBE_STEPS", "SEED", "STEPS"),
+        timeout_seconds=1800,
+    ),
     "metr_la_forecast": Experiment(
         "forecast",
         "tinymesh.nn.A3TGCN",
