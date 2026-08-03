@@ -2,7 +2,8 @@ import unittest
 
 from tinygrad import Device, Tensor
 
-from experiments.mutag_jepa import GraphBatch, _folds
+from experiments.mutag_jepa import GraphBatch
+from experiments.mutag_protocol import stratified_folds
 from tinymesh import Graph
 from tinymesh.datasets import MUTAG
 
@@ -31,13 +32,13 @@ class MUTAGJEPATest(unittest.TestCase):
 
     def test_stratified_folds_are_disjoint_and_exhaustive(self) -> None:
         labels = dataset().labels
-        partitions = _folds(labels, 5, seed=0)
+        partitions = stratified_folds(labels, 5, seed=0)
 
         self.assertEqual([len(partition) for partition in partitions], [2] * 5)
         self.assertEqual(sorted(index for partition in partitions for index in partition), list(range(10)))
         self.assertTrue(all(sorted(labels[index] for index in partition) == [0, 1] for partition in partitions))
-        self.assertEqual(partitions, _folds(labels, 5, seed=0))
-        self.assertNotEqual(partitions, _folds(labels, 5, seed=1))
+        self.assertEqual(partitions, stratified_folds(labels, 5, seed=0))
+        self.assertNotEqual(partitions, stratified_folds(labels, 5, seed=1))
 
 
 if __name__ == "__main__":
