@@ -48,6 +48,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   patches with an EMA target and shortcut controls.
 - [MUTAG masked JEPA](mutag-jepa.md) — frozen graph representations against
   random-encoder and non-neural controls.
+- [MUTAG Graph-JEPA ablation](mutag-graph-jepa.md) — graph patches, structural
+  position, and latent objective under one frozen probe protocol.
 
 ## Data boundaries
 
