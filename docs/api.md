@@ -31,10 +31,6 @@ factory, trainer, or PyTorch compatibility layer.
 
 ::: tinymesh.nn.DirectedDiffusion
 
-Calling a `DirectedDiffusion` returns separate absolute forward and reverse
-fields. Its `residual` method returns their ordered root-relative basis:
-`[forward - values, reverse - values]`.
-
 ::: tinymesh.nn.DiffusionGRU
 
 ## Datasets
