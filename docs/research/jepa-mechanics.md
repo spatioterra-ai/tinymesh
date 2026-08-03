@@ -32,8 +32,30 @@ representation quality can confound the result.
 
 ## Decision
 
-Pending a clean revision-bound run. Until then, `PatchEncoder`, `Predictor`, EMA,
-and the task remain research-only under `experiments/`.
+At tinymesh revision
+[`0b1b9a5`](https://github.com/spatioterra-ai/tinymesh/tree/0b1b9a51d7ecf75981bfc2df1facb3c9b8dfac3b),
+the asymmetric mechanism trains on CPU and Metal with the pinned tinygrad
+revision `1095bbe`. The two devices agree within `1e-7` on the reported losses.
+
+| Measurement | CPU | Metal |
+| --- | ---: | ---: |
+| Initial latent MSE | 0.319204 | 0.319204 |
+| Aligned latent MSE | 0.029169 | 0.029169 |
+| Reversed-target MSE | 0.061945 | 0.061945 |
+| Zero-position MSE | 0.096477 | 0.096477 |
+| Target variation across examples | 0.171856 | 0.171856 |
+| Target gradient | 0 | 0 |
+
+Aligned loss fell by `90.9%`. Reversing examples made it `2.12x` worse and
+removing target position made it `3.31x` worse, so the predictor uses both
+sample content and target identity. The EMA target moved by `5.1267` in summed
+absolute parameter distance while receiving no gradient.
+
+This proves the learning mechanism and its tinygrad execution, not that graph
+topology helps, that the representation transfers, or that the three-node
+fixture captures Graph-JEPA. `PatchEncoder`, `Predictor`, EMA, and the task stay
+research-only. The existing `Graph` and `SAGEConv` APIs already own all reusable
+math used here.
 
 ## Sources
 
