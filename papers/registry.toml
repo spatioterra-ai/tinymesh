@@ -51,3 +51,16 @@ author = "Bardes, Adrien and Garrido, Quentin and Ponce, Jean and Chen, Xinlei a
 journal = "arXiv preprint arXiv:2404.08471"
 year = "2024"
 url = "https://arxiv.org/abs/2404.08471v1"
+
+[paper."ts-jepa"]
+arxiv = "2509.25449v1"
+license = "https://creativecommons.org/licenses/by/4.0/"
+
+[paper."ts-jepa".citation]
+type = "inproceedings"
+key = "Ennadir_2024_TSJEPA"
+title = "Joint Embeddings Go Temporal"
+author = "Ennadir, Sofiane and Golkar, Siavash and Sarra, Leopoldo"
+booktitle = "NeurIPS 2024 Workshop on Time Series in the Age of Large Models"
+year = "2024"
+url = "https://openreview.net/forum?id=FIdbozebmy"

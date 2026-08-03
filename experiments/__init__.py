@@ -73,6 +73,12 @@ CATALOG = {
         ("DEV", "EMA", "HIDDEN", "HISTORY", "HORIZON", "LR", "PROBE_LR", "PROBE_STEPS", "SEED", "STEPS"),
         timeout_seconds=1800,
     ),
+    "metr_la_jepa": Experiment(
+        "representation",
+        "research-only",
+        ("DEV", "BS", "EMA", "EVAL_SAMPLES", "HIDDEN", "HISTORY", "HORIZON", "LR", "PROBE_LR", "PROBE_STEPS", "SAMPLES", "SEED", "STEPS", "TEST"),
+        timeout_seconds=1800,
+    ),
     "metr_la_forecast": Experiment(
         "forecast",
         "tinymesh.nn.A3TGCN",
