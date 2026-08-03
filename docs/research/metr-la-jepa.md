@@ -156,9 +156,7 @@ The representation, topology, and temporal-mixer gates fail. Test remains
 unopened and the supervised-initialization follow-up does not run. This rejects
 this encoder, causal block mask, objective, and budget on METR-LA; it does not
 show that traffic lacks graph structure or that every JEPA formulation fails.
-Promote no encoder, predictor, objective, probe, or orchestration API. The
-root-relative transport repeated from the earlier local-diffusion study is now
-`DirectedDiffusion.residual`; that distills shared graph math, not JEPA.
+Promote no encoder, predictor, objective, probe, or orchestration API.
 
 ## Reproduce
 

@@ -37,7 +37,9 @@ class SpatialEncoder:
     expected = (diffusion.graph.nodes, self.in_features)
     if values.ndim < 3 or values.shape[-2:] != expected:
       raise ValueError(f"values must have shape [..., T, {diffusion.graph.nodes}, {self.in_features}], got {values.shape}")
-    state = self.root(values) + self.neighbor(diffusion.residual(values)) * self.gate.tanh()
+    forward, reverse = diffusion(values)
+    transport = (forward - values).cat(reverse - values, dim=-1)
+    state = self.root(values) + self.neighbor(transport) * self.gate.tanh()
     return self.norm(state.tanh())
 
 

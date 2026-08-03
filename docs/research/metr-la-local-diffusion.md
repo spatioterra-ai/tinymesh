@@ -3,9 +3,7 @@
 True directed transport beats both matched controls on every declared metric
 in seeds 0 and 1. The earlier self-only `DiffusionGRU` still has lower MAE and
 RMSE than this factorized model. The result isolates a repeatable topology
-signal; it does not improve the best forecaster. The repeated root-relative
-transport contract later graduates as `DirectedDiffusion.residual`, while the
-model remains research-only.
+signal; it does not improve the best forecaster or add a public API.
 
 ## Factorization
 
@@ -122,8 +120,7 @@ equal-time model quality.
 ```text
 topology identification   pass
 predictive improvement    fail against incumbent
-transport residual API    pass
-factorized model API      fail
+public API promotion      no
 model test                closed
 ```
 
@@ -134,10 +131,10 @@ errors. Do not add dynamic edges, node identity, or learned adjacency yet.
 
 ## Ownership
 
-`DirectedDiffusion.residual` now owns the repeated ordered
-`[forward - root, reverse - root]` basis. The local cell, readouts, and horizon
-gate remain experiment-owned because the composition does not improve the
-incumbent. This separation follows the motivation of
+`DirectedDiffusion` remains the public spatial primitive. Root subtraction and
+direction concatenation stay direct tensor composition in the experiment. The
+local cell, readouts, and horizon gate also remain experiment-owned because the
+model does not improve the incumbent. This separation follows the motivation of
 [D2STGNN](https://arxiv.org/abs/2206.09112), not an implementation claim of
 paper parity.
 

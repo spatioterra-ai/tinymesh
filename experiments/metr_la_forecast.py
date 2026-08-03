@@ -121,7 +121,8 @@ class LocalDiffusionForecast:
         for period in range(self.periods):
             current = values[..., period, :, :]
             local = self.local(current, local)
-            spatial = self.spatial(diffusion.residual(current), spatial)
+            forward, reverse = diffusion(current)
+            spatial = self.spatial((forward - current).cat(reverse - current, dim=-1), spatial)
         prediction = self.local_readout(local.relu()) + self.spatial_readout(spatial.relu()) * self.spatial_gate.tanh()
         return _output(prediction, anchor, self.head)
 

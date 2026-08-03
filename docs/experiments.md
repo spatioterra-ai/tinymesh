@@ -94,10 +94,10 @@ No result creates an API automatically. Dataset policy, task readouts,
 train/validation/test rules, checkpoint selection, and claims remain
 experiment-owned.
 
-`DirectedDiffusion.residual` is the small example: two independent METR-LA
-models needed the same root subtraction and direction order, so the existing
-operator absorbed that three-line invariant. Their learned encoders, gates,
-heads, losses, and evaluation policy did not move.
+Repeated syntax alone is not a promotion gate. Root subtraction and direction
+concatenation are ordinary tensor composition with no state or new invariant,
+so each model owns that choice directly. A public owner must remove a concept,
+not merely a line.
 
 ## Close a stage
 

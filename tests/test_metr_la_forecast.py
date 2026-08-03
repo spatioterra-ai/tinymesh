@@ -172,9 +172,11 @@ class METRLAForecastTest(unittest.TestCase):
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         values = protocol.features[2]
         operators = _operators(protocol, "local_diffusion", Device.DEFAULT)
+        self_fields = operators["self"](values)
+        true_fields = operators["true"](values)
 
-        self.assertEqual(operators["self"].residual(values).abs().max().item(), 0.0)
-        self.assertGreater(operators["true"].residual(values).abs().max().item(), 0.0)
+        self.assertEqual(max((field - values).abs().max().item() for field in self_fields), 0.0)
+        self.assertGreater(max((field - values).abs().max().item() for field in true_fields), 0.0)
 
     def test_closed_spatial_gate_opens_before_training_transport(self) -> None:
         Tensor.manual_seed(0)

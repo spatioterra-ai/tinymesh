@@ -95,12 +95,19 @@ absolute basis    [X, F, R]
 residual basis    [F - X, R - X]
 ```
 
-`DirectedDiffusion.residual(X)` owns the second ordering. A self-loop-only
-operator returns exactly zero; an isolated row returns `[-X, -X]` because both
-absolute fields are zero. A learned projection or gate remains an ordinary
-caller-owned tensor composition. Both forms reuse two sparse sums and never
-materialize adjacency. The exact values, gradients, and sparse-work witness
-lives in the [directed diffusion experiment](../research/directed-diffusion.md).
+Callers form the second basis with ordinary tensor operations:
+
+```python
+forward, reverse = diffusion(values)
+transport = (forward - values).cat(reverse - values, dim=-1)
+```
+
+That choice belongs to the model, not a second graph operator or layer. A
+self-loop-only operator makes `transport` exactly zero; an isolated row makes
+it `[-X, -X]` because both absolute fields are zero. Either basis reuses two
+sparse sums and never materializes adjacency. The exact diffusion values,
+gradients, and sparse-work witness live in the
+[directed diffusion experiment](../research/directed-diffusion.md).
 
 ## Edge-vector messages
 

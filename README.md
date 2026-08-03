@@ -54,9 +54,8 @@ ordered COO edges / products + node tensors
   `O((N + E)H)` work without dense adjacency or node-edge carriers.
 - Leading axes share one graph, so node sums and endpoint gathers accept
   `[..., N, H]`.
-- `tinymesh.nn` composes direct tinygrad-style graph convolution, attention,
-  recurrence, and directed diffusion; root-relative transport is one method,
-  not another layer.
+- `tinymesh.nn` composes direct tinygrad-style node- and edge-aware graph
+  convolution, attention, recurrence, period attention, and directed diffusion.
 - `StaticGraphTemporalSignal` and the pinned Chickenpox, Montevideo, and
   METR-LA loaders keep graph, node, time, feature, target, and edge axes aligned.
 - CPU and Metal follow the same checked contracts.
