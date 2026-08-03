@@ -94,10 +94,36 @@ encoder. Exact PDF and TeX revisions are pinned by the paper registry.
 
 ## Decision
 
-Pending clean revision-bound runs for seeds 0, 1, and 2. Patch construction,
-RWSE, encoder orchestration, objectives, training, and probes remain
-research-only. `Graph`, `Graph.sum_edges`, `GINEConv`, `MUTAG`, and the shared
-MUTAG evaluation protocol already own the reusable contracts.
+At revision
+[`ddea5f2`](https://github.com/spatioterra-ai/tinymesh/tree/ddea5f26cd9299f2e57eebcc309071c862fe23b7), three
+Metal runs produced 15 held-out folds. Values below are mean and population
+standard deviation across the three seed-level fold means.
+
+| Arm | Initial -> final loss | Initial -> final variation | Random | Trained | Delta | Seed wins | Fold W/T/L |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `euclidean` | 0.08650 -> 0.000274 | 0.00498 -> 0.00579 | 84.23% | 82.25% | -1.98 ± 3.11 pt | 1/3 | 3/2/10 |
+| `hyperbola` | 0.29347 -> 0.01290 | 0.00498 -> 0.01053 | 84.23% | 82.61% | -1.62 ± 2.61 pt | 1/3 | 4/4/7 |
+| `hyperbola_mse` | 0.59835 -> 0.02689 | 0.00498 -> 0.01046 | 84.23% | 82.80% | -1.44 ± 3.11 pt | 2/3 | 6/1/8 |
+| `positionless` | 0.29542 -> 0.01836 | 0.00295 -> 0.00902 | 78.90% | 81.38% | **+2.48 ± 1.23 pt** | **3/3** | **8/3/4** |
+
+Majority accuracy was `66.50%`; the atom/bond/count summary reached
+`83.48% ± 0.44%`. Every target gradient was zero and no arm collapsed its
+graph-level variation.
+
+Only `positionless` passes the registered continuation gate. Its seed deltas
+were `+4.22`, `+1.61`, and `+1.61` points. The same hyperbola objective with
+RWSE started `5.33` points higher but pretraining erased most of that advantage:
+its paired delta was `4.10` points worse. MSE and smooth L1 both fail on mean
+paired transfer, so loss choice does not explain the result. Low objective loss
+again does not predict a useful representation.
+
+Continue patch prediction without structural position as the minimal incumbent;
+retain RWSE only as a negative control. This is evidence for the learning
+mechanism, not a competitive MUTAG model: every trained arm remains below the
+fixed summary. Patch construction, RWSE, encoder orchestration, objectives,
+training, and probes remain research-only. `Graph`, `Graph.sum_edges`,
+`GINEConv`, `MUTAG`, and the shared MUTAG evaluation protocol already own the
+reusable contracts.
 
 ## Reproduce
 

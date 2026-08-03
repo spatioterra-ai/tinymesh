@@ -14,6 +14,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model and Montevideo geometry loses to persistence. On METR-LA, factorized true transport beats both topology controls on MAE and RMSE in two seeds, but the earlier self-only model still dominates it. | Graph structure measurably affects METR-LA forecasts; it has not improved the best model. Compare bounded convergence before changing architecture or API. |
 | Can tinygrad express JEPA learning over graph patches? | Aligned latent loss falls 90.9%; reversed and positionless controls lose on CPU and Metal while the EMA target receives zero gradient. | Yes. Keep the mechanism research-only until a real representation task justifies a reusable owner. |
 | Can variable-size graph collections stay dependency-free and sparse? | MUTAG lowers 188 graphs and 7,442 labeled directed edges identically on CPU and Metal from one bounded, pinned archive. | Yes. Keep source labels canonical and derive model features with tinygrad operations. |
+| Does Graph-JEPA improve MUTAG representations? | Positionless patch prediction gains 2.48 points over its paired random encoder in all three seeds; RWSE-conditioned arms regress, and every learned arm trails the fixed graph summary. | Continue the minimal positionless mechanism on a temporal task. Keep position and every JEPA component research-only. |
 
 ## Sparse core
 
