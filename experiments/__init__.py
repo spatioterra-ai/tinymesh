@@ -38,6 +38,11 @@ CATALOG = {
     ),
     "weighted_aggregation": Experiment("primitive", "tinymesh.Graph.sum"),
     "spatial_geometry": Experiment("primitive", "research-only"),
+    "jepa_mechanics": Experiment(
+        "representation",
+        "research-only",
+        ("DEV", "EMA", "HIDDEN", "LR", "SAMPLES", "SEED", "STEPS"),
+    ),
     "mean_sage": Experiment("layer", "tinymesh.nn.SAGEConv"),
     "gcn": Experiment("layer", "tinymesh.nn.GCNConv"),
     "gat": Experiment("layer", "tinymesh.nn.GATConv"),

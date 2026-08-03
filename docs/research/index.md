@@ -39,6 +39,11 @@ They are evidence, not API promises. This page is the current decision ledger;
   transition.
 - [GConvGRU](gconv-gru.md) — Chebyshev graph mixing inside recurrent gates.
 
+## Representation
+
+- [JEPA mechanics](jepa-mechanics.md) — asymmetric latent prediction over graph
+  patches with an EMA target and shortcut controls.
+
 ## Data boundaries
 
 - [Chickenpox](chickenpox-data.md) — weekly node fields over one pinned graph.
