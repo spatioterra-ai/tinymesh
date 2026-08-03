@@ -2,8 +2,7 @@
 
 This stage asks whether causal latent prediction improves a reusable traffic
 representation—and whether correct spatial transport and learned temporal
-mixing account for the improvement. The protocol is registered before formal
-seeds run.
+mixing account for the improvement. The registered result is negative.
 
 ## Causal boundary
 
@@ -124,6 +123,40 @@ replaces its transformer with sparse directed diffusion plus a bounded causal
 time mixer, fixes one future-block mask, and evaluates a multivariate sensor
 graph. It is an architectural test, not a TS-JEPA reproduction. Exact paper and
 source revisions are pinned by the [paper registry](../papers.md).
+
+## Decision
+
+At revision
+[`17441a9`](https://github.com/spatioterra-ai/tinymesh/tree/17441a9ac70b6c19ba7ad3b012b95a0802927f19),
+three Metal runs evaluated the same 1,189,650 observed validation targets per
+seed. Values are mean and population standard deviation across seeds. Gain is
+paired random-encoder RMSE minus trained-encoder RMSE, so positive is better.
+
+| Arm | Random RMSE | Trained RMSE | Gain | Seed wins | EMA target gate |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `factorized` | 7.523661 ± 0.057822 | 7.616622 ± 0.095102 | **-0.092961 ± 0.047189** | **0/3** | 0.000641 ± 0.000107 |
+| `permuted` | 7.523661 ± 0.057822 | 7.593895 ± 0.082578 | -0.070234 ± 0.029370 | 0/3 | 0.000726 ± 0.000076 |
+| `temporal` | 7.523661 ± 0.057822 | 7.528295 ± 0.059672 | -0.004633 ± 0.008132 | 1/3 | 0 |
+| `spatial` | 7.416151 ± 0.069797 | **7.416944 ± 0.069456** | -0.000792 ± 0.000896 | 1/3 | 0.000080 ± 0.000005 |
+
+The raw-history probe reached `7.281532 ± 0.026356` RMSE and persistence
+reached `7.608212`. The trained factorized representation was worse than both.
+It also lost to trained `permuted` in two seeds and to `temporal` and `spatial`
+in all three; its mean RMSE deficits were `0.022727`, `0.088327`, and
+`0.199678`, respectively.
+
+Mechanics are sound but utility fails. Mean factorized latent L1 fell from
+`0.790422` to `0.192732`, every target gradient was exactly zero, the target
+moved by `1.204118 ± 0.154112`, and representation variation increased from
+`0.498568 ± 0.033605` to `0.516190 ± 0.026315`. Low latent loss therefore did
+not produce a better frozen traffic representation, and the tiny learned
+spatial gates supplied no stable true-topology advantage.
+
+The representation, topology, and temporal-mixer gates fail. Test remains
+unopened and the supervised-initialization follow-up does not run. This rejects
+this encoder, causal block mask, objective, and budget on METR-LA; it does not
+show that traffic lacks graph structure or that every JEPA formulation fails.
+Promote no encoder, predictor, objective, probe, or orchestration API.
 
 ## Reproduce
 
