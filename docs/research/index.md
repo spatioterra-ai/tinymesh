@@ -13,6 +13,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Can the models use spatial structure? | True-topology diffusion wins controlled transport and transfers to unseen graph sizes. | Yes under an identifiable local law. Preserve false-topology and node-local controls. |
 | Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model and Montevideo geometry loses to persistence. On METR-LA, factorized true transport beats both topology controls on MAE and RMSE in two seeds, but the earlier self-only model still dominates it. | Graph structure measurably affects METR-LA forecasts; it has not improved the best model. Compare bounded convergence before changing architecture or API. |
 | Can tinygrad express JEPA learning over graph patches? | Aligned latent loss falls 90.9%; reversed and positionless controls lose on CPU and Metal while the EMA target receives zero gradient. | Yes. Keep the mechanism research-only until a real representation task justifies a reusable owner. |
+| Can variable-size graph collections stay dependency-free and sparse? | MUTAG lowers 188 graphs and 7,442 labeled directed edges identically on CPU and Metal from one bounded, pinned archive. | Yes. Keep source labels canonical and derive model features with tinygrad operations. |
 
 ## Sparse core
 
@@ -52,6 +53,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   and road distance.
 - [METR-LA](metr-la-data.md) — five-minute speed, timestamps, missingness, and
   directed affinity.
+- [MUTAG](mutag-data.md) — variable-size molecular graphs with aligned atom,
+  bond, and graph labels.
 
 ## Forecast evidence
 

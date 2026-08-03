@@ -32,6 +32,7 @@ nav = [
     "research/chickenpox-data.md",
     "research/montevideo-data.md",
     "research/metr-la-data.md",
+    "research/mutag-data.md",
     "research/metr-la-forecast.md",
     "research/metr-la-diffusion.md",
     "research/metr-la-local-diffusion.md",

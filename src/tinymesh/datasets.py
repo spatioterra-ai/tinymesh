@@ -5,8 +5,10 @@ import math
 from array import array
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from io import BytesIO
 from pathlib import Path
 from urllib.request import Request, urlopen
+from zipfile import BadZipFile, ZipFile
 
 from tinygrad import Tensor, dtypes
 from tinygrad.helpers import fetch
@@ -56,6 +58,22 @@ _METR_LA_MAX_BYTES = {
 }
 _METR_LA_STEP = timedelta(minutes=5)
 _METR_LA_THRESHOLD = 0.1
+_MUTAG_SOURCE = (
+    "MUTAG.zip",
+    "https://www.chrsmrrs.com/graphkerneldatasets/MUTAG.zip",
+    24_550,
+    "c419bdc853c367d2d83da4973c45100954ae15e10f5ae2cddde6ca431f8207f6",
+)
+_MUTAG_MAX_BYTES = 32 * 1024
+_MUTAG_MEMBER_MAX_BYTES = {
+    "graph_labels": 1024,
+    "node_labels": 8 * 1024,
+    "graph_indicator": 16 * 1024,
+    "A": 96 * 1024,
+    "edge_labels": 16 * 1024,
+}
+_MUTAG_NODE_TYPES = ("C", "N", "O", "F", "I", "Cl", "Br")
+_MUTAG_BOND_TYPES = ("aromatic", "single", "double", "triple")
 
 
 @dataclass(frozen=True, eq=False)
@@ -128,6 +146,41 @@ class METRLA:
     @property
     def sample_minutes(self) -> int:
         return 5
+
+
+@dataclass(frozen=True, eq=False)
+class MUTAG:
+    """MUTAG molecular graphs with categorical atom, bond, and graph labels."""
+
+    graphs: tuple[Graph, ...]
+    node_labels: tuple[Tensor, ...]
+    edge_labels: tuple[Tensor, ...]
+    labels: tuple[int, ...]
+    node_types: tuple[str, ...] = field(init=False, default=_MUTAG_NODE_TYPES)
+    bond_types: tuple[str, ...] = field(init=False, default=_MUTAG_BOND_TYPES)
+
+    def __post_init__(self) -> None:
+        for name in ("graphs", "node_labels", "edge_labels", "labels"):
+            object.__setattr__(self, name, tuple(getattr(self, name)))
+        if not self.graphs or len({len(self.graphs), len(self.node_labels), len(self.edge_labels), len(self.labels)}) != 1:
+            raise ValueError("MUTAG fields must contain the same positive number of graphs")
+        if any(isinstance(label, bool) or label not in (0, 1) for label in self.labels):
+            raise ValueError("MUTAG labels must be 0 or 1")
+        for index, (graph, node_label, edge_label) in enumerate(zip(self.graphs, self.node_labels, self.edge_labels)):
+            if node_label.ndim != 1 or node_label.shape[0] != graph.nodes:
+                raise ValueError(f"node_labels[{index}] must have shape [{graph.nodes}], got {node_label.shape}")
+            if edge_label.ndim != 1 or edge_label.shape[0] != graph.edges:
+                raise ValueError(f"edge_labels[{index}] must have shape [{graph.edges}], got {edge_label.shape}")
+            if not dtypes.is_int(node_label.dtype) or not dtypes.is_int(edge_label.dtype):
+                raise ValueError("MUTAG node and edge labels must be integer tensors")
+            if node_label.device != edge_label.device or not isinstance(node_label.device, str):
+                raise ValueError("each MUTAG graph requires one shared device")
+
+    def __len__(self) -> int:
+        return len(self.graphs)
+
+    def __getitem__(self, index: int) -> tuple[Graph, Tensor, Tensor, int]:
+        return self.graphs[index], self.node_labels[index], self.edge_labels[index], self.labels[index]
 
 
 @dataclass(frozen=True)
@@ -203,6 +256,15 @@ def montevideo_bus(
     position = Tensor(source.position, dtype=x.dtype, device=x.device).realize()
     road_distance = Tensor(source.road_distance, dtype=x.dtype, device=x.device).realize()
     return MontevideoBus(signal, position, road_distance)
+
+
+def mutag(path: str | Path | None = None, *, device: str | None = None) -> MUTAG:
+    """Load the TU Dortmund MUTAG molecular graph collection."""
+    try:
+        with ZipFile(BytesIO(_read_mutag(path))) as archive:
+            return _parse_mutag(archive, device)
+    except BadZipFile as error:
+        raise ValueError("MUTAG source must be a ZIP archive") from error
 
 
 def metr_la(
@@ -328,6 +390,122 @@ def _float_tensor(values: array[float], shape: tuple[int, ...], device: str | No
     if values.itemsize != 4:
         raise RuntimeError("native float storage must be four bytes")
     return Tensor(values.tobytes(), dtype=dtypes.float32, device=device).reshape(*shape).realize()
+
+
+def _parse_mutag(archive: ZipFile, device: str | None) -> MUTAG:
+    indicator = tuple(value - 1 for value in _mutag_integers(archive, "graph_indicator"))
+    node_labels = _mutag_integers(archive, "node_labels")
+    graph_labels = _mutag_integers(archive, "graph_labels")
+    edge_labels = _mutag_integers(archive, "edge_labels")
+    edges = _mutag_edges(archive)
+
+    if not indicator or indicator[0] != 0 or any(left > right for left, right in zip(indicator, indicator[1:])):
+        raise ValueError("MUTAG graph indicators must be ordered from one")
+    graphs = indicator[-1] + 1
+    if set(indicator) != set(range(graphs)):
+        raise ValueError("MUTAG graph indicators must be contiguous")
+    if len(graph_labels) != graphs:
+        raise ValueError(f"MUTAG must contain one label for each of its {graphs} graphs")
+    if len(node_labels) != len(indicator):
+        raise ValueError("MUTAG must contain one label for each node")
+    if len(edge_labels) != len(edges):
+        raise ValueError("MUTAG must contain one label for each edge")
+    if any(label not in range(len(_MUTAG_NODE_TYPES)) for label in node_labels):
+        raise ValueError("MUTAG node labels must be in [0, 7)")
+    if any(label not in range(len(_MUTAG_BOND_TYPES)) for label in edge_labels):
+        raise ValueError("MUTAG edge labels must be in [0, 4)")
+    if any(label not in (-1, 1) for label in graph_labels):
+        raise ValueError("MUTAG graph labels must be -1 or 1")
+
+    labeled_edges: dict[tuple[int, int], int] = {}
+    edge_groups: list[list[tuple[int, int, int]]] = [[] for _ in range(graphs)]
+    starts = [0]
+    for index in range(1, len(indicator)):
+        if indicator[index] != indicator[index - 1]:
+            starts.append(index)
+    for index, ((source, target), label) in enumerate(zip(edges, edge_labels), start=1):
+        if source < 0 or source >= len(indicator) or target < 0 or target >= len(indicator):
+            raise ValueError(f"MUTAG edge {index} endpoint is out of range")
+        if source == target:
+            raise ValueError(f"MUTAG edge {index} is a self-loop")
+        if indicator[source] != indicator[target]:
+            raise ValueError(f"MUTAG edge {index} crosses graph boundaries")
+        if (source, target) in labeled_edges:
+            raise ValueError(f"MUTAG edge {index} duplicates an earlier edge")
+        labeled_edges[source, target] = label
+        graph = indicator[source]
+        edge_groups[graph].append((source - starts[graph], target - starts[graph], label))
+    if any(labeled_edges.get((target, source)) != label for (source, target), label in labeled_edges.items()):
+        raise ValueError("MUTAG bonds must contain matching edges in both directions")
+
+    ends = [*starts[1:], len(indicator)]
+    graph_objects, node_tensors, edge_tensors = [], [], []
+    for graph, (start, end) in enumerate(zip(starts, ends)):
+        group = edge_groups[graph]
+        graph_objects.append(Graph(end - start, [source for source, _, _ in group], [target for _, target, _ in group]))
+        node_tensors.append(Tensor(node_labels[start:end], device=device).realize())
+        edge_tensors.append(Tensor([label for _, _, label in group], device=device).realize())
+    return MUTAG(
+        tuple(graph_objects),
+        tuple(node_tensors),
+        tuple(edge_tensors),
+        tuple(int(label == 1) for label in graph_labels),
+    )
+
+
+def _read_mutag(path: str | Path | None) -> bytes:
+    if path is None:
+        request = Request(_MUTAG_SOURCE[1], headers={"User-Agent": "tinymesh"})
+        with urlopen(request, timeout=10) as stream:
+            payload = stream.read(_MUTAG_MAX_BYTES + 1)
+    else:
+        with Path(path).open("rb") as stream:
+            payload = stream.read(_MUTAG_MAX_BYTES + 1)
+    if len(payload) > _MUTAG_MAX_BYTES:
+        raise ValueError(f"MUTAG source exceeds {_MUTAG_MAX_BYTES} bytes")
+    if path is None and (len(payload) != _MUTAG_SOURCE[2] or hashlib.sha256(payload).hexdigest() != _MUTAG_SOURCE[3]):
+        raise RuntimeError("MUTAG source identity mismatch")
+    return payload
+
+
+def _mutag_integers(archive: ZipFile, name: str) -> tuple[int, ...]:
+    values = []
+    for index, row in enumerate(_mutag_rows(archive, name), start=1):
+        try:
+            values.append(int(row))
+        except ValueError as error:
+            raise ValueError(f"MUTAG {name} row {index} must be an integer") from error
+    return tuple(values)
+
+
+def _mutag_edges(archive: ZipFile) -> tuple[tuple[int, int], ...]:
+    edges = []
+    for index, row in enumerate(_mutag_rows(archive, "A"), start=1):
+        values = row.split(",")
+        if len(values) != 2:
+            raise ValueError(f"MUTAG A row {index} must contain two endpoints")
+        try:
+            edges.append((int(values[0].strip()) - 1, int(values[1].strip()) - 1))
+        except ValueError as error:
+            raise ValueError(f"MUTAG A row {index} endpoints must be integers") from error
+    return tuple(edges)
+
+
+def _mutag_rows(archive: ZipFile, name: str) -> tuple[str, ...]:
+    member = f"MUTAG/MUTAG_{name}.txt"
+    matches = [info for info in archive.infolist() if info.filename == member]
+    if len(matches) != 1:
+        raise ValueError(f"MUTAG source must contain {member} exactly once")
+    info = matches[0]
+    if info.file_size > _MUTAG_MEMBER_MAX_BYTES[name]:
+        raise ValueError(f"MUTAG {name} exceeds {_MUTAG_MEMBER_MAX_BYTES[name]} bytes")
+    try:
+        rows = tuple(row.strip() for row in archive.read(info).decode("ascii").splitlines())
+    except UnicodeDecodeError as error:
+        raise ValueError(f"MUTAG {name} must be ASCII") from error
+    if not rows or any(not row for row in rows):
+        raise ValueError(f"MUTAG {name} must contain non-empty rows")
+    return rows
 
 
 def _read_montevideo(path: str | Path | None = None) -> _MontevideoSource:

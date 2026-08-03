@@ -54,6 +54,7 @@ CATALOG = {
     "montevideo_source": Experiment("data", "tinymesh.datasets", ()),
     "montevideo_data": Experiment("data", "tinymesh.datasets"),
     "metr_la_data": Experiment("data", "tinymesh.datasets"),
+    "mutag_data": Experiment("data", "tinymesh.datasets"),
     "metr_la_forecast": Experiment(
         "forecast",
         "tinymesh.nn.A3TGCN",
