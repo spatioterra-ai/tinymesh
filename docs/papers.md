@@ -35,7 +35,8 @@ The current sources are
 and [Graph-JEPA v3](https://arxiv.org/abs/2309.16014v3), published in
 [TMLR](https://openreview.net/forum?id=v47f4DwYZb), plus
 [GINE v3](https://arxiv.org/abs/1905.12265v3), published at
-[ICLR 2020](https://openreview.net/forum?id=HJlWWJSFDH).
+[ICLR 2020](https://openreview.net/forum?id=HJlWWJSFDH), and
+[V-JEPA v1](https://arxiv.org/abs/2404.08471v1).
 
 ## Source rule
 

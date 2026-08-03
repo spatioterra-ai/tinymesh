@@ -38,3 +38,16 @@ author = "Hu, Weihua and Liu, Bowen and Gomes, Joseph and Zitnik, Marinka and Li
 booktitle = "International Conference on Learning Representations"
 year = "2020"
 url = "https://openreview.net/forum?id=HJlWWJSFDH"
+
+[paper."v-jepa"]
+arxiv = "2404.08471v1"
+license = "https://creativecommons.org/licenses/by/4.0/"
+
+[paper."v-jepa".citation]
+type = "article"
+key = "Bardes_2024_VJEPA"
+title = "Revisiting Feature Prediction for Learning Visual Representations from Video"
+author = "Bardes, Adrien and Garrido, Quentin and Ponce, Jean and Chen, Xinlei and Rabbat, Michael and LeCun, Yann and Assran, Mahmoud and Ballas, Nicolas"
+journal = "arXiv preprint arXiv:2404.08471"
+year = "2024"
+url = "https://arxiv.org/abs/2404.08471v1"
