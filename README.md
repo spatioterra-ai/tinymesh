@@ -39,7 +39,7 @@ ordered COO edges + node tensors
        |                |
        v                v
   sparse fields    sparse aggregation
-  endpoints        sum / mean / weighted sum
+  endpoints        sum / mean / edge sum / weighted sum
   target softmax          |
        +------------------+
                |
@@ -47,13 +47,13 @@ ordered COO edges + node tensors
      spatial + temporal components
 ```
 
-- `Graph` owns deterministic directed topology, sparse sum and mean, endpoint
-  projection, target softmax, in-degree, and scalar edge identity.
+- `Graph` owns deterministic directed topology, sparse node and edge sums,
+  endpoint projection, target softmax, in-degree, and scalar edge identity.
 - Forward and first-order backward store `O(N + E)` topology and perform
   `O((N + E)H)` work without dense adjacency or node-edge carriers.
 - Leading axes share one graph, so `Graph.sum` accepts `[..., N, H]`.
-- `tinymesh.nn` composes direct tinygrad-style graph convolution, attention,
-  recurrence, period attention, and directed diffusion objects.
+- `tinymesh.nn` composes direct tinygrad-style node- and edge-aware graph
+  convolution, attention, recurrence, period attention, and directed diffusion.
 - `StaticGraphTemporalSignal` and the pinned Chickenpox, Montevideo, and
   METR-LA loaders keep graph, node, time, feature, target, and edge axes aligned.
 - CPU and Metal follow the same checked contracts.

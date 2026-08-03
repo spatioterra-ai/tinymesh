@@ -23,6 +23,7 @@ Record a run by passing every experiment setting explicitly:
 
 ```console
 uv run --locked python -m experiments.run mean_sage DEV=CPU
+uv run --locked python -m experiments.run gine DEV=CPU
 uv run --locked python -m experiments.run jepa_mechanics DEV=CPU EMA=0.99 HIDDEN=8 LR=0.01 SAMPLES=16 SEED=0 STEPS=80
 uv run --locked python -m experiments.run mutag_data DEV=CPU
 uv run --locked python -m experiments.run mutag_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.01 MASK_EVERY=3 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100

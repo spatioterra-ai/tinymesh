@@ -24,6 +24,7 @@ nav = [
     "research/sparse-aggregation.md",
     "research/mean-sage.md",
     "research/gcn.md",
+    "research/gine.md",
     "research/weighted-aggregation.md",
     "research/attention.md",
     "research/tgcn.md",

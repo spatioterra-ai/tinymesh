@@ -99,6 +99,8 @@ class _CSR:
     def _segment_sum(self, edge_values: Tensor) -> Tensor:
         if self.nodes == 1:
             return edge_values.sum(axis=0, keepdim=True)
+        if not self.target:
+            return edge_values.sum(axis=0, keepdim=True).expand(self.nodes, edge_values.shape[1])
         device = cast(str, edge_values.device)
         row_ptr, _, _, _ = self._tensors(device)
         edge_order, _, _, target = self._edge_tensors(device)

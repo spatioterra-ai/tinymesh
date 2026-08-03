@@ -77,6 +77,32 @@ one edge owner and reduces only feature width `H`, so it needs neither atomics
 nor a materialized `[E, H]` message tensor. Edge-order maps keep the scalar
 attached to the same COO edge through both traversals.
 
+## Edge-vector messages
+
+Some layers build a distinct vector on every edge before aggregation:
+
+```text
+node fields [N, F] -- source gather --+
+                                       +--> edge messages [E, H] -- target sum --> [N, H]
+edge fields [E, D] -- transform -------+
+```
+
+`Graph.edge_values` owns the node-to-edge gather and `Graph.sum_edges` owns the
+edge-to-node reduction. Both preserve caller COO order. Their backward paths
+are the opposite operations, so the composition stores `O(N + E)` topology
+and does not materialize a node-by-node carrier.
+
+GINE is the first caller:
+
+```text
+m(u -> v) = ReLU(x_u + W_edge e_uv)
+y_v       = MLP((1 + epsilon) x_v + sum(m(u -> v)))
+```
+
+The layer always projects the declared edge width into node width, making the
+shape boundary explicit. Ordinary tinygrad linear maps and ReLU own message
+and update semantics; `Graph` owns only gather and reduction.
+
 ## Graph attention
 
 A single attention head composes node transforms, endpoint projection, target
@@ -190,13 +216,8 @@ a real graph.
 
 ## Where other layers differ
 
-The same decomposition identifies capabilities that do not exist yet:
-
-- GIN keeps sum aggregation and adds a learned update.
-- Edge-conditioned attention adds edge features to score construction.
-
-GIN and edge-conditioned attention remain design probes. Mean GraphSAGE, GCN,
-single- and multi-head GAT, T-GCN, and GConvGRU now compose as direct
+Edge-conditioned attention remains a design probe. Mean GraphSAGE, GINE, GCN,
+single- and multi-head GAT, T-GCN, and GConvGRU compose as direct
 `tinymesh.nn` classes over the shared experimental `Graph` boundary. The
 classes own equations and parameters; experiments own training, controls, and
 claims.
@@ -207,6 +228,8 @@ in [Mean GraphSAGE experiment](../research/mean-sage.md). The normalized second
 caller lives in [GCN experiment](../research/gcn.md). Scalar edge evidence
 lives in
 [Weighted aggregation experiment](../research/weighted-aggregation.md).
+Edge-vector reduction and its first caller live in the
+[GINE experiment](../research/gine.md).
 Endpoint projection, segment softmax, and the attention witness live in
 [Sparse attention experiment](../research/attention.md).
 Fixed-topology recurrence lives in

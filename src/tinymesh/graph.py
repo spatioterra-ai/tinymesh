@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from math import prod
 from typing import Literal
 
 from tinygrad import Tensor, dtypes
@@ -68,6 +69,25 @@ class Graph:
         degree = self.in_degree(device=values.device).maximum(1).cast(values.dtype)
         degree = degree.reshape((1,) * (values.ndim - 2) + (self.nodes, 1))
         return self.sum(values) / degree
+
+    def sum_edges(self, values: Tensor) -> Tensor:
+        """Sum COO-ordered edge values at their target nodes over axis -2."""
+        if values.ndim < 2:
+            raise ValueError(f"values must have shape [..., E, H], got {values.shape}")
+        if values.shape[-2] != self.edges:
+            raise ValueError(f"values must have {self.edges} edge rows, got {values.shape[-2]}")
+        if not isinstance(values.device, str):
+            raise ValueError("edge values require one device")
+
+        shape = values.shape
+        order = (values.ndim - 2, *range(values.ndim - 2), values.ndim - 1)
+        flat = values.permute(order).reshape(self.edges, prod(shape[:-2]) * shape[-1])
+        output = self._csr._segment_sum(flat)
+        return output.reshape(self.nodes, *shape[:-2], shape[-1]).permute(
+            *range(1, values.ndim - 1),
+            0,
+            values.ndim - 1,
+        )
 
     def edge_values(
         self,

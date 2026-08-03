@@ -19,6 +19,29 @@ class SAGEConv:
         return self.neighbor(graph.mean(values)) + self.root(values)
 
 
+class GINEConv:
+    """Edge-aware graph isomorphism convolution."""
+
+    def __init__(self, node_features: int, edge_features: int, out_features: int, eps: float = 0.0) -> None:
+        if node_features <= 0 or edge_features <= 0 or out_features <= 0:
+            raise ValueError("feature counts must be positive")
+        self.edge = nn.Linear(edge_features, node_features)
+        self.hidden = nn.Linear(node_features, out_features)
+        self.output = nn.Linear(out_features, out_features)
+        self.node_features, self.edge_features, self.eps = node_features, edge_features, eps
+
+    def __call__(self, values: Tensor, edge_values: Tensor, graph: Graph) -> Tensor:
+        if values.shape != (graph.nodes, self.node_features):
+            raise ValueError(f"values must have shape [{graph.nodes}, {self.node_features}], got {values.shape}")
+        if edge_values.shape != (graph.edges, self.edge_features):
+            raise ValueError(f"edge_values must have shape [{graph.edges}, {self.edge_features}], got {edge_values.shape}")
+        if values.dtype != edge_values.dtype or values.device != edge_values.device:
+            raise ValueError("node and edge values must share dtype and device")
+        message = (graph.edge_values(values, endpoint="source") + self.edge(edge_values)).relu()
+        state = (1 + self.eps) * values + graph.sum_edges(message)
+        return self.output(self.hidden(state).relu())
+
+
 class GCNConv:
     """Unweighted GCN over caller-supplied edges and self-loops."""
 
