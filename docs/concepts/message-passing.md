@@ -77,6 +77,31 @@ one edge owner and reduces only feature width `H`, so it needs neither atomics
 nor a materialized `[E, H]` message tensor. Edge-order maps keep the scalar
 attached to the same COO edge through both traversals.
 
+## Directed transport
+
+Positive affinity can normalize the same directed edges in both directions:
+
+```text
+X -- forward random walk --> F
+X -- reverse random walk --> R
+```
+
+`DirectedDiffusion(X)` returns `(F, R)`. Some models need the transported
+levels themselves; others keep node-local level separate and ask only how
+transport differs from each root:
+
+```text
+absolute basis    [X, F, R]
+residual basis    [F - X, R - X]
+```
+
+`DirectedDiffusion.residual(X)` owns the second ordering. A self-loop-only
+operator returns exactly zero; an isolated row returns `[-X, -X]` because both
+absolute fields are zero. A learned projection or gate remains an ordinary
+caller-owned tensor composition. Both forms reuse two sparse sums and never
+materialize adjacency. The exact values, gradients, and sparse-work witness
+lives in the [directed diffusion experiment](../research/directed-diffusion.md).
+
 ## Edge-vector messages
 
 Some layers build a distinct vector on every edge before aggregation:

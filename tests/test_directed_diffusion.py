@@ -175,6 +175,14 @@ class DirectedDiffusionTest(unittest.TestCase):
         self.assert_nested_close(actual[0].tolist(), expected[0].tolist())
         self.assert_nested_close(actual[1].tolist(), expected[1].tolist())
 
+    def test_residual_is_root_relative_and_direction_ordered(self) -> None:
+        graph = Graph(len(VALUES), SOURCE, TARGET)
+        diffusion = DirectedDiffusion(graph, Tensor(AFFINITY, device=Device.DEFAULT))
+        root, expected = Tensor(VALUES), reference()
+        residual = (Tensor(expected.forward) - root).cat(Tensor(expected.reverse) - root, dim=-1)
+
+        self.assert_nested_close(diffusion.residual(root).tolist(), residual.tolist())
+
     def test_empty_graph_returns_zero(self) -> None:
         graph = Graph(3, [], [])
         affinity = Tensor([], device=Device.DEFAULT).realize()
@@ -208,10 +216,9 @@ class DirectedDiffusionTest(unittest.TestCase):
             Tensor(AFFINITY, device=Device.DEFAULT).realize(),
         )
         Tensor.realize(diffusion.forward_weight, diffusion.reverse_weight)
-        forward, reverse = diffusion(
-            Tensor.ones(nodes, features, device=Device.DEFAULT).realize()
-        )
-        output = forward.cat(reverse, dim=-1)
+        values = Tensor.ones(nodes, features, device=Device.DEFAULT).realize()
+        forward, reverse = diffusion(values)
+        output = diffusion.residual(values)
 
         calls = [
             uop for uop in output.uop.toposort()

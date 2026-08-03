@@ -252,6 +252,11 @@ class DirectedDiffusion:
             self.reverse.sum(values, edge_weight=self.reverse_weight),
         )
 
+    def residual(self, values: Tensor) -> Tensor:
+        """Concatenate forward and reverse transport relative to each root."""
+        forward, reverse = self(values)
+        return (forward - values).cat(reverse - values, dim=-1)
+
 
 class DiffusionGRU:
     """One gated recurrent step over bidirectional directed diffusion."""

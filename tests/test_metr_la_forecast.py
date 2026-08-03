@@ -12,7 +12,6 @@ from experiments.metr_la_forecast import (
     _graphs,
     _objective,
     _operators,
-    _transport,
     forecast,
     train,
 )
@@ -174,8 +173,8 @@ class METRLAForecastTest(unittest.TestCase):
         values = protocol.features[2]
         operators = _operators(protocol, "local_diffusion", Device.DEFAULT)
 
-        self.assertEqual(_transport(values, operators["self"]).abs().max().item(), 0.0)
-        self.assertGreater(_transport(values, operators["true"]).abs().max().item(), 0.0)
+        self.assertEqual(operators["self"].residual(values).abs().max().item(), 0.0)
+        self.assertGreater(operators["true"].residual(values).abs().max().item(), 0.0)
 
     def test_closed_spatial_gate_opens_before_training_transport(self) -> None:
         Tensor.manual_seed(0)

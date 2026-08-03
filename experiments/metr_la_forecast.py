@@ -121,7 +121,7 @@ class LocalDiffusionForecast:
         for period in range(self.periods):
             current = values[..., period, :, :]
             local = self.local(current, local)
-            spatial = self.spatial(_transport(current, diffusion), spatial)
+            spatial = self.spatial(diffusion.residual(current), spatial)
         prediction = self.local_readout(local.relu()) + self.spatial_readout(spatial.relu()) * self.spatial_gate.tanh()
         return _output(prediction, anchor, self.head)
 
@@ -605,11 +605,6 @@ class _GRU:
         reset = gates[..., self.hidden_features:].sigmoid()
         candidate = self.candidate(values.cat(hidden * reset, dim=-1)).tanh()
         return update * hidden + (1 - update) * candidate
-
-
-def _transport(values: Tensor, diffusion: DirectedDiffusion) -> Tensor:
-    forward, reverse = diffusion(values)
-    return (forward - values).cat(reverse - values, dim=-1)
 
 
 def _state(values: Tensor, hidden: Tensor | None, features: int) -> Tensor:
