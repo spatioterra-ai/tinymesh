@@ -61,6 +61,12 @@ CATALOG = {
         "research-only",
         ("DEV", "EMA", "FOLDS", "HIDDEN", "LR", "MASK_EVERY", "PROBE_LR", "PROBE_STEPS", "SEED", "STEPS"),
     ),
+    "mutag_graph_jepa": Experiment(
+        "representation",
+        "research-only",
+        ("DEV", "EMA", "FOLDS", "HIDDEN", "LR", "PATCHES", "PROBE_LR", "PROBE_STEPS", "RW", "SEED", "STEPS", "TARGETS"),
+        timeout_seconds=1800,
+    ),
     "metr_la_forecast": Experiment(
         "forecast",
         "tinymesh.nn.A3TGCN",
