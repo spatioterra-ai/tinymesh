@@ -55,9 +55,35 @@ partition, position, and objective choices are deferred deliberately.
 
 ## Decision
 
-Pending clean revision-bound runs for seeds 0, 1, and 2. Every component in
-this file remains research-only; `Graph`, `MUTAG`, and `SAGEConv` already own
-the reusable contracts.
+At revision
+[`bc44ff8`](https://github.com/spatioterra-ai/tinymesh/tree/bc44ff86596562ab0f2b3caeb7e351930939bf1d),
+three Metal runs produced 15 held-out folds. Values below are mean and
+population standard deviation across the three seed-level fold means.
+
+| Measurement | Result |
+| --- | ---: |
+| Initial latent MSE | 0.07993 ± 0.00302 |
+| Final latent MSE | 0.000099 ± 0.000011 |
+| Initial target variation | 0.00971 ± 0.00022 |
+| Final target variation | 0.00882 ± 0.00124 |
+| Majority accuracy | 66.50% ± 0.00% |
+| Summary accuracy | 83.48% ± 0.44% |
+| Random encoder accuracy | 76.23% ± 0.55% |
+| JEPA encoder accuracy | 76.24% ± 1.54% |
+| JEPA minus random | +0.00 ± 1.13 points |
+
+The seed-level JEPA deltas were `-0.51`, `+1.58`, and `-1.05` percentage
+points. It won four folds, tied five, and lost six. Latent MSE fell by `99.88%`
+and every target gradient was zero, but target variation contracted by `9.2%`
+and the frozen representation did not improve consistently over its identical
+random initialization.
+
+The simple masked whole-graph objective therefore stops here. Low pretraining
+loss is not evidence of useful transfer. The next experiment must add the
+graph-specific information this task omitted—multiple patches and target
+position—before considering a reusable JEPA API. Every component remains
+research-only; `Graph`, `MUTAG`, and `SAGEConv` already own the reusable
+contracts.
 
 ## Reproduce
 
