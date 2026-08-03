@@ -52,6 +52,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   and road distance.
 - [METR-LA](metr-la-data.md) — five-minute speed, timestamps, missingness, and
   directed affinity.
+- [MUTAG](mutag-data.md) — variable-size molecular graphs with aligned atom,
+  bond, and graph labels.
 
 ## Forecast evidence
 

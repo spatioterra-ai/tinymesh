@@ -42,3 +42,7 @@ factory, trainer, or PyTorch compatibility layer.
 ::: tinymesh.datasets.METRLA
 
 ::: tinymesh.datasets.metr_la
+
+::: tinymesh.datasets.MUTAG
+
+::: tinymesh.datasets.mutag
