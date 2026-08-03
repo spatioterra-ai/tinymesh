@@ -30,9 +30,29 @@ uses GINE as its patch encoder, making MUTAG bond state the first live caller.
 
 ## Decision
 
-Pending clean revision-bound CPU and Metal runs. Correct edge reduction and
-GINE enter the public API independently of downstream model quality; patch
-extraction, self-supervision, and representation evaluation remain experiments.
+At revision
+[`5a72bd7`](https://github.com/spatioterra-ai/tinymesh/tree/5a72bd76edad75d64f4a2edb46765342ef97d470),
+CPU and Metal produced identical float32 evidence:
+
+| Measurement | Result |
+| --- | ---: |
+| Initial MSE | 5.0000 |
+| Update-weight gradient | `[-11, -1]` |
+| Aligned-edge MSE after one step | 0.9225 |
+| Reversed-edge MSE | 1.9225 |
+| Erased-edge MSE | 1.8100 |
+| Learned update weight | `[0.55, 0.05]` |
+
+One SGD step reduced aligned loss by `81.6%`. Reversing the two edge types made
+loss `2.08x` worse; erasing them made it `1.96x` worse. The destination nodes
+and their source node fields are otherwise identical, so the learned update
+uses aligned edge identity rather than a node-only shortcut.
+
+Focused tests independently match a host edge sum, return each destination
+gradient to its original COO edges, preserve leading axes through one sparse
+call, and cover empty edges. Correct edge reduction and GINE therefore enter
+the public API. Patch extraction, self-supervision, and representation quality
+remain experiments.
 
 ## Limits
 
