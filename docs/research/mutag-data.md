@@ -59,7 +59,24 @@ fact; ordinary tinygrad `one_hot` derives model inputs.
 
 ## Full-source witness
 
-Pending a clean revision-bound CPU and Metal run.
+Revision
+[`290d055`](https://github.com/spatioterra-ai/tinymesh/tree/290d055baf9cabaab62421fbb26cf652ca7a7413)
+produced identical CPU and Metal observations:
+
+```text
+graphs                  188
+classes                 2 (63, 125)
+nodes                   3,371 (10 to 28 per graph)
+directed edges          7,442
+undirected bonds        3,721
+reciprocal edges        7,442
+node-type counts        2,395 345 593 12 1 23 2
+bond-type counts        4,708 2,008 724 2
+```
+
+The exact agreement proves device-independent categorical lowering. The
+reciprocal count proves every stored edge has its reverse; it does not prove a
+model uses atom, bond, or topology information.
 
 ```console
 uv run --locked python -m experiments.run mutag_data DEV=CPU
