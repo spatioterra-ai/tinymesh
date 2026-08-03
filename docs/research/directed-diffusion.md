@@ -18,9 +18,10 @@ positive affinity[E]
        +--> outgoing sum in G.T ----> reverse weight[E] --> G.T.sum
 ```
 
-`tinymesh.nn.DirectedDiffusion` now owns the reverse graph and two normalized
-edge fields. This experiment retains the host reference and gradient witness.
-A fixed recurrent caller realizes those fields once before reuse.
+`tinymesh.nn.DirectedDiffusion` owns the reverse graph, two normalized edge
+fields, and their ordered root-relative residual. This experiment retains the
+host reference and gradient witness. A fixed recurrent caller realizes the
+edge fields once before reuse.
 
 ## Operator
 
@@ -32,6 +33,8 @@ p_reverse[e] = a[e] / sum(a[k] for k with target[k] = v)
 
 forward(X)[v] += p_forward[e] X[u]
 reverse(X)[u] += p_reverse[e] X[v]
+
+residual(X) = [forward(X) - X, reverse(X) - X]
 ```
 
 The second denominator is the outgoing degree of `v` in the reversed graph.
@@ -41,6 +44,12 @@ so both normalized fields preserve one identity.
 Each edge has a positive affinity and therefore belongs to a row with a
 positive denominator. Isolated nodes own no edge, require no division
 convention, and return zero.
+
+The residual basis removes the node-local level without discarding direction.
+Self-loop-only transport is therefore exactly zero. For an isolated node both
+absolute fields are zero, so the residual contains `-X` in each direction. The
+operation has no parameters; learned projections and gates belong to model
+callers.
 
 `DirectedDiffusion` validates shape, floating dtype, and device without
 realizing the affinity tensor. The caller or data boundary owns the positive
@@ -76,7 +85,8 @@ and weights.
 
 An independent Python edge loop computes both normalized fields, both
 directions, and gradients with respect to node values and raw affinity. The
-tinygrad matches that reference within `1e-5` on CPU and Metal.
+tinygrad matches that reference within `1e-5` on CPU and Metal. A separate
+contract check derives the ordered residual from the same host fields.
 
 The fixture contains asymmetric degrees, duplicate edges, and two isolated
 nodes. Reordering COO edges reorders the two weight fields and affinity
@@ -109,9 +119,10 @@ blocks; this experiment does not claim framework parity.
 ## Limits
 
 The result covers fixed directed topology, positive scalar affinity, shared
-graph batch axes, first-order gradients, and one-step diffusion. It does not
-cover learned affinity, zero or negative affinity, higher-order walks,
-changing topology, vector edge messages, or recurrent model quality.
+graph batch axes, first-order gradients, one-step diffusion, and the
+root-relative bidirectional basis. It does not cover learned affinity, zero or
+negative affinity, higher-order walks, changing topology, vector edge
+messages, or recurrent model quality.
 
 ## Reproduce
 

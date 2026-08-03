@@ -94,6 +94,11 @@ No result creates an API automatically. Dataset policy, task readouts,
 train/validation/test rules, checkpoint selection, and claims remain
 experiment-owned.
 
+`DirectedDiffusion.residual` is the small example: two independent METR-LA
+models needed the same root subtraction and direction order, so the existing
+operator absorbed that three-line invariant. Their learned encoders, gates,
+heads, losses, and evaluation policy did not move.
+
 ## Close a stage
 
 An experiment stage is complete only when all five boundaries are explicit:
