@@ -62,6 +62,22 @@ Local envelopes support iteration. A result that changes a project decision
 belongs in `docs/research/` with its exact command, revisions, controls, scope,
 and limits.
 
+## Benchmark retention
+
+Benchmarks are retained, not run as routine verification:
+
+```text
+tracked runner + protocol    executable question
+ignored run envelope         complete local observation
+tracked research record      revision-bound result + decision + limits
+unit tests                    deterministic benchmark setup, never timing
+```
+
+Rerun a benchmark when its implementation, reference pin, hardware, or protocol
+changes, or immediately before making a performance claim. Do not add framework
+installs or noisy wall-clock thresholds to CI. The current cross-framework
+record is the [Mac framework benchmark](research/framework-benchmark.md).
+
 `metr_la_forecast` keeps three modes explicit: no `EPOCHS` or `STEPS` records
 the protocol and baselines; `STEPS=N` records bounded optimizer execution
 without a quality claim; `EPOCHS=N` runs checkpoint-selected model evidence.

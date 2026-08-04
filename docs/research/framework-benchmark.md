@@ -22,29 +22,76 @@ The benchmark uses `N = 4,096`, directed degree eight, `E = 32,768`, and
 feature and hidden widths of 32. TGCN adds one explicit self-loop per node, for
 36,864 recurrent edges.
 
-```text
-aggregation   sum source fields at each target
+Aggregation sums source fields at each target. The two layers build different
+models over that primitive.
 
-GraphSAGE     Linear(mean_neighbors(X)) + Linear_root(X)
-
-TGCN          graph-project X into update / reset / candidate inputs
-              then apply the same three node-local recurrent gates
-```
-
-Aggregation and GraphSAGE are direct equation matches. Both GraphSAGE layers
-have 2,080 parameters. For TGCN, the pinned PyG Temporal source calls three
-`GCNConv` layers. Tinymesh concatenates their output weights into one graph
-projection:
+### GraphSAGE
 
 ```text
-PyG Temporal    GCN_z(X) + GCN_r(X) + GCN_h(X)    3 propagations
-Tinymesh        GCN_[z,r,h](X)                     1 propagation
+neighbor fields X_j -- CSR mean -- Linear(F, H) --+
+                                                   +--> X'_i
+own field X_i -------------------- Linear(F, H) --+
 ```
 
-The mapping sets the three PyG convolution biases to zero, then copies the
-same graph and gate weights. Tinymesh has 9,312 parameters; PyG Temporal retains
-9,408 because its three zeroed convolution biases remain registered. This is
-an algebraic component comparison, not identical kernel work.
+This is PyG `SAGEConv` with its default mean aggregation, root transform, and
+no projection or output normalization:
+
+```text
+X'_i = W_neighbor mean({X_j : j -> i}) + b + W_root X_i
+```
+
+Both implementations make one neighborhood aggregation and have `2FH + H`
+parameters: 2,080 at `F = H = 32`. Tinymesh owns one homogeneous graph as CSR;
+the measured PyG path receives COO `edge_index` and uses message passing. PyG's
+additional bipartite, aggregation, projection, and normalization modes are
+outside this comparison.
+
+### TGCN
+
+```text
+X_t -- normalized graph sum -- Linear(F, 3H) -- split G_z, G_r, G_h
+                                                        |
+H_t-1 ---------------------------- three local gates ---+
+                                                        |
+                                                        v
+                                                      H_t
+```
+
+The pinned PyG Temporal cell instead expresses the three graph projections as
+three `GCNConv(F, H)` calls. Shared topology and linearity permit one exact
+factorization:
+
+```text
+S = D^-1/2 A D^-1/2 X
+
+PyG Temporal    [S W_z, S W_r, S W_h]    3 graph propagations
+Tinymesh         S [W_z | W_r | W_h]      1 graph propagation
+```
+
+Both then apply the same update, reset, candidate, and hidden-state equations.
+The parity mapping disables PyG Temporal's three graph-convolution biases and
+copies every graph and gate weight. Those biases are redundant before gate
+linears that already own a bias. Tinymesh therefore has
+`3FH + 6H^2 + 3H` parameters, or 9,312 here; PyG Temporal registers another
+`3H`, for 9,408. TGCN is an algebraically aligned cell comparison, not
+identical kernel work.
+
+### Model boundary
+
+| | `SAGEConv` | `TGCN` |
+| --- | --- | --- |
+| Question | what do my neighbors say now? | what do my neighbors say now, and what should I remember? |
+| Input | `X` | `X_t`, `H_t-1` |
+| Graph operator | incoming mean | symmetric normalized sum with explicit self-loops |
+| Own-node path | separate root linear | self-loop inside the graph sum |
+| Sparse work | one propagation per layer | one propagation per time step |
+| State | none | node-aligned hidden state |
+| Parameters | `2FH + H` | `3FH + 6H^2 + 3H` |
+| Reference | direct PyG default equation | fused PyG Temporal equation |
+
+The timing rows are therefore not a race between GraphSAGE and TGCN. Each
+Tinymesh component is compared with its own reference implementation; TGCN
+performs additional recurrent work and returns persistent state.
 
 | Device | Aggregation error | GraphSAGE error | TGCN error |
 | --- | ---: | ---: | ---: |
@@ -82,7 +129,7 @@ the sparse kernels alone.
 
 The parity checks are the durable result: all three Tinymesh components have a
 concrete mapping to the established PyG stack. Metal execution is promising,
-especially where one wider sparse propagation replaces three smaller calls.
+especially where one shared normalized graph sum replaces three propagations.
 CPU execution is not competitive in this run; even aggregation is only tied in
 the best sample and loses clearly at the median.
 
@@ -114,3 +161,7 @@ uv run --locked --with torch==2.8.0 --with torch-geometric==2.8.0 python -m expe
 The runner records the Tinymesh revision, every reference gitlink, explicit
 settings, elapsed time, and the complete JSON observation under the ignored
 `experiments/runs/` directory.
+
+This benchmark is manual evidence, not routine CI. The tracked runner preserves
+the protocol; this record preserves the representative result. The global
+rerun and retention contract lives in [Experiments](../experiments.md#benchmark-retention).
