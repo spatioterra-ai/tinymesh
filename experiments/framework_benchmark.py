@@ -65,6 +65,10 @@ def main() -> None:
     tiny_tgcn = TGCN(width, hidden)
     pygt_tgcn = PyGTTGCN(width, hidden, cached=True, add_self_loops=False).to(torch_device)
     _configure_tgcn(tiny_tgcn, pygt_tgcn, device, torch)
+    factored_tgcn = _factored_tgcn(
+        torch, scatter, recurrent_edge_index, nodes, width, hidden, torch_device,
+    )
+    _configure_factored_tgcn(factored_tgcn, pygt_tgcn, torch)
 
     for parameter in nn.state.get_parameters((tiny_sage, tiny_tgcn)):
         parameter.realize()
@@ -102,11 +106,36 @@ def main() -> None:
     def pygt_tgcn_call() -> Any:
         return pygt_tgcn(torch_values, recurrent_edge_index, H=torch_hidden)
 
+    @torch.inference_mode()
+    def factored_tgcn_call() -> Any:
+        return factored_tgcn(torch_values, torch_hidden)
+
     parity = {
         "aggregation_max_abs_error": _max_abs(tiny_sum(tiny_values), pyg_sum()),
         "sage_max_abs_error": _max_abs(tiny_sage_call(tiny_values), pyg_sage_call()),
         "tgcn_max_abs_error": _max_abs(tiny_tgcn_call(tiny_values, tiny_hidden), pygt_tgcn_call()),
+        "tgcn_factored_max_abs_error": _max_abs(tiny_tgcn_call(tiny_values, tiny_hidden), factored_tgcn_call()),
     }
+    if max(parity.values()) > 2e-4:
+        raise RuntimeError(f"framework parity failed: {parity}")
+
+    pygt_tgcn_compiled = torch.compile(pygt_tgcn, fullgraph=True)
+    factored_tgcn_compiled = torch.compile(factored_tgcn, fullgraph=True)
+
+    @torch.inference_mode()
+    def pygt_tgcn_compiled_call() -> Any:
+        return pygt_tgcn_compiled(torch_values, recurrent_edge_index, H=torch_hidden)
+
+    @torch.inference_mode()
+    def factored_tgcn_compiled_call() -> Any:
+        return factored_tgcn_compiled(torch_values, torch_hidden)
+
+    parity["tgcn_compiled_max_abs_error"] = _max_abs(
+        tiny_tgcn_call(tiny_values, tiny_hidden), pygt_tgcn_compiled_call(),
+    )
+    parity["tgcn_factored_compiled_max_abs_error"] = _max_abs(
+        tiny_tgcn_call(tiny_values, tiny_hidden), factored_tgcn_compiled_call(),
+    )
     if max(parity.values()) > 2e-4:
         raise RuntimeError(f"framework parity failed: {parity}")
 
@@ -122,6 +151,9 @@ def main() -> None:
         _time("tgcn", "tinymesh_eager", lambda: tiny_tgcn_call(tiny_values, tiny_hidden), tiny_sync, warmups, samples),
         _time("tgcn", "tinymesh_jit", lambda: tiny_tgcn_jit(tiny_values, tiny_hidden), tiny_sync, warmups, samples),
         _time("tgcn", "pygt_eager", pygt_tgcn_call, torch_sync, warmups, samples),
+        _time("tgcn", "pygt_compiled", pygt_tgcn_compiled_call, torch_sync, warmups, samples),
+        _time("tgcn", "torch_factored_eager", factored_tgcn_call, torch_sync, warmups, samples),
+        _time("tgcn", "torch_factored_compiled", factored_tgcn_compiled_call, torch_sync, warmups, samples),
     ]
 
     print(json.dumps({
@@ -149,7 +181,8 @@ def main() -> None:
         "protocol": {
             "mode": "steady-state forward",
             "topology_setup": "excluded",
-            "compilation": "excluded by warmup",
+            "compilation": "excluded before timing",
+            "torch_compile": "fullgraph with default backend",
             "warmups": warmups,
             "samples": samples,
             "statistic": "median; minimum and p90 retained",
@@ -163,8 +196,10 @@ def main() -> None:
             "tgcn": {
                 "tinymesh": _tiny_parameters(tiny_tgcn),
                 "pygt": sum(parameter.numel() for parameter in pygt_tgcn.parameters()),
+                "torch_factored": sum(parameter.numel() for parameter in factored_tgcn.parameters()),
                 "tinymesh_graph_propagations": 1,
                 "pygt_graph_propagations": 3,
+                "torch_factored_graph_propagations": 1,
             },
         },
         "timings": [asdict(timing) for timing in timings],
@@ -250,6 +285,64 @@ def _configure_tgcn(tiny: TGCN, pygt: Any, device: str, torch: Any) -> None:
             convolution.bias.zero_()
             gate.weight.fill_(scale)
             gate.bias.fill_(scale / 10)
+
+
+def _factored_tgcn(
+    torch: Any,
+    scatter: Callable[..., Any],
+    edge_index: Any,
+    nodes: int,
+    width: int,
+    hidden: int,
+    device: str,
+) -> Any:
+    degree = scatter(
+        torch.ones(edge_index.shape[1], device=device),
+        edge_index[1],
+        dim=0,
+        dim_size=nodes,
+        reduce="sum",
+    )
+    scale = degree.rsqrt()
+    edge_weight = scale[edge_index[0]] * scale[edge_index[1]]
+
+    class FactoredTGCN(torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.projection = torch.nn.Linear(width, 3 * hidden, bias=False)
+            self.update = torch.nn.Linear(2 * hidden, hidden)
+            self.reset = torch.nn.Linear(2 * hidden, hidden)
+            self.candidate = torch.nn.Linear(2 * hidden, hidden)
+            self.register_buffer("edge_index", edge_index)
+            self.register_buffer("edge_weight", edge_weight)
+
+        def forward(self, values: Any, state: Any) -> Any:
+            aggregate = scatter(
+                values.index_select(0, self.edge_index[0]) * self.edge_weight[:, None],
+                self.edge_index[1],
+                dim=0,
+                dim_size=nodes,
+                reduce="sum",
+            )
+            graph_state = self.projection(aggregate)
+            update_input, reset_input, candidate_input = graph_state.split(hidden, dim=-1)
+            update = self.update(torch.cat((update_input, state), dim=-1)).sigmoid()
+            reset = self.reset(torch.cat((reset_input, state), dim=-1)).sigmoid()
+            candidate = self.candidate(torch.cat((candidate_input, state * reset), dim=-1)).tanh()
+            return update * state + (1 - update) * candidate
+
+    return FactoredTGCN().to(device).eval()
+
+
+def _configure_factored_tgcn(factored: Any, pygt: Any, torch: Any) -> None:
+    with torch.no_grad():
+        factored.projection.weight.copy_(torch.cat((pygt.conv_z.lin.weight, pygt.conv_r.lin.weight, pygt.conv_h.lin.weight)))
+        for target, source in zip(
+            (factored.update, factored.reset, factored.candidate),
+            (pygt.linear_z, pygt.linear_r, pygt.linear_h),
+        ):
+            target.weight.copy_(source.weight)
+            target.bias.copy_(source.bias)
 
 
 def _max_abs(tiny: Tensor, torch: Any) -> float:
