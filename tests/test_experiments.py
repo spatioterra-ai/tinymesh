@@ -59,9 +59,16 @@ class CatalogTest(unittest.TestCase):
                         self.assertIn("uv run --locked", line)
                     if "python -m experiments." in line or "python experiments/" in line:
                         self.assertIn("python -m experiments.run", line)
-                    prefix = "uv run --locked python -m experiments.run "
-                    if prefix in line and "--list" not in line and "<experiment>" not in line:
-                        name, *settings = shlex.split(line)[6:]
+                    if "python -m experiments.run" not in line:
+                        continue
+                    command = shlex.split(line)
+                    runner = ["python", "-m", "experiments.run"]
+                    offset = next(
+                        (index for index in range(len(command) - 2) if command[index:index + 3] == runner),
+                        None,
+                    )
+                    if offset is not None and "--list" not in line and "<experiment>" not in line:
+                        name, *settings = command[offset + 3:]
                         self.assertIn(name, CATALOG)
                         _settings(CATALOG[name], settings)
                         documented.add(name)

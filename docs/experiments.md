@@ -22,6 +22,7 @@ uv run --locked python -m experiments.run --list
 Record a run by passing every experiment setting explicitly:
 
 ```console
+uv run --locked --with torch==2.8.0 --with torch-geometric==2.8.0 python -m experiments.run framework_benchmark DEV=METAL DEGREE=8 HIDDEN=32 NODES=4096 SAMPLES=20 WARMUPS=5 WIDTH=32
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run gine DEV=CPU
 uv run --locked python -m experiments.run jepa_mechanics DEV=CPU EMA=0.99 HIDDEN=8 LR=0.01 SAMPLES=16 SEED=0 STEPS=80
@@ -38,6 +39,13 @@ uv run --locked python -m experiments.run metr_la_diffusion DEV=CPU
 uv run --locked python -m experiments.run metr_la_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
 uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
 ```
+
+`framework_benchmark` compares steady-state forward paths against PyG 2.8.0
+and the exact pinned PyG Temporal `TGCN` source. The external packages are
+resolved only for that command; they are not tinymesh dependencies. The
+PyG Temporal 0.56.2 package is not used because it resolves `torch-sparse`
+0.6.18 from source on Python 3.12/macOS; this benchmark needs only the pinned
+`TGCN` file.
 
 The runner refuses a dirty tracked worktree, clears inherited experiment
 settings, accepts only settings declared by the catalog, and applies the

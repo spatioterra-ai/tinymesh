@@ -30,6 +30,11 @@ METR_LA_SETTINGS = (
 
 
 CATALOG = {
+    "framework_benchmark": Experiment(
+        "benchmark",
+        "research-only",
+        ("DEV", "DEGREE", "HIDDEN", "NODES", "SAMPLES", "WARMUPS", "WIDTH"),
+    ),
     "sparse_aggregation": Experiment("kernel", "tinymesh.Graph"),
     "csr_aggregation": Experiment(
         "kernel",
