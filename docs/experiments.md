@@ -41,11 +41,13 @@ uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL STEP
 ```
 
 `framework_benchmark` compares steady-state forward paths against PyG 2.8.0
-and the exact pinned PyG Temporal `TGCN` source. The external packages are
-resolved only for that command; they are not tinymesh dependencies. The
-PyG Temporal 0.56.2 package is not used because it resolves `torch-sparse`
-0.6.18 from source on Python 3.12/macOS; this benchmark needs only the pinned
-`TGCN` file.
+and the exact pinned PyG Temporal `TGCN` source. TGCN includes eager and
+full-graph compiled reference paths plus a one-propagation PyTorch control that
+matches Tinymesh's factorization. Compilation occurs before timing. The
+external packages are resolved only for that command; they are not tinymesh
+dependencies. The PyG Temporal 0.56.2 package is not used because it resolves
+`torch-sparse` 0.6.18 from source on Python 3.12/macOS; this benchmark needs
+only the pinned `TGCN` file.
 
 The runner refuses a dirty tracked worktree, clears inherited experiment
 settings, accepts only settings declared by the catalog, and applies the
