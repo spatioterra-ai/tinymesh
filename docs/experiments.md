@@ -22,7 +22,7 @@ uv run --locked python -m experiments.run --list
 Record a run by passing every experiment setting explicitly:
 
 ```console
-uv run --locked --with torch==2.8.0 --with torch-geometric==2.8.0 python -m experiments.run framework_benchmark DEV=METAL DEGREE=8 HIDDEN=32 NODES=4096 SAMPLES=20 WARMUPS=5 WIDTH=32
+uv run --locked --with torch==2.8.0 --with torch-geometric==2.8.0 python -m experiments.run framework_benchmark DEV=METAL DEGREE=8 HIDDEN=32 NODES=4096 SAMPLES=50 WARMUPS=10 WIDTH=32
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run gine DEV=CPU
 uv run --locked python -m experiments.run jepa_mechanics DEV=CPU EMA=0.99 HIDDEN=8 LR=0.01 SAMPLES=16 SEED=0 STEPS=80
