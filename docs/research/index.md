@@ -9,6 +9,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Question | Current evidence | Decision |
 | --- | --- | --- |
 | Can sparse graph learning stay native to tinygrad? | Unit, scalar-weighted, and edge-vector aggregation, endpoint projection, target softmax, and first-order gradients remain sparse on CPU and Metal. | Yes, for fixed topology. Keep the CSR backend private while `Tensor.custom_kernel` remains alpha. |
+| How does the current runtime compare with PyG on this Mac? | Exact aggregation and GraphSAGE mappings agree within `4.8e-7`; a configured TGCN mapping agrees within `6.0e-8`. JIT Tinymesh has lower best and median Metal/MPS times in all three cases, while PyG has lower CPU medians. Wall-time variance is high. | Keep the benchmark and require JIT for repeated Tinymesh execution. Make no general speed claim until isolated, multi-shape runs include training, memory, and compiled PyTorch. |
 | Does metric geometry require a geo dependency? | Position tensors compose into displacement, distance, radial weights, and sparse messages. | No. Data adapters own coordinate frames and units; add a type only when it must own a new invariant. |
 | Can the models use spatial structure? | True-topology diffusion wins controlled transport and transfers to unseen graph sizes. | Yes under an identifiable local law. Preserve false-topology and node-local controls. |
 | Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model and Montevideo geometry loses to persistence. On METR-LA, factorized true transport beats both topology controls on MAE and RMSE in two seeds, but the earlier self-only model still dominates it. | Graph structure measurably affects METR-LA forecasts; it has not improved the best model. Compare bounded convergence before changing architecture or API. |
@@ -21,6 +22,9 @@ They are evidence, not API promises. This page is the current decision ledger;
 
 ## Sparse core
 
+- [Mac framework benchmark](framework-benchmark.md) — exact component mappings
+  against PyG and pinned PyG Temporal source, with synchronized CPU and Metal
+  wall time.
 - [Sparse aggregation](sparse-aggregation.md) — destination CSR, transpose
   backward, scaling evidence, and the alpha-kernel boundary.
 - [Mean GraphSAGE](mean-sage.md) — the first trainable caller of sparse mean.

@@ -21,6 +21,7 @@ nav = [
     "research/spatial-structure.md",
     "research/spatial-geometry.md",
     "research/directed-diffusion.md",
+    "research/framework-benchmark.md",
     "research/sparse-aggregation.md",
     "research/mean-sage.md",
     "research/gcn.md",
