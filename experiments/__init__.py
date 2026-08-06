@@ -80,6 +80,13 @@ CATALOG = {
         papers=("graph-jepa", "gine"),
         fidelity="ablation",
     ),
+    "mutag_graph_jepa_reproduction": Experiment(
+        "representation",
+        "research-only",
+        timeout_seconds=86_400,
+        papers=("graph-jepa",),
+        fidelity="reproduction",
+    ),
     "transport_jepa": Experiment(
         "representation",
         "research-only",

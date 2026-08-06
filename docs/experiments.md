@@ -43,6 +43,7 @@ uv run --locked python -m experiments.run jepa_mechanics DEV=CPU EMA=0.99 HIDDEN
 uv run --locked python -m experiments.run mutag_data DEV=CPU
 uv run --locked python -m experiments.run mutag_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.01 MASK_EVERY=3 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100
 uv run --locked python -m experiments.run mutag_graph_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.005 PATCHES=8 PROBE_LR=0.05 PROBE_STEPS=150 RW=8 SEED=0 STEPS=80 TARGETS=3
+uv run --locked --with scikit-learn==1.7.2 python -m experiments.run mutag_graph_jepa_reproduction DEV=METAL
 uv run --locked python -m experiments.run transport_jepa DEV=METAL EMA=0.998 HIDDEN=8 HISTORY=4 HORIZON=4 LR=0.001 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100
 uv run --locked python -m experiments.run metr_la_jepa DEV=METAL BS=64 EMA=0.998 EVAL_SAMPLES=512 HIDDEN=8 HISTORY=12 HORIZON=12 LR=0.001 PROBE_LR=0.01 PROBE_STEPS=100 SAMPLES=512 SEED=0 STEPS=100 TEST=0
 uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0

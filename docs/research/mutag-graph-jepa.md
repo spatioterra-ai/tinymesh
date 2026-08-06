@@ -166,3 +166,34 @@ uv run --locked python -m experiments.run mutag_graph_jepa DEV=METAL EMA=0.99 FO
 uv run --locked python -m experiments.run mutag_graph_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.005 PATCHES=8 PROBE_LR=0.05 PROBE_STEPS=150 RW=8 SEED=1 STEPS=80 TARGETS=3
 uv run --locked python -m experiments.run mutag_graph_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.005 PATCHES=8 PROBE_LR=0.05 PROBE_STEPS=150 RW=8 SEED=2 STEPS=80 TARGETS=3
 ```
+
+## Paper reproduction
+
+`mutag_graph_jepa_reproduction` is a separate, frozen port of the official
+MUTAG configuration at revision `72df1b7704921001ea012a21f840300fbc792cdd`:
+32 patch slots, 15-step RWSE, two GINE layers, width 512, four attention layers,
+one context, three targets, smooth L1, 50 epochs, ten stratified folds, five
+published seeds, and scikit-learn logistic regression.
+
+The executable reference schedules learning rate from held-out test loss despite
+the paper's claim that test data is unseen during pretraining. This port preserves
+that behavior for code parity; its score must not be read as a clean blind test.
+
+Every MUTAG graph has fewer than 32 nodes. The official `metis_subgraph`
+therefore never invokes METIS for this dataset: it permutes 32 slots, assigns
+one node to each occupied slot, shifts the highest occupied slot to 31, expands
+each occupied patch by one hop, and masks the empty slots. The tinygrad port
+matches that behavior directly without adding METIS, PyTorch, or PyG.
+
+This command is intentionally expensive and isolated from routine verification:
+
+```console
+uv run --locked --with scikit-learn==1.7.2 python -m experiments.run mutag_graph_jepa_reproduction DEV=METAL
+```
+
+The reproduction has not produced a retained score yet. Until the complete
+command finishes on a clean revision, it establishes executable protocol parity,
+not numerical reproduction of the paper's reported `91.25 ± 2.10` accuracy.
+The reference's final printer instead reports the mean of the five within-run
+ten-fold standard deviations; the reproduction output preserves that metric so
+the discrepancy stays visible.
