@@ -9,7 +9,7 @@ from random import Random
 from tinygrad import Context, Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 
-from experiments.mutag_protocol import Metric, Probe, linear_probe, metric, molecular_summary, stratified_folds
+from experiments.mutag_protocol import Metric, Probe, linear_probe, metric, molecular_summary, nearest_label_accuracy, stratified_folds
 from tinymesh import Graph
 from tinymesh.datasets import MUTAG, mutag
 from tinymesh.nn import GINEConv
@@ -153,7 +153,9 @@ class FoldArm:
   target_parameter_delta: float
   target_gradient: float
   random_encoder: Probe
+  random_retrieval_accuracy: float
   trained_encoder: Probe
+  trained_retrieval_accuracy: float
 
 
 @dataclass(frozen=True)
@@ -163,6 +165,7 @@ class FoldResult:
   test_graphs: int
   majority_accuracy: float
   summary: Probe
+  summary_retrieval_accuracy: float
   arms: tuple[FoldArm, ...]
 
 
@@ -177,8 +180,11 @@ class ArmObservation:
   target_parameter_delta: Metric
   target_gradient: Metric
   random_encoder_accuracy: Metric
+  random_retrieval_accuracy: Metric
   trained_encoder_accuracy: Metric
+  trained_retrieval_accuracy: Metric
   accuracy_delta: Metric
+  retrieval_delta: Metric
 
 
 @dataclass(frozen=True)
@@ -197,6 +203,7 @@ class Observation:
   probe_learning_rate: float
   majority_accuracy: Metric
   summary_accuracy: Metric
+  summary_retrieval_accuracy: Metric
   arms: tuple[ArmObservation, ...]
   results: tuple[FoldResult, ...]
 
@@ -235,12 +242,14 @@ def compare(
     all_batch = PatchBatch(data, indices, patches=patches, walk_length=walk_length, seed=model_seed)
     majority = max(range(2), key=lambda label: sum(data.labels[index] == label for index in train))
     probe_seed = model_seed + 10_000
+    summary_probe = linear_probe(summary, data.labels, train, test, steps=probe_steps, learning_rate=probe_learning_rate, seed=probe_seed)
     results.append(FoldResult(
       fold,
       len(train),
       len(test),
       sum(data.labels[index] == majority for index in test) / len(test),
-      linear_probe(summary, data.labels, train, test, steps=probe_steps, learning_rate=probe_learning_rate, seed=probe_seed),
+      summary_probe,
+      nearest_label_accuracy(summary, data.labels, train, test),
       tuple(_run_arm(
         data,
         train_batch,
@@ -276,6 +285,7 @@ def compare(
     probe_learning_rate,
     metric(tuple(result.majority_accuracy for result in results)),
     metric(tuple(result.summary.test_accuracy for result in results)),
+    metric(tuple(result.summary_retrieval_accuracy for result in results)),
     tuple(_aggregate(arm, results) for arm in ARMS),
     results,
   )
@@ -357,14 +367,18 @@ def _run_arm(
     sum((value - initial_target[name]).abs().sum().item() for name, value in nn.state.get_state_dict(model.target).items()),
     sum(0 if value.grad is None else value.grad.abs().sum().item() for value in nn.state.get_parameters(model.target)),
     random_probe,
+    nearest_label_accuracy(random_embedding, data.labels, train, test),
     trained_probe,
+    nearest_label_accuracy(trained_embedding, data.labels, train, test),
   )
 
 
 def _aggregate(arm: Arm, results: tuple[FoldResult, ...]) -> ArmObservation:
   folds = tuple(next(item for item in result.arms if item.name == arm.name) for result in results)
   random_accuracy = tuple(item.random_encoder.test_accuracy for item in folds)
+  random_retrieval = tuple(item.random_retrieval_accuracy for item in folds)
   trained_accuracy = tuple(item.trained_encoder.test_accuracy for item in folds)
+  trained_retrieval = tuple(item.trained_retrieval_accuracy for item in folds)
   return ArmObservation(
     arm.name,
     folds[0].parameters,
@@ -375,8 +389,11 @@ def _aggregate(arm: Arm, results: tuple[FoldResult, ...]) -> ArmObservation:
     metric(tuple(item.target_parameter_delta for item in folds)),
     metric(tuple(item.target_gradient for item in folds)),
     metric(random_accuracy),
+    metric(random_retrieval),
     metric(trained_accuracy),
+    metric(trained_retrieval),
     metric(tuple(trained - random for trained, random in zip(trained_accuracy, random_accuracy))),
+    metric(tuple(trained - random for trained, random in zip(trained_retrieval, random_retrieval))),
   )
 
 
