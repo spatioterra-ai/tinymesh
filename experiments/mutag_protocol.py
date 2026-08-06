@@ -88,6 +88,25 @@ def linear_probe(
   return Probe(_accuracy(model(train_x), train_y), _accuracy(model(test_x), test_y))
 
 
+def nearest_label_accuracy(
+  features: Tensor,
+  labels: tuple[int, ...],
+  train: tuple[int, ...],
+  test: tuple[int, ...],
+) -> float:
+  """Classify held-out graphs by exact cosine search over training graphs."""
+  rows = features.tolist()
+  device = str(features.device)
+  corpus = Tensor([rows[index] for index in train], device=device).clone().realize()
+  query = Tensor([rows[index] for index in test], device=device).clone().realize()
+  mean, std = corpus.mean(axis=0), corpus.std(axis=0)
+  scale = (std > 1e-6).where(std, 1)
+  corpus, query = (corpus - mean) / scale, (query - mean) / scale
+  corpus, query = _unit(corpus), _unit(query)
+  nearest = (query @ corpus.T).argmax(axis=1).tolist()
+  return sum(labels[train[match]] == labels[index] for match, index in zip(nearest, test)) / len(test)
+
+
 def metric(values: tuple[float, ...]) -> Metric:
   mean = fmean(values)
   return Metric(values, mean, sqrt(fmean((value - mean) ** 2 for value in values)))
@@ -95,3 +114,8 @@ def metric(values: tuple[float, ...]) -> Metric:
 
 def _accuracy(prediction: Tensor, target: Tensor) -> float:
   return (prediction.argmax(axis=1) == target).mean().item()
+
+
+def _unit(values: Tensor) -> Tensor:
+  norm = (values * values).sum(axis=1, keepdim=True).sqrt()
+  return values / (norm > 1e-6).where(norm, 1)

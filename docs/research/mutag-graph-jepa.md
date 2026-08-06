@@ -63,6 +63,12 @@ standardization. Every arm is compared with its own identical frozen encoder
 before pretraining. Majority and atom/bond/count summary controls retain the
 same fixed probe protocol as the preceding stage.
 
+Each frozen representation also serves as an exact in-memory search index.
+Train-only standardization and unit normalization define cosine similarity; each
+held-out graph takes the label of its nearest training graph. Test graphs are
+queries, never indexed candidates. This measures whether the latent geometry is
+searchable without adding an approximate index or storage dependency.
+
 An objective earns continuation only if its trained encoder beats its own
 random initialization on mean held-out accuracy and does so in at least two of
 three seed-level fold means, without collapsing graph-level target variation.
