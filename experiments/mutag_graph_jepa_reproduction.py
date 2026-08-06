@@ -343,7 +343,7 @@ def _pretrain(
       total_loss += loss.item() * len(indices)
     final_loss, completed = total_loss / len(train), epoch + 1
     with Context(TRAINING=0):
-      test_loss = fmean(_smooth_l1(*model.predict(batch, *selection)).item() for batch, selection in test_batches)
+      test_loss = _evaluation_loss(model, test_batches)
     if test_loss < best * (1 - 1e-4):
       best, stale = test_loss, 0
     else:
@@ -354,6 +354,17 @@ def _pretrain(
     if optimizer.lr.item() < 1e-5:
       break
   return model, test_batches, final_loss, completed
+
+
+def _evaluation_loss(model: Model, batches: tuple[tuple[PaperBatch, tuple[Tensor, Tensor]], ...]) -> float:
+  losses = []
+  for batch, selection in batches:
+    prediction, truth = model.predict(batch, *selection)
+    # Prevent the complete width-512 forward and scalar loss from becoming one serial Metal kernel.
+    prediction.realize()
+    truth.realize()
+    losses.append(_smooth_l1(prediction, truth).item())
+  return fmean(losses)
 
 
 def _embed(data: MUTAG, model: Model, indices: tuple[int, ...], seed: int) -> list[list[float]]:
