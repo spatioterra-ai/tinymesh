@@ -21,7 +21,8 @@ RUNS = ROOT / "experiments" / "runs"
 def main() -> None:
     if len(sys.argv) == 2 and sys.argv[1] == "--list":
         for name, experiment in CATALOG.items():
-            print(f"{name:28} {experiment.group:9} {experiment.owner}")
+            papers = ",".join(experiment.papers) or "-"
+            print(f"{name:28} {experiment.group:14} {experiment.fidelity:9} {papers:20} {experiment.owner}")
         return
     if len(sys.argv) < 2:
         raise SystemExit("usage: python -m experiments.run EXPERIMENT [KEY=VALUE ...]")
@@ -37,10 +38,12 @@ def main() -> None:
     result = _run(name, settings, timeout)
     elapsed = perf_counter() - start
     envelope = {
-        "schema": 1,
+        "schema": 2,
         "experiment": name,
         "group": CATALOG[name].group,
         "owner": CATALOG[name].owner,
+        "papers": CATALOG[name].papers,
+        "fidelity": CATALOG[name].fidelity,
         "started_at": started_at.isoformat(),
         "elapsed_seconds": round(elapsed, 6),
         "timeout_seconds": timeout,

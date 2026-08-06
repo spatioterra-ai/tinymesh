@@ -2,6 +2,7 @@ import json
 import shlex
 import subprocess
 import tempfile
+import tomllib
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,6 +44,15 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual(CATALOG["mean_sage"].timeout_seconds, 600)
         self.assertEqual(CATALOG["metr_la_diffusion"].timeout_seconds, 900)
         self.assertEqual(CATALOG["metr_la_local_diffusion"].timeout_seconds, 600)
+
+    def test_paper_fidelity_is_explicit_and_revision_bound(self) -> None:
+        papers = set(tomllib.loads((ROOT / "papers" / "registry.toml").read_text())["paper"])
+        levels = {"original", "mechanism", "ablation", "reproduction"}
+
+        self.assertTrue(all(experiment.fidelity in levels for experiment in CATALOG.values()))
+        self.assertTrue(all(set(experiment.papers) <= papers for experiment in CATALOG.values()))
+        self.assertTrue(all(bool(experiment.papers) == (experiment.fidelity != "original") for experiment in CATALOG.values()))
+        self.assertEqual(CATALOG["mutag_graph_jepa"].fidelity, "ablation")
 
     def test_documented_runs_use_the_locked_runner(self) -> None:
         paths = [
