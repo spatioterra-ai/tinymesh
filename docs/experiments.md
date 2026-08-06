@@ -9,6 +9,20 @@ experiments/       data, training, controls, measurements
 docs/research/     revision-bound decisions
 ```
 
+Paper-derived experiments declare both their pinned paper keys and one fidelity
+level in `experiments.CATALOG`:
+
+```text
+mechanism     tiny fixture; equation or training path only
+ablation      controlled question; departures are explicit
+reproduction  same data + splits + preprocessing + model + training + metric
+```
+
+Use the smallest level that answers the question. A reproduction must match the
+paper protocol end to end; sharing only the dataset is an ablation. The runner
+stores this claim beside the revision and settings, so a later result cannot be
+silently described at a stronger level.
+
 `experiments.CATALOG` classifies every runnable experiment as a kernel,
 primitive, layer, data boundary, or forecast. Its owner names the promoted
 `tinymesh` surface or says `research-only`.
@@ -56,7 +70,7 @@ uses a measured 900-second bound. A successful run writes an ignored JSON
 envelope under `experiments/runs/` containing:
 
 - the tinymesh revision and all five reference gitlinks;
-- the experiment group and API owner;
+- the experiment group, API owner, pinned papers, and fidelity level;
 - Python version, UTC start, elapsed time, timeout, and explicit settings;
 - the experiment's JSON observation.
 

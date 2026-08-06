@@ -9,6 +9,8 @@ class Experiment:
     owner: str
     settings: tuple[str, ...] = ("DEV",)
     timeout_seconds: int = 600
+    papers: tuple[str, ...] = ()
+    fidelity: str = "original"
 
 
 METR_LA_SETTINGS = (
@@ -47,10 +49,12 @@ CATALOG = {
         "representation",
         "research-only",
         ("DEV", "EMA", "HIDDEN", "LR", "SAMPLES", "SEED", "STEPS"),
+        papers=("i-jepa", "graph-jepa"),
+        fidelity="mechanism",
     ),
     "mean_sage": Experiment("layer", "tinymesh.nn.SAGEConv"),
     "gcn": Experiment("layer", "tinymesh.nn.GCNConv"),
-    "gine": Experiment("layer", "tinymesh.nn.GINEConv"),
+    "gine": Experiment("layer", "tinymesh.nn.GINEConv", papers=("gine",), fidelity="mechanism"),
     "gat": Experiment("layer", "tinymesh.nn.GATConv"),
     "multi_head_gat": Experiment("layer", "tinymesh.nn.GATConv"),
     "tgcn": Experiment("layer", "tinymesh.nn.TGCN"),
@@ -65,24 +69,32 @@ CATALOG = {
         "representation",
         "research-only",
         ("DEV", "EMA", "FOLDS", "HIDDEN", "LR", "MASK_EVERY", "PROBE_LR", "PROBE_STEPS", "SEED", "STEPS"),
+        papers=("graph-jepa",),
+        fidelity="ablation",
     ),
     "mutag_graph_jepa": Experiment(
         "representation",
         "research-only",
         ("DEV", "EMA", "FOLDS", "HIDDEN", "LR", "PATCHES", "PROBE_LR", "PROBE_STEPS", "RW", "SEED", "STEPS", "TARGETS"),
         timeout_seconds=1800,
+        papers=("graph-jepa", "gine"),
+        fidelity="ablation",
     ),
     "transport_jepa": Experiment(
         "representation",
         "research-only",
         ("DEV", "EMA", "HIDDEN", "HISTORY", "HORIZON", "LR", "PROBE_LR", "PROBE_STEPS", "SEED", "STEPS"),
         timeout_seconds=1800,
+        papers=("v-jepa",),
+        fidelity="ablation",
     ),
     "metr_la_jepa": Experiment(
         "representation",
         "research-only",
         ("DEV", "BS", "EMA", "EVAL_SAMPLES", "HIDDEN", "HISTORY", "HORIZON", "LR", "PROBE_LR", "PROBE_STEPS", "SAMPLES", "SEED", "STEPS", "TEST"),
         timeout_seconds=1800,
+        papers=("ts-jepa",),
+        fidelity="ablation",
     ),
     "metr_la_forecast": Experiment(
         "forecast",

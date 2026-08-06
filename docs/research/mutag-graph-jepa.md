@@ -78,8 +78,9 @@ or threshold changes after clean results are visible.
 
 ## Deliberate departures from paper parity
 
-This is a bounded architectural ablation, not a reproduction of the reported
-MUTAG score. It uses random rather than METIS partitions, MLP rather than
+The experiment catalog marks this as an `ablation`, not a `reproduction` of the
+reported MUTAG score. It uses the same canonical MUTAG dataset, but random
+rather than METIS partitions, MLP rather than
 attention encoders, hidden width 16 rather than 512, eight rather than 32
 patches, fixed rather than online partitions, five folds over three seeds, and
 a fixed tinygrad probe rather than scikit-learn logistic regression.
