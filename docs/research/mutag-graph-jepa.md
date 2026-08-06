@@ -131,6 +131,33 @@ training, and probes remain research-only. `Graph`, `Graph.sum_edges`,
 `GINEConv`, `MUTAG`, and the shared MUTAG evaluation protocol already own the
 reusable contracts.
 
+### Search extension
+
+At revision
+[`f66ab38`](https://github.com/spatioterra-ai/tinymesh/tree/f66ab383c4c6c88d74b183d06ba35564270d8937),
+the same three registered runs also measured exact standardized-cosine 1-nearest
+neighbor accuracy. Values remain the mean and population standard deviation
+across the three seed-level fold means.
+
+| Representation | Random search | Trained search | Delta |
+| --- | ---: | ---: | ---: |
+| Fixed summary | — | **83.67% ± 1.03%** | — |
+| `euclidean` | 79.44% ± 1.11% | 76.96% ± 2.93% | -2.48 ± 3.88 pt |
+| `hyperbola` | 79.44% ± 1.11% | 77.47% ± 1.93% | -1.97 ± 1.61 pt |
+| `hyperbola_mse` | 79.44% ± 1.11% | 77.65% ± 1.97% | -1.79 ± 1.36 pt |
+| `positionless` | 76.21% ± 0.24% | 71.61% ± 3.70% | -4.60 ± 3.52 pt |
+
+Every trained arm regresses its matched random search on mean accuracy, and the
+fixed summary beats every learned representation. The positive positionless
+linear-probe result therefore does not imply useful nearest-neighbor geometry:
+a trained readout can recover label information that cosine neighborhoods do
+not expose.
+
+Keep exact search as an evaluation control. Promote no embedding, retrieval, or
+index API, and add no vector database. A later retrieval stage needs an explicit
+similarity objective or independent structural relevance labels before it can
+claim semantically searchable graphs.
+
 ## Reproduce
 
 ```console
