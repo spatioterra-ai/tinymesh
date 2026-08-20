@@ -66,6 +66,8 @@ class VehicleObservation:
 @dataclass(frozen=True)
 class Snapshot:
   source_id: str
+  schedule_revision: str
+  schedule_sha256: str
   generated_at: int
   trips: tuple[TripObservation, ...]
   vehicles: tuple[VehicleObservation, ...]
@@ -104,7 +106,14 @@ def normalize(message: object, schedule: Schedule, source_id: str) -> Snapshot:
     if vehicle is not None:
       vehicles.append(vehicle)
   _contradictions(trips, vehicles)
-  return Snapshot(source_id, generated_at, tuple(trips), tuple(sorted(vehicles, key=lambda item: item.vehicle_id)))
+  return Snapshot(
+    source_id,
+    schedule.revision,
+    schedule.sha256,
+    generated_at,
+    tuple(trips),
+    tuple(sorted(vehicles, key=lambda item: item.vehicle_id)),
+  )
 
 
 def observe(path: str | Path = FIXTURE) -> Observation:
