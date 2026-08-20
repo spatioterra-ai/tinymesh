@@ -41,6 +41,7 @@ class GtfsRealtimeTest(unittest.TestCase):
     snapshot = normalize(message(), self.schedule, SOURCE_ID)
 
     self.assertEqual(snapshot.generated_at, 1167661800)
+    self.assertEqual((snapshot.schedule_revision, snapshot.schedule_sha256), (self.schedule.revision, self.schedule.sha256))
     self.assertEqual([trip.entity_id for trip in snapshot.trips], ["cancel-city2", "vehicle-city1"])
     current = snapshot.trips[1]
     self.assertEqual(
