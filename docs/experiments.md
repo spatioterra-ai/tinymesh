@@ -33,26 +33,15 @@ List the catalog:
 uv run --locked python -m experiments.run --list
 ```
 
-Record a run by passing every experiment setting explicitly:
+The catalog is the runnable inventory and settings allowlist. Experiments own
+their defaults; command-line overrides are explicit, isolated from the parent
+environment, and recorded in the result envelope. Representative runs:
 
 ```console
 uv run --locked --with torch==2.8.0 --with torch-geometric==2.8.0 python -m experiments.run framework_benchmark DEV=METAL DEGREE=8 HIDDEN=32 NODES=4096 SAMPLES=50 WARMUPS=10 WIDTH=32
 uv run --locked python -m experiments.run mean_sage DEV=CPU
-uv run --locked python -m experiments.run gine DEV=CPU
-uv run --locked python -m experiments.run jepa_mechanics DEV=CPU EMA=0.99 HIDDEN=8 LR=0.01 SAMPLES=16 SEED=0 STEPS=80
-uv run --locked python -m experiments.run mutag_data DEV=CPU
-uv run --locked python -m experiments.run mutag_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.01 MASK_EVERY=3 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100
 uv run --locked python -m experiments.run mutag_graph_jepa DEV=METAL EMA=0.99 FOLDS=5 HIDDEN=16 LR=0.005 PATCHES=8 PROBE_LR=0.05 PROBE_STEPS=150 RW=8 SEED=0 STEPS=80 TARGETS=3
 uv run --locked --with scikit-learn==1.7.2 python -m experiments.run mutag_graph_jepa_reproduction DEV=METAL
-uv run --locked python -m experiments.run transport_jepa DEV=METAL EMA=0.998 HIDDEN=8 HISTORY=4 HORIZON=4 LR=0.001 PROBE_LR=0.05 PROBE_STEPS=150 SEED=0 STEPS=100
-uv run --locked python -m experiments.run metr_la_jepa DEV=METAL BS=64 EMA=0.998 EVAL_SAMPLES=512 HIDDEN=8 HISTORY=12 HORIZON=12 LR=0.001 PROBE_LR=0.01 PROBE_STEPS=100 SAMPLES=512 SEED=0 STEPS=100 TEST=0
-uv run --locked python -m experiments.run chickenpox_forecast DEV=CPU EPOCHS=10 SEED=0
-uv run --locked python -m experiments.run metr_la_forecast DEV=CPU
-uv run --locked python -m experiments.run metr_la_forecast DEV=METAL STEPS=3 SEED=0
-uv run --locked python -m experiments.run metr_la_forecast DEV=METAL EPOCHS=3 MODEL=self HEAD=residual LOSS=mae SEED=0 BS=512
-uv run --locked python -m experiments.run metr_la_diffusion DEV=CPU
-uv run --locked python -m experiments.run metr_la_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
-uv run --locked python -m experiments.run metr_la_local_diffusion DEV=METAL STEPS=1 SEED=0 BS=512 HIDDEN=32 HEAD=residual LOSS=mae
 ```
 
 `framework_benchmark` compares steady-state forward paths against PyG 2.8.0
@@ -70,7 +59,7 @@ cataloged positive timeout. The default is 600 seconds; `metr_la_diffusion`
 uses a measured 900-second bound. A successful run writes an ignored JSON
 envelope under `experiments/runs/` containing:
 
-- the tinymesh revision and all five reference gitlinks;
+- the tinymesh revision and the cataloged references used by that experiment;
 - the experiment group, API owner, pinned papers, and fidelity level;
 - Python version, UTC start, elapsed time, timeout, and explicit settings;
 - the experiment's JSON observation.
@@ -140,9 +129,10 @@ concatenation are ordinary tensor composition with no state or new invariant,
 so each model owns that choice directly. A public owner must remove a concept,
 not merely a line.
 
-## Close a stage
+## Retain a decision
 
-An experiment stage is complete only when all five boundaries are explicit:
+A decision-changing experiment stage is complete only when all five boundaries
+are explicit:
 
 1. **Evidence:** freeze the revision, settings, splits, controls, seeds,
    metrics, and result.
@@ -158,6 +148,7 @@ An experiment stage is complete only when all five boundaries are explicit:
    change, confirm main-branch CI and documentation deployment, then remove the
    branch and worktree.
 
-Do not begin a new dataset or architecture stage while one of these is
-unfinished. A negative result closes a claim as completely as a positive one
+Exploratory work may overlap while its claims remain local. Do not publish a
+decision, promote an API, or describe a stage as complete until these boundaries
+are closed. A negative result closes a claim as completely as a positive one
 when its controls and limits are preserved.

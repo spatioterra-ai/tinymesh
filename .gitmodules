@@ -1,15 +1,6 @@
 [submodule "submodules/tinygrad"]
 	path = submodules/tinygrad
 	url = https://github.com/tinygrad/tinygrad.git
-[submodule "submodules/pytorch-geometric"]
-	path = submodules/pytorch-geometric
-	url = https://github.com/pyg-team/pytorch_geometric.git
 [submodule "submodules/pytorch-geometric-temporal"]
 	path = submodules/pytorch-geometric-temporal
 	url = https://github.com/benedekrozemberczki/pytorch_geometric_temporal.git
-[submodule "submodules/torchgeo"]
-	path = submodules/torchgeo
-	url = https://github.com/torchgeo/torchgeo.git
-[submodule "submodules/terratorch"]
-	path = submodules/terratorch
-	url = https://github.com/torchgeo/terratorch.git
