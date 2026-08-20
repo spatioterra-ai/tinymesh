@@ -103,18 +103,19 @@ relevant research page when a change can affect a model comparison.
 Passing numerical values does not prove sparse complexity. Inspect stored
 structure, work growth, and intermediate shapes.
 
-Dependency changes keep `pyproject.toml`, `uv.lock`, and the matching reference
-submodule on one exact revision. Change a gitlink in its own pull request and
+Dependency changes keep `pyproject.toml`, `uv.lock`, and the matching executable
+reference on one exact revision. Change a gitlink in its own pull request and
 record the upstream delta and compatibility evidence.
 
 tinygrad experiments follow upstream `master`. At the start of an experiment
 stage, advance the runtime dependency, lockfile, and tinygrad submodule together
-in a dedicated pull request. Move comparative PyG references only for an
-intentional, revision-bound study.
+in a dedicated pull request. Move the PyG Temporal source reference only for an
+intentional, revision-bound benchmark.
 
 The exact role and exclusion for every reference lives in
-[Reference projects](docs/reference-projects.md). tinygrad governs API shape;
-the other submodules constrain semantics without becoming dependencies.
+[Reference projects](docs/reference-projects.md). Historical design references
+use revision-bound links; only sources consumed by executable evidence remain
+gitlinks.
 
 ## AI assistance
 

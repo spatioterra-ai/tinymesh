@@ -30,20 +30,21 @@ def main() -> None:
     name, *raw_settings = sys.argv[1:]
     if name not in CATALOG:
         raise SystemExit(f"unknown experiment {name!r}; use --list")
-    revision, references = _revision()
-    settings = _settings(CATALOG[name], raw_settings)
+    experiment = CATALOG[name]
+    revision, references = _revision(experiment.references)
+    settings = _settings(experiment, raw_settings)
     started_at = datetime.now(timezone.utc)
     start = perf_counter()
-    timeout = CATALOG[name].timeout_seconds
+    timeout = experiment.timeout_seconds
     result = _run(name, settings, timeout)
     elapsed = perf_counter() - start
     envelope = {
         "schema": 2,
         "experiment": name,
-        "group": CATALOG[name].group,
-        "owner": CATALOG[name].owner,
-        "papers": CATALOG[name].papers,
-        "fidelity": CATALOG[name].fidelity,
+        "group": experiment.group,
+        "owner": experiment.owner,
+        "papers": experiment.papers,
+        "fidelity": experiment.fidelity,
         "started_at": started_at.isoformat(),
         "elapsed_seconds": round(elapsed, 6),
         "timeout_seconds": timeout,
@@ -56,18 +57,21 @@ def main() -> None:
     print(_write(envelope, started_at, name, revision).relative_to(ROOT))
 
 
-def _revision() -> tuple[str, dict[str, str]]:
+def _revision(paths: tuple[str, ...]) -> tuple[str, dict[str, str]]:
     dirty = _git("status", "--porcelain", "--untracked-files=no", "--ignore-submodules=none")
     if dirty:
         raise SystemExit("refusing to run against a dirty tracked worktree")
     revision = _git("rev-parse", "HEAD")
-    references = {}
+    gitlinks = {}
     for line in _git("ls-tree", "-r", "HEAD").splitlines():
         metadata, path = line.split("\t", 1)
         mode, kind, commit = metadata.split()
         if (mode, kind) == ("160000", "commit"):
-            references[path] = commit
-    return revision, references
+            gitlinks[path] = commit
+    missing = set(paths) - set(gitlinks)
+    if missing:
+        raise RuntimeError(f"reference is not a gitlink: {', '.join(sorted(missing))}")
+    return revision, {path: gitlinks[path] for path in paths}
 
 
 def _settings(experiment: Experiment, raw: list[str]) -> dict[str, str]:

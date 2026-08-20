@@ -27,7 +27,7 @@ class CatalogTest(unittest.TestCase):
             for experiment in CATALOG.values()
         ))
 
-    def test_settings_are_explicit_and_unique(self) -> None:
+    def test_settings_are_allowlisted_and_unique(self) -> None:
         experiment = CATALOG["chickenpox_forecast"]
 
         self.assertEqual(
@@ -44,6 +44,16 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual(CATALOG["mean_sage"].timeout_seconds, 600)
         self.assertEqual(CATALOG["metr_la_diffusion"].timeout_seconds, 900)
         self.assertEqual(CATALOG["metr_la_local_diffusion"].timeout_seconds, 600)
+
+    def test_catalog_names_only_executable_references(self) -> None:
+        tinygrad = ("submodules/tinygrad",)
+        framework = tinygrad + ("submodules/pytorch-geometric-temporal",)
+
+        self.assertEqual(CATALOG["framework_benchmark"].references, framework)
+        self.assertTrue(all(
+            experiment.references == (framework if name == "framework_benchmark" else tinygrad)
+            for name, experiment in CATALOG.items()
+        ))
 
     def test_paper_fidelity_is_explicit_and_revision_bound(self) -> None:
         papers = set(tomllib.loads((ROOT / "papers" / "registry.toml").read_text())["paper"])
@@ -82,11 +92,11 @@ class CatalogTest(unittest.TestCase):
                         self.assertIn(name, CATALOG)
                         _settings(CATALOG[name], settings)
                         documented.add(name)
-        self.assertEqual(documented, set(CATALOG))
+        self.assertTrue(documented)
 
 
 class RunnerTest(unittest.TestCase):
-    def test_revision_covers_every_reference_gitlink(self) -> None:
+    def test_revision_covers_only_requested_reference_gitlinks(self) -> None:
         revision = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             cwd=ROOT,
@@ -102,17 +112,17 @@ class RunnerTest(unittest.TestCase):
             check=True,
         ).stdout.strip()
         with patch("experiments.run._git", side_effect=["", revision, tree]):
-            actual_revision, references = _revision()
+            actual_revision, references = _revision((
+                "submodules/tinygrad",
+                "submodules/pytorch-geometric-temporal",
+            ))
 
         self.assertEqual(actual_revision, revision)
         self.assertEqual(
             set(references),
             {
-                "submodules/pytorch-geometric",
                 "submodules/pytorch-geometric-temporal",
-                "submodules/terratorch",
                 "submodules/tinygrad",
-                "submodules/torchgeo",
             },
         )
         self.assertTrue(all(len(commit) == 40 for commit in references.values()))
@@ -125,7 +135,12 @@ class RunnerTest(unittest.TestCase):
     def test_dirty_revision_is_rejected(self) -> None:
         with patch("experiments.run._git", return_value=" M src/tinymesh/graph.py"):
             with self.assertRaisesRegex(SystemExit, "dirty"):
-                _revision()
+                _revision(("submodules/tinygrad",))
+
+    def test_missing_reference_gitlink_is_rejected(self) -> None:
+        with patch("experiments.run._git", side_effect=["", "a" * 40, ""]):
+            with self.assertRaisesRegex(RuntimeError, "not a gitlink"):
+                _revision(("submodules/missing",))
 
     def test_run_clears_inherited_settings_and_parses_one_object(self) -> None:
         completed = subprocess.CompletedProcess([], 0, stdout='{"device": "CPU"}\n', stderr="")

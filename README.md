@@ -135,7 +135,7 @@ tests/           executable contracts
 docs/concepts/   durable theory
 docs/research/   exact evidence and current decisions
 papers/          tracked citations and exact-source fetch, ignored cache
-submodules/      pinned read-only references
+submodules/      pinned references consumed by executable evidence
 ```
 
 The runtime never imports experiments or submodules. Research may use public

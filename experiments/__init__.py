@@ -11,6 +11,7 @@ class Experiment:
     timeout_seconds: int = 600
     papers: tuple[str, ...] = ()
     fidelity: str = "original"
+    references: tuple[str, ...] = ("submodules/tinygrad",)
 
 
 METR_LA_SETTINGS = (
@@ -36,6 +37,7 @@ CATALOG = {
         "benchmark",
         "research-only",
         ("DEV", "DEGREE", "HIDDEN", "NODES", "SAMPLES", "WARMUPS", "WIDTH"),
+        references=("submodules/tinygrad", "submodules/pytorch-geometric-temporal"),
     ),
     "sparse_aggregation": Experiment("kernel", "tinymesh.Graph"),
     "csr_aggregation": Experiment(
