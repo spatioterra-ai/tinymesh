@@ -68,6 +68,7 @@ CATALOG = {
     "metr_la_data": Experiment("data", "tinymesh.datasets"),
     "mutag_data": Experiment("data", "tinymesh.datasets"),
     "gtfs_schedule": Experiment("data", "research-only", ()),
+    "gtfs_realtime": Experiment("data", "research-only", ()),
     "mutag_jepa": Experiment(
         "representation",
         "research-only",

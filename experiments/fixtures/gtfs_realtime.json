@@ -1,0 +1,54 @@
+{
+  "header": {
+    "incrementality": "FULL_DATASET",
+    "timestamp": 1167661800
+  },
+  "entities": [
+    {
+      "id": "vehicle-city1",
+      "trip": {
+        "trip_id": "CITY1",
+        "route_id": "CITY",
+        "start_date": "20070101",
+        "start_time": "06:00:00",
+        "schedule_relationship": "SCHEDULED"
+      },
+      "vehicle": {
+        "vehicle_id": "city-bus-1",
+        "timestamp": 1167661740,
+        "current_stop_sequence": 2,
+        "current_stop_id": "NANAA",
+        "current_status": "IN_TRANSIT_TO"
+      },
+      "trip_update": {
+        "timestamp": 1167661720,
+        "delay": 120,
+        "delay_at_stop_sequence": 2,
+        "stop_time_updates": [
+          {
+            "stop_sequence": 3,
+            "stop_id": "NADAV",
+            "arrival": {"delay": 120, "time": 1167662040},
+            "departure": {"delay": 120, "time": 1167662160}
+          },
+          {
+            "stop_sequence": 4,
+            "stop_id": "DADAN",
+            "arrival": {"delay": 180, "time": 1167662520},
+            "departure": {"delay": 180, "time": 1167662640}
+          }
+        ]
+      }
+    },
+    {
+      "id": "cancel-city2",
+      "trip": {
+        "trip_id": "CITY2",
+        "route_id": "CITY",
+        "start_date": "20070101",
+        "start_time": "06:00:00",
+        "schedule_relationship": "CANCELED"
+      }
+    }
+  ]
+}
