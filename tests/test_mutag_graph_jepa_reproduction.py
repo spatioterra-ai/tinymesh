@@ -1,8 +1,9 @@
 import unittest
+from unittest.mock import patch
 
 from tinygrad import Context, Tensor
 
-from experiments.mutag_graph_jepa_reproduction import Model, PaperBatch, paper_patches
+from experiments.mutag_graph_jepa_reproduction import Model, PaperBatch, _evaluation_loss, paper_patches
 from tinymesh import Graph
 from tinymesh.datasets import MUTAG
 
@@ -19,6 +20,27 @@ def dataset() -> MUTAG:
 
 
 class GraphJEPAReproductionTest(unittest.TestCase):
+  def test_evaluation_loss_materializes_model_outputs(self) -> None:
+    class FixedModel:
+      def __init__(self) -> None:
+        self.prediction = Tensor([0.0, 2.0]) + 0
+        self.truth = Tensor([0.0, 0.0]) + 0
+
+      def predict(self, *_: object) -> tuple[Tensor, Tensor]:
+        return self.prediction, self.truth
+
+    model = FixedModel()
+    self.assertFalse(model.prediction.uop.base.is_realized)
+    self.assertFalse(model.truth.uop.base.is_realized)
+
+    def loss(prediction: Tensor, truth: Tensor) -> Tensor:
+      self.assertTrue(prediction.uop.base.is_realized)
+      self.assertTrue(truth.uop.base.is_realized)
+      return Tensor(0.75)
+
+    with patch("experiments.mutag_graph_jepa_reproduction._smooth_l1", side_effect=loss):
+      self.assertEqual(_evaluation_loss(model, ((None, (None, None)),)), 0.75)  # type: ignore[arg-type]
+
   def test_paper_partition_preserves_32_slots_and_one_hop_patches(self) -> None:
     import random
 
