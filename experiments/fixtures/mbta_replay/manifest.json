@@ -1,0 +1,105 @@
+{
+  "artifacts": {
+    "replay.csv": {
+      "bytes": 58902,
+      "rows": 663,
+      "sha256": "41c06fda9fa38e19e193eb10266e37ebff93bc6464069ba4cea500ec71360304"
+    },
+    "schedule_calls.csv": {
+      "bytes": 28636,
+      "rows": 792,
+      "sha256": "ed06138f0e3267b0e8f59989dd1e29f2a6e31ee89aaa7d078540fd59b532563f"
+    },
+    "schedule_stops.csv": {
+      "bytes": 1253,
+      "rows": 24,
+      "sha256": "cccb7bda24b6742e54a7d50fcf57cc17bdd4b07826eaccddb99bc236fd15bff8"
+    },
+    "schedule_trips.csv": {
+      "bytes": 2021,
+      "rows": 66,
+      "sha256": "4db287b7879d77a8e0d6141ed0568c1c49f7998e994241b64657ebf626794442"
+    }
+  },
+  "extraction": {
+    "event_selector": "coalesce(move_timestamp, stop_timestamp)",
+    "interval_local": [
+      "2026-08-18T07:00:00-04:00",
+      "2026-08-18T09:00:00-04:00"
+    ],
+    "interval_utc": [
+      1787050800,
+      1787058000
+    ],
+    "route_id": "Blue",
+    "service_date": 20260818,
+    "timezone": "America/New_York",
+    "tool": "duckdb==1.4.1"
+  },
+  "provenance": {
+    "move_timestamp": "observed_vehicle_position",
+    "scheduled_arrival_time": "schedule",
+    "scheduled_departure_time": "schedule",
+    "stop_timestamp": "mixed_vehicle_position_or_trip_update_prediction"
+  },
+  "schedule": {
+    "active_dates": [
+      20260818,
+      20260819
+    ],
+    "feed_version": "Summer 2026, 2026-08-17T19:35:03+00:00, version D"
+  },
+  "schema": 1,
+  "source": {
+    "files": [
+      {
+        "bytes": 1352196,
+        "filename": "2026-08-18-subway-on-time-performance-v1.parquet",
+        "name": "performance",
+        "sha256": "ccd64aa2467191ca884f2a886a88e697764d7f74cd562e946345a3e0dd4a3e87",
+        "url": "https://performancedata.mbta.com/lamp/subway-on-time-performance-v1/2026-08-18-subway-on-time-performance-v1.parquet"
+      },
+      {
+        "bytes": 172361,
+        "filename": "mbta-2026-feed_info.parquet",
+        "name": "feed_info",
+        "sha256": "ddb5673f6f81b738071052231b7dd7aa4c58e8a6d34e33d2c76d290770fbb111",
+        "url": "https://performancedata.mbta.com/lamp/gtfs_archive/2026/feed_info.parquet"
+      },
+      {
+        "bytes": 13689076,
+        "filename": "mbta-2026-trips.parquet",
+        "name": "trips",
+        "sha256": "d6116af20771d213aa96f25bced2119b6fa7fa6e8393d3b0fae255cdf89574a5",
+        "url": "https://performancedata.mbta.com/lamp/gtfs_archive/2026/trips.parquet"
+      },
+      {
+        "bytes": 60348530,
+        "filename": "mbta-2026-stop_times.parquet",
+        "name": "stop_times",
+        "sha256": "842f13908c2b92ee565969ffd9ae341673c6d1e365b70a2a4c39f8d82d6ae630",
+        "url": "https://performancedata.mbta.com/lamp/gtfs_archive/2026/stop_times.parquet"
+      },
+      {
+        "bytes": 1152737,
+        "filename": "mbta-2026-stops.parquet",
+        "name": "stops",
+        "sha256": "3bce51fe3098cb17c898663b2023ee5f0381ca39d91a5bc1012767ad36e75658",
+        "url": "https://performancedata.mbta.com/lamp/gtfs_archive/2026/stops.parquet"
+      }
+    ],
+    "gtfs_documentation_revision": "02da961b963ba3d3a66042ca4d5bd19e21ce5c0a",
+    "lamp_revision": "e266440db994ed33eede5e44a137b205e4a1e8dd",
+    "license_sha256": "e791e24e86b9e974de060c3b238abfc392260cad54ccc0d2d3d4f0a61846b91a",
+    "license_url": "https://cdn.mbta.com/sites/default/files/developers/2018-10-30-massdot-developers-license-agreement.pdf",
+    "publisher": "Massachusetts Bay Transportation Authority via LAMP"
+  },
+  "source_audit": {
+    "full_day_duplicate_trip_stops": 59,
+    "full_day_missing_move": 2242,
+    "full_day_missing_stop": 583,
+    "full_day_rows": 41446,
+    "full_day_trip_instances": 3722,
+    "full_day_vehicles": 241
+  }
+}
