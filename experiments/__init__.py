@@ -71,6 +71,7 @@ CATALOG = {
     "gtfs_realtime": Experiment("data", "research-only", ()),
     "gtfs_transition": Experiment("data", "research-only", ()),
     "gtfs_snapshot": Experiment("data", "research-only", ("DEV",)),
+    "gtfs_replay": Experiment("data", "research-only", ()),
     "mutag_jepa": Experiment(
         "representation",
         "research-only",
