@@ -1,0 +1,25 @@
+stop_id,stop_name,parent_station,stop_lat,stop_lon
+70038,Bowdoin,place-bomnl,42.361365,-71.062037
+70039,Government Center,place-gover,42.359705,-71.059215
+70040,Government Center,place-gover,42.359705,-71.059215
+70041,State,place-state,42.358978,-71.057598
+70042,State,place-state,42.358978,-71.057598
+70043,Aquarium,place-aqucl,42.359784,-71.051652
+70044,Aquarium,place-aqucl,42.359784,-71.051652
+70045,Maverick,place-mvbcl,42.3691186,-71.0395296
+70046,Maverick,place-mvbcl,42.3691186,-71.0395296
+70047,Airport,place-aport,42.374262,-71.030395
+70048,Airport,place-aport,42.374262,-71.030395
+70049,Wood Island,place-wimnl,42.37974,-71.022818
+70050,Wood Island,place-wimnl,42.379671,-71.022783
+70051,Orient Heights,place-orhte,42.386909,-71.004809
+70052,Orient Heights,place-orhte,42.386842,-71.004767
+70053,Suffolk Downs,place-sdmnl,42.390422,-70.997323
+70054,Suffolk Downs,place-sdmnl,42.39061,-70.99703
+70055,Beachmont,place-bmmnl,42.397219,-70.992647
+70056,Beachmont,place-bmmnl,42.397204,-70.992551
+70057,Revere Beach,place-rbmnl,42.40776,-70.992586
+70058,Revere Beach,place-rbmnl,42.407874,-70.992497
+70059,Wonderland,place-wondl,42.413514,-70.991714
+70060,Wonderland,place-wondl,42.413361,-70.991685
+70838,Bowdoin,place-bomnl,42.361365,-71.062037
