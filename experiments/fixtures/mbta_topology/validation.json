@@ -1,0 +1,2427 @@
+{
+  "baselines": {
+    "anchor": {
+      "coverage": 1.0,
+      "macro_route_mae_seconds": 171.847916,
+      "mae_seconds": 152.175644,
+      "median_absolute_error": 99.200012,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 325.150024,
+      "predictions": 138910,
+      "rmse_seconds": 362.958223,
+      "targets": 138910
+    },
+    "persistence": {
+      "coverage": 0.993233,
+      "macro_route_mae_seconds": 239.623077,
+      "mae_seconds": 217.968536,
+      "median_absolute_error": 145.0,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 481.0,
+      "predictions": 137970,
+      "rmse_seconds": 400.224078,
+      "targets": 138910
+    },
+    "plan": {
+      "coverage": 0.999028,
+      "macro_route_mae_seconds": 174.803711,
+      "mae_seconds": 152.647949,
+      "median_absolute_error": 99.0,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 323.0,
+      "predictions": 138775,
+      "rmse_seconds": 382.366827,
+      "targets": 138910
+    },
+    "temporal": {
+      "coverage": 1.0,
+      "macro_route_mae_seconds": 175.667328,
+      "mae_seconds": 157.151627,
+      "median_absolute_error": 103.0,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 336.0,
+      "predictions": 138910,
+      "rmse_seconds": 365.043812,
+      "targets": 138910
+    }
+  },
+  "decision": "freeze:open_learned_test_once",
+  "protocol_sha256": "e3c44f17757820eea46c7c6e066fe914991c920388e1a56a4e17f7c013303db8",
+  "results": [
+    {
+      "arm": "self",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.84494,
+          "step": 100
+        },
+        {
+          "mae_seconds": 150.913483,
+          "step": 200
+        },
+        {
+          "mae_seconds": 150.840836,
+          "step": 300
+        },
+        {
+          "mae_seconds": 150.495667,
+          "step": 400
+        },
+        {
+          "mae_seconds": 150.177383,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.209778,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.395302,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.165176,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 215.281006,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.175323,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 158.804443,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.653885,
+        "mae_seconds": 150.177383,
+        "median_absolute_error": 95.030319,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 319.56778,
+        "predictions": 138910,
+        "rmse_seconds": 365.187858,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 127.236168,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.617188,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 257.300476,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 265.853088,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.746262,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.857719,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 141.966278,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.893515110015869,
+          0.6871233582496643,
+          0.9935095310211182,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7270572781562805,
+          0.12890245020389557,
+          0.08011160045862198,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "MdMQvx2mDD4Wwns+VbYZv3+SFb3cmVU9LswEPSXrND/3Vy8+342FvSGcG7/6Fsm9VzLovRAYnT1f0Gs+D74XPQ==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "JU8TOxuh5T62S+g99AQAv9LDkb6n7lK9UH+mPQH2kz0X+F29dSs0Pu9rqb4fPZI9npzXPHSD3D2ezbm8QXwkvZnbkD0/WaY9Gn92PdEjhz1kHcw9e4+LvAF8qjxg0g6+FkNcvHmWwLyR2o8+ZSe0PSR8Iz6cWoW+7xjBvbxhjb06CaC+oKEVPVaVSD6BCow+upxWPj95CzwBVRC+Ui/hPchRIz6VMYS42D/tPWCpLD7xKWA+mhkhvWzKjD12JmO+5Q/nvSXRmz5vajW+Pp0lvnO4jD5f5Mg8GRvPPRKXcb4NQ7O8efgwvprzET4xjz29S7lDv0ZiBb+GDTQ/LCLUPNsY772DvXE7AFMBPVMN9Dz3sSo9OCMmPx/sXL7MANE9nug9vmOp5b0OfDa82K0Qvtody73xe6M9fyyQvUUqJrvisY2+E9OIvOvfhD7eQxA7e/uNPjIahr5AQPg9mMYdvqgkIj0OEKQ+OpwXPq3uQL1vaR48QAgdPlKPFb7RmYQ9z+IavlaJYD7mjZC9cGRJPv1abz1Odb8+BJBkvTU40b07wq0+Gn6mvbi/kr0NTwW+UU2ivFSPFr1uywc+rbLLPv3yQL1O9NY9UDFwvgbal71r83o9fiBkvoJ36z0J/tW9k60UPjMsTD42q3W8fopiPmYuFz6DOyG+fjTCPcU1I74gOwS+1YtVvp29gD59x08+VBKevLIb0z0fALu9S7eMPeNpQz6OTH68VAZWPjx4Bz7t/AA+XowtPozrM79Mlno+A1fJPKJxmL3ofvO85U0Yviupwb1TLja/OoA1PmVOh71t+Wo+lQk4PFiFXj3PC2K9KQJEvSXheD333QG9ykV+vZIxmb5k82g9+9oqvqOSN70pRAY9deT6vVs5Pj5hI1y+EdpePTB1SD5dXl49LdopvY4a77yjsYs8k15Dvmbziz2Dxik+XBV2vOyVOT1JysM7AoCGPaBnUj4TDbA++VTBvQWO/Twy1BG9uvHrPe+RCT6mOky9S1qfPiMjJj3IY0S7sXSLvqR0Bj5N8ow+aZ+jPrwkDb4fKua7X5kEPngQRz280NY5Z00PPy+y5j2Brhy/2FZGPfzBkT1Nlpe9FxMpPUlIWb0b7789VIOOvr1tdz1EB9q7nP+gPbHSTT6JM9S9L/EsPsUdOj4psR48ODdBPM3oa7w+vZq9C3CdPJWh0TwbKjM+IySuvBuLjzxeNZg99YSrPdo+Mj4F1UA9TUQ+PhZBgbxftl69Q+g3PrJwHr4+0eI9gCsWvTguGz2q6m+9xr2WPnjXgD4ipwe/klIbvtb8kL2ed8m9sxE9vO0wsLxdegC8oAHfvmCROT4DTGA+YKC1PWpg4D0p7wQ92oNnPfmcuTxga9A+Jo2TvrPSSD3NYdm9y7ZGvWvJZj6VNhm9Pw2ivJPVEz6dKzY+/DjIPTjs9r2UBfi9tN0NPk/69j3pcJs8UkI7PmrRN75+55S6IjUyvOS9Lz1R+jm9GVXjPXj0C741ZLE+JPumPhsM+72cjLI+nUeVPkw0YT4j5NQ9qCk6Prasgj68SZU+9aqaPhnhXL4urcG8hGEDPvbFGbx4sEw+YfW5vCd02bzQrgY+dWGnvRACBb4TLlk+UmFDvuyKCz7oTzY+JdyIvVJ7Dz4LSR0+hqMjPlzH/D0iwho9ajhJvcnVLj6v/oi8o12sPUOtA7wEVb69Yykxvii8Aj0=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "npWSvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "rxGwPTFZiz1/S+G9KeeUvsq9rT0xGpK9x1AmvcruOj4ZeIk897JdvZEjGT7UKeq6MOxYvmISBzzLK5S9Tb2yPA==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "self",
+      "best_step": 400,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.802139,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.997696,
+          "step": 200
+        },
+        {
+          "mae_seconds": 150.831024,
+          "step": 300
+        },
+        {
+          "mae_seconds": 150.491913,
+          "step": 400
+        },
+        {
+          "mae_seconds": 150.592621,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.40921,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.772728,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.479385,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 217.490707,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.489777,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 159.508942,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.836685,
+        "mae_seconds": 150.491913,
+        "median_absolute_error": 95.007568,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 321.768005,
+        "predictions": 138910,
+        "rmse_seconds": 364.354502,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 127.18325,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.75563,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 257.739197,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 266.901306,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 128.23761,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.775864,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.263931,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.893515110015869,
+          0.6871233582496643,
+          0.9935095310211182,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7270572781562805,
+          0.12890245020389557,
+          0.08011160045862198,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "TDKWvNZA9Dp8smw9tFqXvdFJnz6z/9w+HyToPrzV576t2Ne+nIQ2PQdPGz4g06i99TH0vbfIFb8Cgny+ZpKQvg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "6C9VPYgoJ74H05W+17TFPpcxDL6tr2e+cHQtPo3GoTyK9CE8YXa9vo1vT742RXy9DnisPm/Cqr7/34k+659dvoasi77R8AA9VmJqPNe+kr0FhXq+/qdIvYFR2bu7A4g9H08ovpzOvzxnh4U9SaOtPYXmYD46hZY8FuIZvr8qDj5Llmg+PTQYPAjBEL6PkHM95lQUPR39mDxCzDy+OqOCPp4vAT2mQYO+gGYYPr4gib5B4zS+44yWve2YiLzte+09tKDjPbzDej4ZRDu+wN69PW9dLL4D37+94ARtPUKKCjxCZ8a8wkAJPadNhb03WlY9ZqdevUcHGj13BYa8mtaSPYPTqr0W1Qe+jNMZvkjD4LzaCSo9s7AIvp0XPT2MzPM6gfJUPkxAybwEoTm9bpGPPtn0Z74spCq7XTXbPM3+Kr6V+p68rKWZvkYXH76SNwA/ZNwUP083fz3SMsE8tX+sPedtPj3e+Le+trUTP13+Gj9CUAa9ePMQPf5UkL2QsA8+HoSQvNizRL7AeYM8L0MdvKEt9b3r628+YIsEvyIFkL3M7gU+AnwcvU6/D76zyhS+082JPKzD8r6GRkg+CxpNvqNBxr1p7r496/eYvhe18j1j9x28rawovOWan72IFrS9evhOPmQ96LwnEA2/wacaP6sP+72moRS+8V7ZvSuEE74z7qC9wmUXv/13Cr5Kby8+krArPtrf+TyPM/w91sbxvfXjGD44kQw9GeEovbeXIL7EXQ+/Sm/zvjNSJz8URhy91JrsPeppqbxgUr+7gh3cPMMRFz3JCzQ/uqMrvthVCr61sT0/qVLAvcImTb384yW+R9trvbaIoj1zP/67c+ErvYjKAr7vGhQ+qZiTPoaqrb75TUg+pPr2PUIF1j0kRDe+zCnJvWu/jD6ZxQQ+a5GYvFOy5D3nN+k6SIxfPYT8JTyAZpk9ahi4Pn4xfb6eKp28DiosvSS0l76NmbE+g7vGvBavFL4YgQs+lGyyPLftwzyFMoW9v9vpPU8Xir5s4Ie+TPCwPW2awD2j2QO+4ExrvZU/Ib3J0pG+rAdnPRrMZL1NpUE9antAvmu04boOv4E8FaZTPfLZCT4xEAk+C3UVvvJPKz6bqow9VPXOvQ6WfD1edOU9jBsKPqGazT1twby94lX4PRVsyrvE4Jy9obywvBcQwbxyYDA9gPEdvsfBKz6fR36+mLyYO99aGT6+yci9FIfjPQuSSz1xcMs9dFzRPdDsST6VBss9estBvTrTSj4R8bq9gMBMu5B69T0QP8A95EKIPmkGGz0nkK++OCpQPqQXx723aWK77i+COlfGmb2NW6u9uliKvkKIdT3n6iK+0gVCvkPfvz08PKM97AJJvUcH4j2vMjS8lZeoPdXZv7y1C5i8zqv9PqyPmD4T/Qy/eJN+PLCzs71aKx09PssWPsmWfr3NawU+GarXPRjBVL15kWM+QN5RPH86AD6xN7W9WxbTPUXMAj6DpcQ79t6wPDY+tj5+tgc/152RvcSOmLwMPJW6DupPPrs/fj19zm0+r5cHvYg5rL47hVw+rT2dvY7hgL5ubpi9PJLgvIDUIb49H409h/2uvWUp/D2sj5w8wD7lvJGPGL3Est0+Wcvrvpgtk739JhI9G3f6PR8lHz7Kq0q8+iYGP2/L6D2w8wQ9O4Izvs4kgr3cRgY+mQ0hvqjvQL1uE5S9k2OSvV6z8bw=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "BJx1vQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "g/y3Pb32rD3ugxE9PJNKPWVdr71dBbQ9tyD6PY9bdb72w2g9W1UePkHKSDuUmhA8BFbjvXad8D3vGI09vftXvQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "self",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.862518,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.741013,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.200134,
+          "step": 300
+        },
+        {
+          "mae_seconds": 151.205399,
+          "step": 400
+        },
+        {
+          "mae_seconds": 150.146423,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.640945,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.112015,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.134323,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 214.766998,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.145126,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 155.643402,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.624832,
+        "mae_seconds": 150.146423,
+        "median_absolute_error": 94.230682,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 321.754395,
+        "predictions": 138910,
+        "rmse_seconds": 364.868941,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 126.552795,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.362366,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.481018,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 267.419434,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 127.865143,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.88575,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 141.807251,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.893515110015869,
+          0.6871233582496643,
+          0.9935095310211182,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7270572781562805,
+          0.12890245020389557,
+          0.08011160045862198,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "3Y6fPWZFG75eXOk+N1yIPdsjij6qCBs/nkNyvsrq5D6X30a+LToCPZ8+NT6sxxC+whGVPk7sVj7qmAm/W3BDPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "6SP6PS+iLL7Q3Hk+GHYuPgmZmr08rTU+fXYaPmtAq7z6A4S7kt0iPXu/B76F7Oo9rNouvZBMZrtPkMW9dmHZvW3pbD1PMY29rluEvIe70D03nw49S2sYPuzIFj65cGa9og7UvFOdjLwlZlS+zY6lvcNuzD1wTKK9L7EgvhQ3WT2Nf829LHe2PRy/jrzitEi+bYVmPkXdmj2zj/m9KfDpvfLBoD3V+zY/TtNXPbSWAj+RN1U++HnPPRy7aD0bOzS9WNcBPvZfgL3v8LQ+L4YfP8845D0FZlc9HVRPPQ/voj38o3c9t2SKvJC9KT4VXcU8x763OTewgz5ZihK+137IvTyKCz5iTQk60eVHPNsiX73XC8M9ba+KvqVBoz4qCYK9T68xPtJdCL68coY9jGN2vjPZJ75LmwQ53QkOviYb6715N4s+YfJCPqqsMb49VyA9sig6PoIowD11IyS9B7URPk8dIjlkUdm9CaEsPsoBOr5UIj8+RKlEvoXTvb2/pBo/By01vfW+oL1nJDS++5bzvZ4ckT3EOd4+zicWvwmPSD9ZXsk9eauLvbal573uXl6+iGsFvm1jQr9iWaO9nrscvZF5wTzKT3m9hoGyPfUqmz3dUgi+sY0QvdngWr1cGAk9HhCLvszrmr2jv1U+0Uk7vt4Iv76WbiA+H/FMPDXABD1oSz+8FyItPrYExL4kAoq+XaAlPvy9yT1uM0c+UEpFPnK8HD0Mzxi+1s2pvtIXrz0a3E4/vTsGP4OJDL/b3F88rmULPlyIkrqqb/M7LtoXvU1tojp+vM2+BGgDPs7W7r2Ihpg+cbEyPe5/pLyij+O8i6j4O4hHU74y6hM9ZlaFve2Inb6dblu8uUy4vsNFgb5Y5rE9XPegPZGjfT0t8bo7qVMvPoZPqL5aNSk+RhUsvvwR9L7Ui3m9fs9lviliOr58+ng+RlhwPnoGKb6tw5o9v/MVPtvub7191gu/7fNJPtbpUz0e0oS8s3+jPaW5s73oiQG+9CbivstdHL6DKm6+Oxgav5MkVz7T1pQ+p4XZOhSRIr4NBhg+HsrxPVawYT58EmW+XEWHvrHHwT48B0e+zRY3PqTKE741Cuw8UxICvTJyAz5v9hI/zmZkPYVPBj6rwku+uOolvlNoGb4RztK9h5nsvd4kOj5WWie8Me9MvS7RDz539Q4+eC3uvepwsz1Tm1i+CFAnvmdhNz065jU8El/qPL/GjT73J0S+bE2MvYORgT74Idg98xsMvVSBgj5X+qa99F7EPJC9g73JjJQ9Ak9UvtnS0r4uFhw+Wsz4veh7Lz2e7r+97dqsvW3WUb7g32a9XNFgvEkRVz4UZIA9OQr+vl7R+by3o4e9cxHJPufPqD3BMaU9NoA/ubD/FD0cHYA+RspKPvpN87437x8/AWI7PQAy+710FSe+q0UJPCGvaTvSeQG/qzaaPdXR/LwpGgC/NfMiPo5rkzkpXIc+bGZgPgc5bT39dN497J+ZvqnM2r6Myva+2h0QP5vSP78JpsI9lIKIPeoLNL1X3dK8j/MZvb4PLj/EfSW+wv7NvQF8+TyOXcW9+isxPkp1zb3gTki9Be14Pc6ghzV/eNs8QC1iPfo0nL7vJgu/+knKvVnahz5lHyi+idssvQzEB74mN5M9H0mSvgBIRr3AHsw9AMNGvnbxBj4Zxoo9QgSiPhIhzT0zCZC9HwjFvstdaj4=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "mv2tvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "DlNjvMWJwzqYQhe+3dDfvLLYQz35ixg+4nJRPuEwVT7Cy+g9SwWTPWZOSD7l6Rw9hmFZvRRGkT2pzhW+9y4Kvg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "true",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 150.06163,
+          "step": 100
+        },
+        {
+          "mae_seconds": 148.239517,
+          "step": 200
+        },
+        {
+          "mae_seconds": 147.224426,
+          "step": 300
+        },
+        {
+          "mae_seconds": 145.945297,
+          "step": 400
+        },
+        {
+          "mae_seconds": 145.741959,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 202.275482,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 114.870544,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 145.734711,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 184.434235,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 145.742493,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 143.478439,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 166.425278,
+        "mae_seconds": 145.741959,
+        "median_absolute_error": 91.770691,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 309.902466,
+        "predictions": 138910,
+        "rmse_seconds": 365.791415,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 122.916931,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 172.29274,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 243.915939,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 257.037781,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 136.578201,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 96.472153,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 135.763138,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.839354991912842,
+          4.468683242797852,
+          0.953141450881958,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7866359353065491,
+          1.1946873664855957,
+          0.21085526049137115,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "FZhLPYzd7b1bPjk/o/LSvmSSUj4NMui+KTmlPjxUyj5eHtA+pApEPwMsDr+h8A2/AkREvl1YLD6MeJ4+B6SSPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "AE8pvm8+FT0DL3Y+c5zzvZ31Hr5RO7O9SCeaPQ5gyDxvDyc+kbgIv6yp4L6zlpM+HW26vfeghT21IT+91k7gPSFfKz0KhIs8WNUPPimhpT2q7QM/jeo0PeJ+6735osq+VwzsPGRZkr12Yp48XHYWPNCeOj2OqbK+S/68vMov/z2dTJu7CBdfPnnxcj4XuwU9Ra8TPlBa6b7aazW+2oLAPMuhaT4wXVE+NVmLvkV/LT9eH7E+CsaWvIpR0Tq7ZpQ8DBZxPa1ZlD41gru+S6DQPfMRuj100Vi8Cfw3Oj799Lytzle81czAvuRDZj5eSS68TzVev8luPb727zg/CidMPcHUorzlKw+9IeKivLa5NTzEuoc8Oc+GvUwXh7/NHiI+Ar6AvrWwdb0RRp+94KhyPNiBkb2dyfE9nhJZvrIqvDuAlAC/g/uJPa6kjT71pwq9uB+MPnWESr6haqU90E5cvn7YiLwlavs+uX2+PXAbLr55h3k8M57BPUe3Az6tnhw9LRKPPMe0hT6vydm+N4CePiiZ/73ufvg+UND/vDPC17797rK9Ha0lPQfxsTySdVM9LWe/vHDWy70aYCq/Cb8rvgq6Bz6RW3Q9MU83vYFAtr6csCc95/RKvYP0vD0yqhu+3Uy3Pnz7Gj4Waac+KOgCPw5rbL0SDAG9PWi6PJIDNr4zPMS9z2CCvjgIpz5VWnQ+QNgPPaSaZz25qW48qdH4PAEA4D1GswW+AnkXPsi1VT5Eexo9UBc5PqPgLL8CAI4+d6fTO/nABL5PHry7ocK1vWGko72/Hua+V1m3vvbYWD42+A4+7/+kPP/PJz0pgKa9zY3AvZFEvj0IZWQ9grvzvFCTnb6xZ789qwsJv8ZKzD3sQn89IM/KvI5Yaj1CbYS9uj4CPXwMKD9wmI29NCikvQ/Avr27j/a70oQGvVwtEz5r7X89S66NPEbWFb3BOMA9HLimPXMCgz0mJU29F+0LP1DgWj+p9Bq8AzJaO/ecTT2MSHo9a8AsP+RF2j8YQEA/pEIWv/ugDz5KQw4+Vo6UPXfJ2D3/I1w+lJ6bPtFJ7D0Oih0+K2upPVOGqT2B0Ai/SW58Ptw1nL3itiS9LSjJvCidbzxW9w6/A0a0vhJp2z448aG8eQLYPQCT57xtLZg8XXlLPKqUZT+8yd08e5vqOwWiJz+dSfo+xsb3O4zKmb077N08F47RPVy0k70vhp09XWWfvcx0cTzGapE6vgqrPYGaoD1/Y1k7V67LPQypL74Kp+q6BkjRvVd4Cj43xxm9rU+tPRybh7kob7O+zYpXvjeEVb62Lgm9p0s0PRblXL1pltG85hcGP1Tizz40NpA7jgdpPU23jD0XizY952yVvc8Htz23Ymc9dCccvZEvsz0hzoc+kJ7jOz3fGD9pID88IdHZPMh+8z2mbLQ9PT+LPU/pgb2Uk52+1bGkPkBlTT3RH9I7aSp2POivhLzMxEm9FzjMvaqf6jxNCY69X3uoPmQQu737U9Y+PVKSPVs40rsmSOw+MF7wPQ2SMz3tt6M9porLPbbeZz7ahmQ+cJgNP4GJWL4LP8A8zCrNPYF6CD4Tmko+utYMvvI/u72g0xI9tm45vuibxD0eJ6q9lBGkvKrzRjz+4Nw9AF0LvW4dRD3kmQw8gTxBPyD9QD/PFEG+BawrPpT/bT74xHY+795YPhX3YT4A1g6/tK5jv+1vZz4=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "gSkzvg==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "WdlFPknwbL7zp6a+S+3QvpAN/j1ofkU+NdkjvjcRRT5iPFk+VWCMPo8TQL5tZYE+92dzvtOnKr41CzG+gWZ3Pg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "true",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 149.595886,
+          "step": 100
+        },
+        {
+          "mae_seconds": 148.439407,
+          "step": 200
+        },
+        {
+          "mae_seconds": 146.733246,
+          "step": 300
+        },
+        {
+          "mae_seconds": 146.261795,
+          "step": 400
+        },
+        {
+          "mae_seconds": 146.025909,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 202.444016,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 115.217514,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 146.018234,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 187.062073,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 146.026337,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 144.198593,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 166.954514,
+        "mae_seconds": 146.025909,
+        "median_absolute_error": 92.052765,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 308.393372,
+        "predictions": 138910,
+        "rmse_seconds": 362.746102,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 124.722794,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 173.771347,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 243.474701,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 256.498474,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 138.530991,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 96.543922,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 135.13942,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.839354991912842,
+          4.468683242797852,
+          0.953141450881958,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7866359353065491,
+          1.1946873664855957,
+          0.21085526049137115,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "zLS9vjELEr4RNPs+gwmCvnKAKz1dARw+OjpTvzrymL71XgO/NNWnvv1o3D5CCkg9A3LZvZbE6L1HiSq/ytkJPw==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "xoNGPqSxJDyp1nq8nspfPdWdtL5Z0qe79uKOO+R66Lx53Sy9BI+3PRYvm78wKo++VnFBPtKasr1Ilqq9/Ta8vrpbF76hoSA+3VcVPghn3706Hb2+wavgvb1kgLzwtau9qD8+vh6sbz0kBTI98wVqvMAbRz3Tto0+r8FdPeiAiT7hrMg94ZhdvZobt7wgezM+z6ZIPVOcaD5dCYe+QogOPgvSuz6S7409LRG/vROqpz17noQ8BtfUOgXzO7x1Dr09dW2XPQN+xT0UcBe9SzvDPp/blr7X+pi9YrfdvDI3+jtmbl88yb9OPt44aDqTumO6W9sWPiHmcT2a7e2+/oKBvhyNjT1eUzu7KGxBO/j10ry1S629g7FSP1eLDj9Iflq95MyFPhZ12rser248riGOva9F7zwrO5a99dFXvV3SQ73IPVW9Wpk+vrC0dz7nfl0+OSCLPlfFnDvjm6w8ZHs1PXeMF72aOYa+dKUuPnWwpT7Bw/k8qlTBvNY7oL06N9k9TUiIvcK5V70oUGs9Ww+JvZXP872/VRY+qSvZvgEvl71hOQM+KSySvWzrK770c1G96qxHu8vEfj1AVma9qbd+vu71mr00+b09mvjRvfyFbz5ssrC9AMPYPUUYCr57b4i+sfnVPqnslj2j2ZO9nMR/Pf6NY7/bhIK9OYPyvI83wr2pqF+9gmCIvzfZTL8H3fi9GowzPfPs1Dp7HZM8z+uuvN+yuDw9bkI/e/OxvUEaE7worFi/fbI4vloLGj91qdy9h/JaPvh3ybxIQbu8QyrhvGFuOzu/iM28xu6Rvx2OjjzlNRq9+us3u829ozw5etU9GXiNvJOygj6R/9a9JiwqPq4bGj5MMb8+Vw3xPrVygL0w0as+4yHAuVgU9DwSiqg6joncvbkcgT5KXgs++zM7vOuQGj4u49W9k12BPqr/tb2aRrw9qPO0Pu8xyr5ads09nTBRvs3lq70YZ5Y+mkzTvqFMo73Flzm85cxQvMk0ZTxk1qg7XHluvt25iL8aWQq/Wwk8vhw+Nj46Org8UV8OPS7RcT1R3xa+G4UJvm8hmTz9PYw+VX5fPG4rSb6goQQ+yJqdPbJlkD1OOio93KU4vQOkhj0XLBs+dRS3vjbrOT48P2w9g9IVPteLGD37e129LDSqPD6D772xfXw985PWvGxWE76AbSe9TQCqvkdmmT7L+/W9rfdMvHcS1T3gnRK+cSdVPdUaIj6AY609+SYSPjIbBD7tFFU9U5TGPLlAUD7QmsU9Vlq0PZh0aT3BAQE8K9ekvZxfW772caa+uUxqPiLzir49Cq69zqyBPUZf4j04WRA9KG4kvsoqcr4kYQK/9DpgvrlmDD6v/A4+nm/zvb0cmz3ZbIU+UQXGO+Y3cb24Xos+0xycu8PQYD8MtWS+X5Dkuy5jzLuu3A097AqkPZH3dDztGeK+/VAYPz7XKD6rgSE+aXq+PSQnpj1jl/g8v+x2PGlFJb2+Jro9l2atvI2DAD+Xkxw/DX9VvURTrb0LXzI76hSWPRhkYLzioAs9b0L5vJSDj722vNg8cm0lv/m1A75iW8e8A4wPvWuwlL66hwm93iOovPTVZz4nSMi9spm4Pd/nET6xVFS+roguvdnhxzz7b5m9vqjAulnjab0Zth09Mn4YP6pycz9bpiC9vz2cvZbpET4uWAw+g7E+PcNcXz0s7DI98TgWv8r8kz0=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "j0avvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "3MhyPt5XMD7/y46+RO2tvms0Nz2HzDw+WhPjvskqrL5KK/Y9vLkvvmTcQb7A+Qs9n1KAPpJXgL5/4oo+W+NIPg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "true",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 149.652634,
+          "step": 100
+        },
+        {
+          "mae_seconds": 148.393127,
+          "step": 200
+        },
+        {
+          "mae_seconds": 147.142548,
+          "step": 300
+        },
+        {
+          "mae_seconds": 146.483414,
+          "step": 400
+        },
+        {
+          "mae_seconds": 145.610168,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 202.216461,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 114.699013,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 145.602493,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 186.611465,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 145.61055,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 144.041656,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 166.220306,
+        "mae_seconds": 145.610168,
+        "median_absolute_error": 91.227692,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 309.801331,
+        "predictions": 138910,
+        "rmse_seconds": 365.870751,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 124.423508,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 172.049988,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 243.8423,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 257.338684,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 134.348389,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 96.01532,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 135.523895,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.839354991912842,
+          4.468683242797852,
+          0.953141450881958,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7866359353065491,
+          1.1946873664855957,
+          0.21085526049137115,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "g5i5PQ03Xb+VSrk+edeLvljfNj/9MsW+egU+v1EJmD7qmMe+M1vwvNl12T4kZnc+ie4GP7OoPb50PEI+pH6Qvg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "OvqZPhj5bL0o1xY+mLAtPjzqEz3q24A99jhYPkdsGT5+QL88hkG9vRbor71Tooo9ffW1PBz2vz0KQOK9aK8rvmF67z1ZJ7O+IKOcvKN9Dz5QrAo/GC/tPfeUTb1vJ/k8UMdmPn3ECLw7wgy9XWRWveVnsbwTU4m/us6evrkgdD09PPQ8S/WQveZrvL0UP9y9hmBlvf0Ehj9jPwm+UUWtvU8oIj6lzek+NVAFvm53jT7KzIe+WE0VPTtDFjzzqZK8egYBPs5s9j3/XJU9vxwAP9eVoz3SYJ49m3K3uZc2Gz5fShA+OZXwvqVmdD4V+p09Q7W8viBXsj0CDZE+AKc9vs7NLL2HGK08uLq7PGcggb0QYIa70Hh0vpUcnD6Vjnm+ON7dPfFtrL27abq9TQuGvcsWMb4ajKc+R0mgviXlib2k0cg+aYqKPdlztL6OTlC76xt5Pe/RczyLZjE8wggnPRfBPT3shqY+aDOCP6eeE74JmtM995XBvAigKbyj63q9tFxcvR+dFb0nlSy9Klu3vZDMXT2LdTu9rr9Cu2mKFz3A6LI++oshOxlvRj1lbjK8Gzc5vJ2IDL/NgCm/EkJAPfDNBr7WMaS+G6qPvpCKPL4Xxii++fPHPsxhJj8NzCW+1oLHvpIWcb3iII4+oJgVvj3RIb/KpD+8g1g9vGGYjb32G0a9k078vk5Rzr/6Vxa/+LwQP7Io9Lx2ATm9OmsXPURK4TvF3f691RJVvjRdgD315kY/LTmwPgLj/b7CfC27xP8TvTNsSjx5RzU9Q08JPQBmBTzn1ue8x0k5P6hunr6ztYA+Y2u9PLqBhr0ClrK9GN5PO/Nba76ef9s9/uQsvX35f75LSDG9cObuPHCgxb6nhh68/uMHPrmTNr3co148y6E1PTCBdb5i0rO91bdJvvRQWb75LZm9IU0WvsbHFL5WG5E9Uu1APtxUhL7dgwc+QaINvdssLr3Uqdi+zR0OPsdlUD4vrva9yACmPbdXYr1ZbQu97XYHvzWY2b4XXlK9PojyveZcmD0mXlY+jAN7vpE5NL7h61Y+2Qg9PtHERD7TxBQ+SFTcvpiebr7G2qm9w6FDPcSiyL0+mos9W4sZPHW1Uz12fCg+Fl4hvlHe6Tzh3aq9hM8BvvhhE76dZ7S9sWA3vupY9r327rA70KGnPBuECz2/DRc9SNI3v8NA5j7u5oC97jooviI4pbwI+nm9/30lvXPrAz6Ewzi+v4Y1PmZ7Xj2cjhM+ottsuwIYjj724qs97K1MPVOCL70hSx29U17avh188b7aork9e3KCveOu4T3qZYO9mz+TvM0Cc73p9tE7+biHPS4/Fz8UCcE9h+OGvm8+jD2lnF09vymYPro8oj1k4Sc+zRRXvnh10DyLyjA+HDo6PmIN4b5NXGs+Sj0fvZioar36xGy9P5uLO9HrDj2t7rS+WMX9PJv+x7x4E6++xOWTviDwub7I0sk+JTtXPkNoDj5S6EA+DkafvQtxRz1nEjW+H4fVPetmtr18kCY9R4r0vWpsh76Gqwu+WBBavQHPYT5Wn6E7jsd9vZQBCD7G18m92HZ4PjOGUb4yrEW9g0O0vZtn3jtGYJU9/EfovoRsML3wmQy/Mjd9vG23U71WbTO9k4WGvb1UHL1T8oE9wa3nPk30G78AU5C+Z0sMPqzPij0pF1w9eUL6PTwKMD17y2c9TJGdvABClr4=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "ZtUfvg==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "i2ZBvZ1A0b6h+ni+NAtvPidUDT6JaMi9rw+cvryEYD6TtRo+WeEnPkLJ7r0+cyk+4VGXvm0L6z0LHUC9CfGEPg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "reverse",
+      "best_step": 400,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.130493,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.693436,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.596771,
+          "step": 300
+        },
+        {
+          "mae_seconds": 150.700821,
+          "step": 400
+        },
+        {
+          "mae_seconds": 150.724869,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.340866,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.133034,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.68869,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 215.583496,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.700272,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 153.089783,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 171.201324,
+        "mae_seconds": 150.700821,
+        "median_absolute_error": 95.719269,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 321.147095,
+        "predictions": 138910,
+        "rmse_seconds": 364.49985,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 126.461906,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.780426,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.227356,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 265.578705,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 132.0896,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 98.308907,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 142.96228,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.884884357452393,
+          5.244430065155029,
+          0.9498810768127441,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7234233021736145,
+          1.5419316291809082,
+          0.21786166727542877,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "ZxzRvmb9Aj4+8UE/kmvsvtwesT2uaBm+9Wj4ve+3rj7HJsA+Ny0yvYqk+b43/aS9/wr/vYnI0b2SrLg+eQNYPQ==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "SUyVvd2o9z0c5YG9uN+uvovhtr6S7pO70kdmPsSZ1z3n8lg+7PluvVlaS74h/V8+2XuFvkAKNT42e1W8RiIvvfKC6r0C5/w9WPwzPrl6hz5tUhy+wT8hPR4usD6SCRa+C75rvaM3wb3dsno9P7mnvTl7+TwRLuC+feOxPewTAr3/uPC9jKrOPKTymj1FYkA+8hoTPlVRAL+tSCS+Gs+pPuajEz9zd5U+RTYtvwFaMz+ylEo94Q/CPFETrrwkkyu9kXCyvCRaGj+NRUq/PywYPkU8eT7FPRI9+8DnvInSgTxGvQs9FhNYvmsq/DzjZQK9Z+Gavpugjb7X1l8/hGdpPX5+gr2vkEk9HQlJPZ+HXz2Wrh89mu+fPanpAr5aogY+HSiCvrUD9b2rZOS8bDt5vuYAxb3eRgs9Jv0OvfzQsT1IjjW+m1aFPumXfD1qsMa9hsiKPlZJ4L1zCks+Lt8WvmyBFD41bwQ+f/12vdNFWr5CYk09hW/APTYsvL2J5Hs94AabvXcJk71vE4c9Sr/PPWIVTj2Yz6E+CuXOvnzgG77EEHQ+Vyu3vZUPNr1AzpO9Z7W/vZNwYryUd1q+saCGPsDYpj1TSAw+TizhvWCuqL3phYg9VHqLvqJGK77qIvi7viKiPEtjiT3birM9c7clPEg/Gjs+2BW+N7ocPm/JbL5ujU29CO87vhgfbT4P9RY9xBlHPa2LLz55Z/W9Z1W0vWYpiD4BN6m9p5NFPlVpAT6j9jI9Gg/tvBMANb89TjY+yc38vHTvxr2Jpfu8G94RvuURNL4aT5K9eDwKPrRC+r0fgsM+mcjcPU3b4j1tJ7c8X2s0vjzGdjxuVJm9Fj/rvTnLfL47WE0+Xu0mvxlE2rxcRAk8/nYSvd6airxMG9K9LbZUPVLHqD75Crm7WG2sPaNawr2Gg+U974NwvopX8j0OZyQ+1soJPd3HuTrzfaQ8hdiLvSNwLj7R9ZM+1quNvIXZBj0vszm+s0RYPp2lLj6CP8Q89xgiPsCCFD5SbzK9suP6voffGT7UN40+/89HPmRfzzyTyme8o/IYPi/GgT14IB0+z2wFPwKh/D3Afvu+EV84Pdl/0j0zyXI8VWo5PpbWaLxc8c+9/Rq4vbiE6D3DoCm9l0bYPdZLMT4oyF2+TbsUPjCzOz4qhxU+maeZPYsFgb241ty902jRPv+bZz0nJpw+4qQ7veXTVr2gce88SlrSuj8GM7zhXZ0+Dmb7PWJ2tL0RTwu+IoHmPZADK77WX6Y9bIwSPmCiAz5NvWG9lKEDPl9SsLwrtfq5fwDqvaxCtL0tiGG+kOKdPcAo272NnnI9fkvLvDUUqj4AsqQ9C7bTPl5p9D2mU7S85ujQvvbwBT7pjjW+iraNPaWnkbtCtki9SaXTvMlK7D4Z5Ms850mIPI+OFj6JpGA+QrcKPr2Wr7ykk669hQ8ePSE9gr0JV5Q8BexcPnOgEb6dUZe9tgydvaEtOjuEIz69NjBaPqWM6L3CafQ+q/djPuf7eL391g4/lr0gPhq2CD6gB1c97YoGPiXKbT6J1dq7J65ivWHw9r63UB48tcJKPiNHGD7c1Sk+wdxPvfeJv72SPh8+T1YPvdK5Br07iYQ+p2czvnRHBj6JUTY+VxFbvZzJqT1y/A4+bbPvPekouz0WLKa98iglvhD5/z0acJg7UZn+PQFRHjxv+ee9QWXWvYSJDDw=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "qUTnvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "fmCrPQ4gED5NFSM+SXZIvgKZwLyZWea9SiI3u8HvvD3rOus99c3CvG5wKz7+G5o9EkFRvVF1rLl2E9C9c4f3PA==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "reverse",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.777664,
+          "step": 100
+        },
+        {
+          "mae_seconds": 152.159729,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.246628,
+          "step": 300
+        },
+        {
+          "mae_seconds": 150.880508,
+          "step": 400
+        },
+        {
+          "mae_seconds": 150.705719,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.645401,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.974289,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.693619,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 215.350204,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.704758,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 154.795441,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 171.327911,
+        "mae_seconds": 150.705719,
+        "median_absolute_error": 95.306488,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 320.789185,
+        "predictions": 138910,
+        "rmse_seconds": 366.60776,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 126.68132,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.861816,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 257.684753,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 267.952667,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.908081,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 98.170708,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.036163,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.884884357452393,
+          5.244430065155029,
+          0.9498810768127441,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7234233021736145,
+          1.5419316291809082,
+          0.21786166727542877,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "JobMvU0nmzvhmiQ/EFrfvQK2or7Yy0w972/KvED72b1nLrm+yMoGPJFGKj9YhYG8yoJJvkfyb74ScVS/eoaHPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "N0XAPQ89Nr4QfQS+9QKcPhxuR75EeS++wuPpPWEYxT03uxe9al6HviCUgL4f03s9jsmZPoNvPL7mJTA+av2Gvm3ZaL7SBpu97uD4vJwKnjyzRF6+mZHRvGaxCD5BKSe9+Ym5vTWbz7zFGEk9CpSCPY1WIj4X4cO90cJ3PM/E/D2GpA8+YlcUvVrjI77Meq89X6zcvGsckD03GjC+753TPki2rDw/2im/a9FqvpL3ub3R4aY7vwhivUA/hTurcja9nH0QPSta8j0z4jG+Huc8PrGCAb7/3Rm9i4gMvWYIMD6rJTC9ZrEkvjHg5r0mc/89qpAqvuP0O75fZZE+A6arPdw9d75pP5G8togCPaxqIL3WuRY8H4eRveNCQz4Q9cI8GC3vPavfDbzK31q9lfZIPfz9Ar5mwV48MQ8DPlLwmr04Gx6/3UPNvj4VBz+5Jho8wPcAPeU8h731DLo8p+Viuzi3eD3EQxq+TJkjP/AXtjxBDRQ/4YUGPLqUor17xYW9AIrmvT3R2z17SCK+mHmEvZSfAb6PADM+hxYMv70brr0KSoQ8g8q0PEzF572E6O680dJNPYg0Zb4HRZ8+KoykvigAQr5QF549yxqCvQGgED5O9yW9hgfxvCKImb2mKCu+h4mYPlH7rb4eLhC+kTEGPsO2m75DRw69czyAvuV6J75IaEW+cXq5vjRumr7mMzw+55+QPsQAnz3FIVw9NFtZvmDI5jvlIbm8MLRyPc6er72qPzO+nPlzvf+Qqj6sbcs8Si05vQYSH7zlS1K++0Vdvk9kIL5jVPY+hxqZvarZvD2zSrw+VndIPSZDoj2xFYi+KSPvvbkisj28uIg84pYDPiQuaLsLDNE9/REDP3mDir5k+bI+ndIdOrXkED089MW9pi2qvfil6z3W2Ic+cllDvgATvDumRxe9zuq0PdhqL72J/so9G+WtPoKYib7ouw4+2lKHPiVVh7we2NA+LvEvvo3EJz5sd548GwWpvDo+EL64WXe8icBsOfEIvL4BKFO+QDqLvVOF5jwC1LG9POhNvQMT4DzLene9tAipvEZSmz3hQhQ/H9fCPbgL2771Iu28BFywvQ4MTL1Hbr09+KeYvFPliz1oAss+Z1TYvotapj5vMWI+Lk5lvGQIKrwB43g+jqAgPLR0Yb6bjQG9b3gHvSULDj5GECk+j1aVvk1ndz5zoCq+PVzcvAND4T2ghz29Kud3Pcd9Uj0CEMc9k1cJPhGnBj7PxZY9RxnivB/LYD4CO1e9ctY/u1UO/z1YirU9On6XPhUwyDyJare+LfH/PbzYpr67XV09Yaq/Pavv4D0Qa8Y90cSBvpIAXT2Hzge+ppbzvpdXIj6HssQ9F/gOvr4oUD2uSkM9P9fOPRE+2D2BceS8jRyfvefu1z5K34K+v19nO2SnSb5l4zY+OyWpPc1oHT4iU9y9kEeLPsMm+L0yfoI+S6UWPo2EdD4ffTC+ChhZPYtkaTxtfOU8CWjGvBXfk70QAvC90QKOPz+nBj6Z8D2/ps2EPdsQBz1YhLM9iRogPVtk9r4Y1Yc+tROevoJ0vb3E7ti9VWHKvYBXh70EN8a9O6wFPd1vkj1lb0I9CWdtPMS2aj4Xmo29VGyQvcglXT0hTwy+N1/xPRC/kT2AFBE9YT1DPsMKXj14rVA8a421vWQVprxY+hk9urZnvXNIKj6jyHo9NqI9vjEGiL4=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "V5qvvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "2npiPYgm9T2IjEC+8p4fPresA74Dt7g9LpKsPTwhkL1prt8993mQvatX8j1LZdi8mIT9PCBgrLzfG32+mChjvQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "reverse",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.023239,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.822571,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.387512,
+          "step": 300
+        },
+        {
+          "mae_seconds": 151.366669,
+          "step": 400
+        },
+        {
+          "mae_seconds": 150.640488,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.720337,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.832512,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.628616,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 214.102692,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.639862,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 153.297134,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.965195,
+        "mae_seconds": 150.640488,
+        "median_absolute_error": 95.007446,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 323.071747,
+        "predictions": 138910,
+        "rmse_seconds": 364.545286,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 125.874138,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.653687,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.344727,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 265.844727,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.377823,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 98.096474,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.564774,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          5.884884357452393,
+          5.244430065155029,
+          0.9498810768127441,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.7234233021736145,
+          1.5419316291809082,
+          0.21786166727542877,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "cIOiPfdXlr5dYyy+nrOavv9AkD4/tNU8rqgpvjGMub2byaq9YZyEvvT+KT2JLyw/3h48PRFcF75Rnh8+BpY2vg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "lIG4PpcsJL43nMM+VVkwPvwnLDwa+Lo9A7PuPdxzX7zHUgO9m26JPfPnp76H6yg+msqkPRVK0L1ihe29jjcGvgNHO7xDS7+9K0OvvKpBUz4LMp+9I+2rPipnhD5Fin29J62vPADzF73rBz+9d8W2vRo+ID6owqW+dxoWvrEDDj0eW5i9sNmBOpRA6T2oaxS+dxpoPhaggD5muhW+aBSHvm3Rlb63U9g9VySzPm8E972a/Z29AofXPXVUTb1wMi29jBKGPcqD0zziFrQ8Wre4PeGOBD6lkPg9Ic6ePRftpT4XGB0+TSaEvAQ9Cr7imbU8/3uNvgOkqj2mzRg+HGqIPKodp7xXkiq7mIQyPfNVezwj2S68dsuEvmucJT+Pcu29XAvvPnhjdr64fVg9MYumvhTFTL5q9Xe8498LvlmIj700++g9bO6bPjthXr4J7s69Hm/dPlNkWj7L0C+9c9U3PBuOKz6TZsa9RHWePd/7OL2xjY08ihwLvqzf4z0KZSu9RzNtOrItQr7xM1490XfzvPpVkb3AlVg+AMoJveuBUD6MJco8f0oIPRrfBb4WsQ6+YVq+vY9Wjr6G1m2+8TtLPIy3kL39x/u9Z/2RPLk77T0FMF2+ZPWiPBUWMT06NZs98pL/u68MOb7qUwY+N/MzvlVbj76zzko+06OtvXNlfb0N/B2+B4QHvlbq0r0Rc5890JxTPktS6DzYY3g92GJgvfgZtb0zEwU97cIGvg0JhD72YsI+JsjSPhI5Ub5QF6C+IW3VPBm1sz3+OCu8pfSTPbOc7buzKm0+JXNlPgZ4Er5Ry/o9D7omPRjD5Dw127W9n60rPU0DIr6+mUw9706ePF84RL6CAiC+DuvBPeAm5b3H5k88ts/DvfEJmrxrCBk99deJPhe4pL0TCZY+7nx9viNwlb4cD0S+nVKWvTFxqL327JY9ibeePQbBIL70F+w9WY/uPazOPr41Nsq+JJoIvncKgD2uoZ08ImG2PVCjgb2M3aq9lTBevjaVz70FJ0q9FlG6vlKb2z28gp0+907Bu0B7h77gGwo+CfwlPnbAYz5pZwG+8PoPvsk/Nz6R7KO+WnkVvodUmL4ztwE+fprlvA1mGz5vNw4+WRUKvnGzCL0pXBa+ETX5vZKgKL6S5ki9xZGTvs5OwjyIu4e9rhX+PfY2Az/pdXs+M2+Mv0LUYD+CEIY9Ig6gvFwIIr2o95u9mkGOvU4BlD5a8Dm+oawePil5bz70u8Y9ZtBBPYczyj2FD2I9mvXFvYM1HD1QAG88Z1DYvqylzr4uF54+dvZ8vvj0kT3XrHa9A0i+vaQS3b2UAG+6SkZVPT1/VT7vNq691jbvvvpXgz3gNBm9vuwaPyxSDzxyib89Wx+ovU20Qb0NIwc+Fx30PNu7ob7KzYg+sfMOPWNC3L3iXNC9I+LAvJn40D0QuvK+q5glvOMQCL51IFO+7XPDvaB3ML0bc5s+ZgojPkpCKD1jtv89TSeFvkRw7zxEXC6+7ltWPVPFhD1Mz0G9B4ThvUXHn77TNZy+Y96IvYfwgD7s4s69dK21PJwZ0D2ygn693x/0PX0Zpb4mZba8waIGPXkaDDxMtxU+xVEbPsWqpz03U/u+M7T7vZJRvj2midy9wT1PvV5wEr5wR6U8OIp5PpiXuL7Wc4k943mXvewQMz7Nl+E9+L3oPfwqFT5WGWG7s/thvmntVb0=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "Mn2vvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "7UrVvTg5wz3m3sM9FJKdvWJFvb3Bmnw8v4rAPYvJmT25Vyg9LTiJPZJUmz0ULq8+vPS7vQTohD0MgpK9gWQDvg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "permuted",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.992401,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.3134,
+          "step": 200
+        },
+        {
+          "mae_seconds": 150.973221,
+          "step": 300
+        },
+        {
+          "mae_seconds": 149.825012,
+          "step": 400
+        },
+        {
+          "mae_seconds": 149.671097,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 209.318054,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.099495,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 149.659103,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 213.767197,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 149.670059,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 154.014618,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.223145,
+        "mae_seconds": 149.671097,
+        "median_absolute_error": 94.743042,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 317.826721,
+        "predictions": 138910,
+        "rmse_seconds": 366.243857,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 126.65699,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 173.821121,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 256.590912,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 265.680847,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.002472,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.26252,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 141.547073,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          6.007785797119141,
+          4.849187850952148,
+          0.9171968698501587,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.6611661911010742,
+          1.7858777046203613,
+          0.27651676535606384,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "3JkBv7EXfT79N9o+cfcJv7QulrsHfte+Lj02PQpABT/Ytec+1wagvTfzNL9Ydum+xFe7vT1ZO72w44U+T82pPQ==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "nQ6aveZI6j04n1C9pt/evraxzb4OnBU7jLWePmMj8z3OmFE+7tU0PSwHfb5OUzU+Q7GLvmgZRT4pJN68CX2vvDb9ojxN5oI8HUgAPkPZZD7Emxo+nGpZvFn2I72kisG98CgOPqOAvD0mEMU8RLDXuydKKzoQZBK/vNvLvV4ohz20Bc+8BzWPPlYugz6W+iI9ZgYTPqA1Z75mdKG9GTgJvq2izT3uGwo+Bs8hPkRGuz603/M8Syw/vRtYbLxNPR++9uDkvNX+nD6PTPi8gKdkPeC9nD5oSbO9TGQ+PK7zFL66jFO95jTWvbiUeD4Lwby9Aqofv3Scvr6TD4Y/FwtqPT3gvL1QnIQ7wqYAPLWkuTyAizQ9qdvKvKPwQL2B2CE9CWRwvtdb1L38jeG8sN/8vZPVsb094Ow9lgnUvbbQAzxzaZG+QMvPPaAjQD6qf6e9XJJzPvg3Db6vkzU+fCk+vhPa9D2/GW89EzdpPeClHb4l8ok9XZumPYse/r1UyeU9FQS5vaQ4tDvkgN68LPEcPr4mDj4rh5c+0wdkvzidqL5/YYc+fy0TPWIee72GrI48zAJ4veDaiD4CeOo7I2lPPfHBkDxw4ZQ9JUrrvE4LQD1XJ9o8XRhKvo3KVr4W5f6724dsPpasYT6Q3gu9qzFlPr2GZD34IiG+MXWsu7sdcL50mmq9lxSjvrU9Aj7iWjc+fpV5PeAhZj6AH52+U93JvW23sD6k9iU8Z9X9Pe8YLT63CIQ9WTUHPST4ar8+b4s+SkY6POiu6b2VSQC9E18OvpiW7L1epSO9CHkgPffCXr1PHXU+mcrBPRWFxD3S8967E5ChvQ8+fbze3Re9EbvcvR2Jsr4/fYQ+gA4fvzlibjt2/Zs8kXwNvSFSmjyfpoG9h09TPUR5dD5XNhs+5HocPYxkwr1t/5q8/mFyvqMrQj6YFEw+ry1QvTNVGLxY1Ng9u4/Kvfx7IT7Tuag+zg2BvfJFWT3vlw6+R40WPnO7KD5i63o7km8lPl177j3OrWU6VDPGvjo1Jz2VUYg+FOUUPiwjgbkwBRI9W7VwPhLPVj3toJI9xXMhP3osQT7DqTW//M42PR5Vvz2FJAa99yCvPbpvOb09bB6+KnorvkV9wz0mQc29ki8gPhiPVT6a0pu86jA4PobjQz4pkvG9aN/5POxSET4iXoI+qrwhPhIuyD0akwc+8/mBPX7Shr166YM96S9pvcjN5T5ndQE+3ZxOPgsy4rzgRwy9KkRFPvf7rb5rDEY+RzQFvqXhCz7N/5W9vmvJPXWpETp4WC6+bWVLvdZ4wL3vgxS+/8bQPfy2qb2YBZE85oucPZfYKz7IQmU+tbzhPRQUCj5SAT+6ROe1vQ0tbj2Z/Yi8WLvNPO2ZKD20jHC86ZhKPDjuzz6Fu5I7bc8DPdcB5z3a0hU+N/IAPqWOE71JRSi+gnDuPK9nRz0AdZI9j1hLPlyaSL5V/4U6ZvWYvUnXXz1sr2S9IxwAPiq/i70sKQU//vuIPlVJrr358v8+nCVrPjh7Fj6XScs9pQSBPs6XKj1vmrS9dofwPLtJab7QmsG9as0CPuXxhT0Nidk9kGrJPEJd3TzX95Y9IZBuvpcITr0Eu6Y+o6gQvhmrkr3WIl0+iaSevWGF3D3tLQo+nriKO2yOaj06Xcm9XPfQvAfqFT1PULI8m5PWPbyxOz3fkaG+evTkvSU/Gj0=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "0wXdvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "N0uJPdyW3b1Ekdm9a6Kovs8U0Dy9Y3e+CF6+vYQ0Oz4RFCQ+9N3XvJsWKT5JaMs9Ja2RvBn8OrzWmLi9CoyfPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "permuted",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.587204,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.982834,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.015961,
+          "step": 300
+        },
+        {
+          "mae_seconds": 150.446335,
+          "step": 400
+        },
+        {
+          "mae_seconds": 150.074371,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.14856,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.26947,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.06189,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 216.697449,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.072906,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 156.219467,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.771225,
+        "mae_seconds": 150.074371,
+        "median_absolute_error": 94.784576,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 318.876404,
+        "predictions": 138910,
+        "rmse_seconds": 366.067659,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 125.073326,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 173.741089,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 257.283539,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 269.183289,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.908096,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.665489,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 142.543655,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          6.007785797119141,
+          4.849187850952148,
+          0.9171968698501587,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.6611661911010742,
+          1.7858777046203613,
+          0.27651676535606384,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "G208vkOuL7w2RZM+e9q+va7fMD1I4FA+MfLYvTJiZb56aj+/aAL+vaa/KT4KYZY9w6nfvSPjR775HEm/5U5Uuw==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "boZyPoRpOD62SUU8DsZhPgZU4L3h/Ai+6wYBPvkNPz7in5M9uhvdvMr4+72qqJk8FD71PspNnL6HIbo9Fqi6vnmGj70277C9q+9kvZPVLT3ANWC+0CGNvRtSkjw/hJi9iPcEvecoMz0JSJk96VLRPWdkdj6YmRC9b3dYvc+3Xz3g5Yc+KkYBvWpe4L2fOkU9G7b6PDGhdjsAm0W+vAGOPsPaJD06Mcu+jLy9vYa0j71P0Sa8jiqdveO7Xb2JogW+lAxDPMTB2T3n7gO+FOVWPgz7sr79l2m8M/nBPfZZID4iNVa9+jANPX5P372c3EY91TsNvsds7b2dN6k+PSaIPVA0P77kgK29M0KevIKpt73zUpo9q2HHvWzGuz0sQuY8g6koPa9SnjxF6MI7Xf2PPTdQr71o4Qk+5FW8PGli0r2m0Gq+mWJKvlLGvrzsofO8UZpuPJWXK72l+zw804iBvZgcLrxbhKS+VG6MPkMWxz4Oqes9jXI4vdFFC74LFIY+9agHvqSdiz33V+u9PrMJPDrEJr73YrY9sqoOv28q1L16xe46xyLDPKwBVL4iX7S9rmC2PE0Dy71mJRc+S/hpvsCaQ75R8PE9pFFkvmW4yz1+6029UOaeuklJD70P8Z+9VYksPgDvAr/iDIm93MiAPQRqwL5lLwc9DaMivlr1+b0EO2u+RRUTvjjLC77uCwU+mCrZPqXjBT1HOhY9RuKGvcGe+jzC8xo9I1UyvrUOmTzE3B+/jfqjvhexaz8topc9EryqvXL5Kb0pV/+8qpu2vETfVjwe7QQ9xcGCvG2Z8Tw5YE0/WmhnvWLFHj019iG+nEmEveNkuj2aqbG9KFhxvW8eOT1Smy0/I38tP9bnKL/CQnQ98NsCPvsFYzqAT8A8aBZ+vN9cHL7SZZ49VbWevQ6Rrj0kg9o9mmHNPVjVwrzdMB4+1TqePr3Rgr6KEiy+13VtPpThIj3vWNc+aI5rvmV6BL3YXVI9a2avu6weZL3JhiI9z/gVvxCQhL6IMIC9DtGiva43bj4BjTa+0MnhvUOBgD5bfpi9RIVTvXOrDL4GA4c++3NePjGGnr6SN+G9DcOpPUKzLr0B14G9o8SBvbefpj2Jc7y8IVUPvTh+Nj7TRku9xZPRPTpwrT2tDZq82CcnPtfZqD4MqV2+1v/YPI4ykD1Vugo8gOyRvhgOqT5nami+4YvtvIRi/z2f23u9KqlrPYK8pj7oguI9kDCgPNLWOz7z5bc9ZJ6cvdj+lD4OLoS+dMg2vIwQGj5CtDk+1vPMPk6l1D0jKXK+60tbPnS7Ub5l3Rs9CF+6PH5tdD2e2Kk9/gBpvWxfB72U4oK+rnDTvrtSQT46A1k99SwxvuPS4j2vTNS8uMUePkn4VT0dSQY+HGguPfNEkT4GrV6+eOItPK1TaL5aiFI+4mnEPUslFD6QGPC95eIbPmxOYD0pkqE9BxxAPti3fj6lLq29QjuOPUDmUD2MIEC8WnKvO/L1871m40O+XR6hP1ECCD4XWLu8iYYEPjbmIz3ZewU+kZn+PBdtGL6Ccxw9CY7lvTJUwL2njOu9NBq0vQThC7unbAm+IrHSPPtLFz0URYI9LKJWPbSNgz59gSO9tQs3vgknLzxOfVe+IUyKvA1qXj79YMi9H/9BPkkMwj0ZoeQ6aWkuvdJpS760peC7ZsW+vYUNvbt/aNS9y76DvXnT+js=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "zt12vQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "IzyFPeoHuT1XEGi9QyfhPaN0Vr1k8HM9zSeuPTnzTL7LXzY+91HbvQqKC76XbdY8tGjuPB83DL3OtWu+V+FCuw==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    },
+    {
+      "arm": "permuted",
+      "best_step": 500,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.887405,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.554153,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.052139,
+          "step": 300
+        },
+        {
+          "mae_seconds": 151.029556,
+          "step": 400
+        },
+        {
+          "mae_seconds": 149.941864,
+          "step": 500
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.43132,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 116.910194,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 149.929916,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 213.732452,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 149.940933,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 153.817444,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.844482,
+        "mae_seconds": 149.941864,
+        "median_absolute_error": 94.476517,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 321.256287,
+        "predictions": 138910,
+        "rmse_seconds": 364.212635,
+        "targets": 138910
+      },
+      "parameters": 353,
+      "route_metrics": [
+        {
+          "mae_seconds": 124.566643,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.660599,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.302307,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 267.954742,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 131.446716,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.736809,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 141.243652,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          6.007785797119141,
+          4.849187850952148,
+          0.9171968698501587,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.6611661911010742,
+          1.7858777046203613,
+          0.27651676535606384,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "2UYVvgqXdTzC/2I+252+PWe6uj7wohI7SdYtvrEzzT6WjtO8YpzAu/EAKT8a2xw/UbsdvWZfRb2/pZQ8ANRGvg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "uHHKPnDiCr7LZQs/6WeuOhbJET1uoPw9lvXzPZXF8DxGIfs8bM8Gvj72J77oy5w9bvXrvGFggz3VSU6+nz/tvQeTEz4onse9oOnvvZdaZz6qiE0+0FNyvHQGdTwd1h4+C/K+PUmYnLyRFQq9Pdv/vJP+4bxAJgK/BKBRvs/EAD7mKZq9YIcvPgq8CD6lZeq+qEC6PsMXJj4gzQ++5/5xvn0bnT1Y/+o+WsUWvdkJTj5RA36+vpqyPYqL071nn9C8AO2sPdmlpL6lHTy+WOQgPsEj7D3/vJA+qNSHvgKLjj6Jkl4+aUsPvi8rvzyC/0I99o/OPbA79T7Oo6m+V8fwvVCWxb3jRiC8iHB2vDW287z00ug9pNOGvDfhLD7wFKS9QmCuPTSc873VCnM9fxFgvuvS9b0LHWs+4HeJvn7Kl70G2Ns9xljxPfUlqr4D2Po89rwSvNdsDz7lk4S9pgOlPf2XVL0sdqg+8s6BPkc8Dr422vK8ibvQvpk8SD3zXtM+OdlEvWqNWb3jBO+8hdqZu66ktD3/S7M+mOvEvvoMOz6ddmm+NUO9PdKnkL3zqlW+1edrvs718zze9UK+i/y/vSBEUD3S6CS9QquSvKmBnj2fLZu9ie4/Pk3B+r2nSci8UXTzvQgotr0zeLY+xrIyvs4Drb5pHfs9JUFYPZeQjTqzPWy9T5YZvi1Ob75JEgq82jq9PRy7yz3K9eI9n9juPcua8Dydf5U+DRLCvqHBAz5ekiE/L0DMPil8Qr+DU789SVTIPOxSdzsw4So8IlXpvPPkv7tQdRC9jOh8PSMck738WG0+Cz6PO5MtqbwjJG286oLFvHghNb6dDnc9cgMHvUOiiL6k1Qs9oRO+vkjpCL7pyJi8qT4EPdQIrz3UEOI8w19tPqxF6L3FWjA+YKv4vZnj0b4Ux4+9t7WBvse3I76rQUE+ClJ1PaKICL6M7hU+1fkJPkW5qr0HgPu+y0QiPpY65D1l3O68dWHiPcdrBL6zp9y9KDu0vWaNBr36iMu8Ik3ZvseT6D3YTng+vBVzPblGBb6RY5Q9zGkQPoIrOD5yJfc9khg+v8bs9L7/j7Q9NNCTuweUyr1Y+2A8QfRMPIReDz0VCLQ9Mdomvnp65j01FSW+PrApvtkaIb7t53G9x1UavlWhub55Iqw977gEPrkwnT7KRU0+pxGJv2lXUD9MIN06uzxKva79Ub3KcK+9P+l7vbt5rD2k4AW9YaC7PVf4Dj4eKfQ9tapcvPHhxT0TD1s9TW0BvRmVYj2uzQ49fW/zvlVJ1L5R7eg+sbapvmtu+D3dBmW9Df6cvS+xvL2qXKc6YGBjPUj23j1swcW9xPcAv+05OD3CNSu8A4UoP/OJS73R8gg+PGIHvjhaAT0VYYs+p0tKPqEyBL+sy7s+ItSrPJlF4r07dMG9eB8pPezwOTyXn0y+/Ex0vGOnyLu+3wO/r3mBva6EKL1bPHA+1AtcPg4B6Dx8LzI+Vg4JvpRGqr3KgRm+6QdzPiRnTL4GuDE9N2y6vSYIcr7kIS6+ES+qvaejJz3N/n69qdt1vSqHijy7l5a9+4caPtM8Hb7pTLm9zIdsPFH45Dwg59o9Fy2gvlH3m72eo789bRRtvUlBAL49Nre9gW5gvnU2O74766C8oO1DPuDfhL7YwVa951WHve2Bjz5d8yO+s4mnPf+ZB72bs8K8Z6Q/Pb8KpL0=",
+          "shape": [
+            16,
+            20
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "1KOIvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "KPObvevv6703t4i9Pz3OvQK74Tw9Ksy9+1EnPiq0Iz6lxbU9DsYyPGDlQb58FII+MtXLvZeDij3ZEtu7k/ifPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 2048000
+    }
+  ],
+  "schema": 1,
+  "split": "validation",
+  "station_local_gate": {
+    "best_stage_3_mae_seconds": 152.647949,
+    "mean_mae_seconds": 150.271906,
+    "passed": true
+  },
+  "targets": 138910,
+  "topology_validation_gate": {
+    "mean": {
+      "macro_route_mae_seconds": {
+        "permuted": 170.612951,
+        "reverse": 171.16481,
+        "self": 170.705134,
+        "true": 166.533366
+      },
+      "mae_seconds": {
+        "permuted": 149.895777,
+        "reverse": 150.682343,
+        "self": 150.271906,
+        "true": 145.792679
+      },
+      "p90_absolute_error": {
+        "permuted": 319.319804,
+        "reverse": 321.669342,
+        "self": 321.03006,
+        "true": 309.365723
+      }
+    },
+    "passed": true,
+    "true_beats_both_stage_3_baselines": true,
+    "true_beats_controls_on_macro_route_mae": true,
+    "true_beats_controls_on_p90_absolute_error": true,
+    "true_beats_every_topology_control_in_every_seed": true
+  }
+}

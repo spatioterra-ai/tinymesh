@@ -32,14 +32,7 @@ def build(
   frozen_protocol: dict | None = None,
   frozen_validation: dict | None = None,
 ) -> tuple[dict, dict, dict | None]:
-  connection, source = open_population(source_dir)
-  population, _ = audit_events(connection)
-  _service_days(connection)
-  _targets(connection)
-  _schedule(connection, source_dir, source)
-  protocol = _protocol(connection, source_dir, population_audit, population)
-  candidates = [_temporal_candidate(connection, hours, support) for hours, support in TEMPORAL_CANDIDATES]
-  selected = min(candidates, key=lambda row: (row["mae_seconds"], row["bin_hours"], row["minimum_support"]))
+  connection, protocol, selected, candidates = open_task(source_dir, population_audit)
   validation = _evidence(connection, "validation", selected, candidates)
   validation["protocol_sha256"] = _digest(protocol)
   if include_test and (protocol != frozen_protocol or validation != frozen_validation):
@@ -49,6 +42,19 @@ def build(
     test["protocol_sha256"] = _digest(protocol)
     test["validation_sha256"] = _digest(validation)
   return protocol, validation, test
+
+
+def open_task(source_dir: Path, population_audit: Path) -> tuple[Any, dict, dict, list[dict]]:
+  """Open the verified population and reconstruct the frozen task in DuckDB."""
+  connection, source = open_population(source_dir)
+  population, _ = audit_events(connection)
+  _service_days(connection)
+  _targets(connection)
+  _schedule(connection, source_dir, source)
+  protocol = _protocol(connection, source_dir, population_audit, population)
+  candidates = [_temporal_candidate(connection, hours, support) for hours, support in TEMPORAL_CANDIDATES]
+  selected = min(candidates, key=lambda row: (row["mae_seconds"], row["bin_hours"], row["minimum_support"]))
+  return connection, protocol, selected, candidates
 
 
 def _service_days(connection: Any) -> None:
