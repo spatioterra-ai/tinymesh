@@ -1,14 +1,14 @@
 # MBTA topology signal
 
-Status: Stage 4 validation frozen; learned test evaluation remains unopened.
+Status: Stage 4 retained; learned test opened once after validation freeze.
 
-## Validation decision
+## Decision
 
-The frozen validation evidence identifies a directional topology candidate worth
-one test evaluation. A 353-parameter residual model using true upstream
-operational neighbors reaches 145.793 seconds mean MAE across three seeds. It
-beats the station-local, reversed, and degree-preserving permuted controls in
-every seed, as well as on route-macro MAE and p90 error.
+Retain a bounded topology-specific result. A 353-parameter residual model using
+true upstream operational neighbors reaches 149.398 seconds mean test MAE across
+three seeds. It beats both Stage 3 baselines and the station-local, reversed,
+and degree-preserving permuted controls in every seed, as well as on route-macro
+MAE and p90 error.
 
 ```text
 Stage 3 exact event target at cutoff
@@ -30,10 +30,12 @@ anchor                   on sparse neighbor(s)
                   |
            validation frozen
                   |
-            test still closed
+          single test passed
 ```
 
-This is validation evidence, not yet a retained topology claim.
+The claim is deliberately narrow: within this frozen retrospective MBTA task,
+the train-observed direction of service carries predictive next-headway
+information that matched false topologies do not.
 
 ## Frozen information boundary
 
@@ -128,6 +130,30 @@ The validation gate requires true topology to beat both Stage 3 baselines,
 every topology control in every seed, route-macro MAE, and p90 absolute error.
 All clauses pass. RMSE remains diagnostic rather than the selection metric.
 
+## Single test evidence
+
+The learned test split opened once after commit `4078a5117c`. No model was
+retrained: the evaluator rebuilt the causal features, matched the protocol,
+loaded the exact validation-selected states, and evaluated all 12 arms together.
+
+| Arm | Mean MAE | Mean route-macro MAE | Mean p90 AE |
+| --- | ---: | ---: | ---: |
+| self | 155.042 s | 152.978 s | 344.283 s |
+| **true** | **149.398 s** | **148.167 s** | **330.573 s** |
+| reverse | 155.241 s | 153.405 s | 344.604 s |
+| permuted | 154.771 s | 152.894 s | 343.124 s |
+
+True-topology seed MAEs are 149.049, 149.824, and 149.322 seconds. All beat
+their paired false-topology controls. The true arm also improves on the
+159.788-second temporal baseline, 166.062-second public plan, and
+156.384-second route-fitted anchor. It wins seven of eight route MAEs;
+Mattapan is the exception, so the result is not a universal per-route gain.
+
+The Schedule-resolved/unresolved mean MAEs are 140.845/208.423 seconds for true
+topology versus 146.261/215.637 for self-only. True topology therefore improves
+both provenance slices rather than winning by filtering unresolved observations.
+All arms cover all 176,568 test targets and produce zero nonpositive values.
+
 ## Determinism and reproduction
 
 An initial characterization found run-to-run drift despite fixed RNG seeds. The
@@ -140,26 +166,30 @@ fresh full builds produce byte-identical artifacts:
 | --- | --- |
 | protocol | `e3c44f17757820eea46c7c6e066fe914991c920388e1a56a4e17f7c013303db8` |
 | validation | `9e3fb262e8be83314f0606b2553011d6a0a0a6d5ec96b24366334719048c3069` |
+| test | `d2cf0d52bbb0aabba48fc25b561a49bfc7102feb2865764f469e94d0133c9e9a` |
 
 ```console
 uv run --locked --with duckdb==1.4.1 --with numpy==2.3.2 -m experiments.tools.mbta_topology --source-dir /tmp/mbta-population-source --population-audit experiments/fixtures/mbta_population/audit.json --task-protocol experiments/fixtures/mbta_headway_task/protocol.json --output-dir /tmp/mbta-topology
 uv run --locked python -m experiments.run mbta_topology
+uv run --locked --with duckdb==1.4.1 --with numpy==2.3.2 -m experiments.tools.mbta_topology --source-dir /tmp/mbta-population-source --population-audit experiments/fixtures/mbta_population/audit.json --task-protocol experiments/fixtures/mbta_headway_task/protocol.json --output-dir /tmp/mbta-topology --test
+uv run --locked python -m experiments.run mbta_topology TEST=1
 ```
 
 DuckDB and NumPy are one-off evidence-builder dependencies, not TinyMesh runtime
 dependencies. The executable record pins tinygrad plus the Stage 3 TSL,
 LibCity, and PyG Temporal study references.
 
-## Test gate and limits
+## Limits
 
-After this validation artifact is committed, one command may rebuild and match
-the protocol, load the exact selected states, and evaluate every learned test
-arm together. A positive claim additionally requires true topology to beat both
-Stage 3 test baselines, all controls in every seed, route-macro MAE, and p90
-error. Otherwise Stage 4 records a negative result and stops.
+The frozen claim gate required true topology to beat both Stage 3 test
+baselines, all controls in every seed, route-macro MAE, and p90 error. Every
+clause passed. This establishes incremental directional signal, not that this
+353-parameter model is an optimal forecast or that every route benefits.
 
 The topology comes from observed train run relations, not a universal transit
 ontology. Rare operational transitions remain with low affinity rather than an
 arbitrary support threshold. The experiment covers one MBTA summer interval,
-uses retrospective event time, and says nothing yet about online inference,
-service quality, other systems, or richer context.
+uses retrospective event time, and says nothing about online inference,
+service quality, other systems, causal intervention, or richer context. Stage 5
+remains closed until error analysis names a residual and a causally available
+context source.

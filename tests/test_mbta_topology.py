@@ -46,7 +46,7 @@ class MbtaTopologyTest(unittest.TestCase):
 
     self.assertEqual(model(Tensor.zeros(2, 3), anchor).tolist(), anchor.tolist())
 
-  def test_retained_validation_is_exact_and_learned_test_stays_closed(self) -> None:
+  def test_retained_validation_and_single_learned_test_open_are_exact(self) -> None:
     result = observe()
 
     self.assertEqual((result.targets, result.split), (138_910, "validation"))
@@ -56,8 +56,16 @@ class MbtaTopologyTest(unittest.TestCase):
       (150.271906, 145.792679, 150.682343, 149.895777),
     )
     self.assertEqual(result.decision, "freeze:open_learned_test_once")
-    self.assertFalse((FIXTURE / "test.json").exists())
     self.assertEqual(result, observe())
+
+    test = observe(test=True)
+    self.assertEqual((test.targets, test.split), (176_568, "test"))
+    self.assertEqual(test.anchor_mae_seconds, 156.383835)
+    self.assertEqual(
+      (test.self_mae_seconds, test.true_mae_seconds, test.reverse_mae_seconds, test.permuted_mae_seconds),
+      (155.042175, 149.398249, 155.241165, 154.7712),
+    )
+    self.assertEqual(test.decision, "retain:topology_specific_signal")
 
   def test_retained_artifacts_fail_closed_on_drift(self) -> None:
     with tempfile.TemporaryDirectory() as directory:
