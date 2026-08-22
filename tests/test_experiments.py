@@ -57,7 +57,13 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual(CATALOG["framework_benchmark"].references, framework)
         self.assertTrue(all(
             experiment.references == (
-                framework if name == "framework_benchmark" else event_mesh if name == "gtfs_event_mesh" else tinygrad
+                framework
+                if name == "framework_benchmark"
+                else event_mesh
+                if name == "gtfs_event_mesh"
+                else ()
+                if name == "mbta_population"
+                else tinygrad
             )
             for name, experiment in CATALOG.items()
         ))

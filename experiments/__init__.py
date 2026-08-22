@@ -82,6 +82,7 @@ CATALOG = {
             "submodules/torch-spatiotemporal",
         ),
     ),
+    "mbta_population": Experiment("data", "research-only", (), references=()),
     "mutag_jepa": Experiment(
         "representation",
         "research-only",
