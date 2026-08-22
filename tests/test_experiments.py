@@ -58,6 +58,12 @@ class CatalogTest(unittest.TestCase):
             "submodules/pytorch-geometric-temporal",
             "submodules/torch-spatiotemporal",
         )
+        mbta_topology = (
+            "submodules/libcity",
+            "submodules/pytorch-geometric-temporal",
+            "submodules/tinygrad",
+            "submodules/torch-spatiotemporal",
+        )
 
         self.assertEqual(CATALOG["framework_benchmark"].references, framework)
         self.assertTrue(all(
@@ -68,6 +74,8 @@ class CatalogTest(unittest.TestCase):
                 if name == "gtfs_event_mesh"
                 else headway_task
                 if name == "mbta_headway_task"
+                else mbta_topology
+                if name == "mbta_topology"
                 else ()
                 if name == "mbta_population"
                 else tinygrad

@@ -23,6 +23,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Should MBTA headway use events or a fixed clock as source truth? | A 597-event, 1,109-relation mesh reproduces all 575 derivable labels. 30/60-second clocks preserve identity but are 89.1%/78.2% empty; five-minute bins merge 90 identities. | Retain reversible departure events. Derive clocks only as matched controls after the task fixes their aggregation and missingness policy. |
 | Does the public LAMP export support a forecast-sufficient population? | A capped 28-day acquisition lowers 947,489 physical departures and reproduces 940,776 movement-headway labels. It measures 201 mismatches, 1,007 boundary labels, 384 ambiguous-order rows, and 78.2% exact Schedule identity. | Advance to a retrospective event-time task. Keep the full source population, make carrier and Schedule masks explicit, and make no online claim. |
 | What is the retrospective MBTA next-headway floor? | The frozen task retains 940,551 physical targets. Public plan leads validation at 152.648 s MAE, but the train-only temporal median leads the single test open at 159.788 s versus plan at 166.062 s and persistence at 229.802 s. | Carry both strong controls into Stage 4 and require improvement over each. Keep the claim retrospective. |
+| Does directed MBTA topology add next-headway signal? | On validation, the true upstream arm reaches 145.793 s mean MAE versus 150.272 self-only, 150.682 reversed, and 149.896 degree-preserving permuted controls, winning all three seeds plus route-macro and p90 error. | Freeze validation and open all learned test arms once. Make no topology claim until the test gate passes. |
 
 ## Sparse core
 
@@ -90,6 +91,8 @@ They are evidence, not API promises. This page is the current decision ledger;
 
 - [MBTA next-headway task](mbta-headway-task.md) — frozen event-time target,
   temporal split, leakage-safe baselines, validation evidence, and test gate.
+- [MBTA topology signal](mbta-topology.md) — sparse as-of neighbor messages,
+  matched false-topology controls, and frozen learned validation evidence.
 
 - [Chickenpox forecast](chickenpox-forecast.md) — matched node-local and graph
   recurrence without a stable graph advantage.

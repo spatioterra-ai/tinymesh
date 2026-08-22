@@ -93,6 +93,17 @@ CATALOG = {
             "submodules/torch-spatiotemporal",
         ),
     ),
+    "mbta_topology": Experiment(
+        "forecast",
+        "research-only",
+        ("TEST",),
+        references=(
+            "submodules/libcity",
+            "submodules/pytorch-geometric-temporal",
+            "submodules/tinygrad",
+            "submodules/torch-spatiotemporal",
+        ),
+    ),
     "mutag_jepa": Experiment(
         "representation",
         "research-only",
