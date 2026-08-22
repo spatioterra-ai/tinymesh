@@ -1,9 +1,9 @@
 {
   "artifacts": {
     "replay.csv": {
-      "bytes": 58902,
+      "bytes": 81649,
       "rows": 663,
-      "sha256": "41c06fda9fa38e19e193eb10266e37ebff93bc6464069ba4cea500ec71360304"
+      "sha256": "2f6540b3cb5db5dc49db36095791ba0196b601094cd70cb906ad65f71b0f5bb8"
     },
     "schedule_calls.csv": {
       "bytes": 28636,
@@ -37,10 +37,15 @@
     "tool": "duckdb==1.4.1"
   },
   "provenance": {
+    "dwell_time_seconds": "derived_observed_next_move_minus_mixed_stop",
+    "headway_trunk_seconds": "derived_successive_observed_next_moves",
     "move_timestamp": "observed_vehicle_position",
     "scheduled_arrival_time": "schedule",
     "scheduled_departure_time": "schedule",
-    "stop_timestamp": "mixed_vehicle_position_or_trip_update_prediction"
+    "scheduled_headway_trunk": "schedule_derived",
+    "scheduled_travel_time": "schedule_derived",
+    "stop_timestamp": "mixed_vehicle_position_or_trip_update_prediction",
+    "travel_time_seconds": "derived_mixed_stop_minus_observed_move"
   },
   "schedule": {
     "active_dates": [
@@ -49,7 +54,7 @@
     ],
     "feed_version": "Summer 2026, 2026-08-17T19:35:03+00:00, version D"
   },
-  "schema": 1,
+  "schema": 2,
   "source": {
     "files": [
       {
@@ -95,6 +100,11 @@
     "publisher": "Massachusetts Bay Transportation Authority via LAMP"
   },
   "source_audit": {
+    "blue_derived_headways": 4274,
+    "blue_exact_headways": 4274,
+    "blue_headway_mismatches": 0,
+    "blue_rows": 4706,
+    "blue_source_headways": 4274,
     "full_day_duplicate_trip_stops": 59,
     "full_day_missing_move": 2242,
     "full_day_missing_stop": 583,

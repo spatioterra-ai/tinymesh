@@ -20,11 +20,18 @@ REPLAY_FIELDS = (
   "route_id",
   "direction_id",
   "stop_id",
+  "parent_station",
   "stop_sequence",
   "move_timestamp",
   "stop_timestamp",
+  "travel_time_seconds",
+  "dwell_time_seconds",
+  "headway_trunk_seconds",
+  "trunk_route_id",
   "scheduled_arrival_time",
   "scheduled_departure_time",
+  "scheduled_travel_time",
+  "scheduled_headway_trunk",
 )
 
 
@@ -46,21 +53,61 @@ class ReplayRow:
   route_id: str
   direction_id: int
   stop_id: str
+  parent_station: str
   stop_sequence: int
   move_timestamp: int | None
   stop_timestamp: int | None
+  travel_time_seconds: int | None
+  dwell_time_seconds: int | None
+  headway_trunk_seconds: int | None
+  trunk_route_id: str
   scheduled_arrival_time: int | None
   scheduled_departure_time: int | None
+  scheduled_travel_time: int | None
+  scheduled_headway_trunk: int | None
 
 
 @dataclass(frozen=True)
-class IntervalAudit:
-  start_utc: int
-  rows: int
-  trip_instances: int
-  vehicles: int
-  active_edges: int
-  colliding_stops: int
+class Missingness:
+  move_timestamp: int
+  stop_timestamp: int
+  travel_time: int
+  dwell_time: int
+  trunk_headway: int
+  scheduled_arrival: int
+  scheduled_departure: int
+  scheduled_travel_time: int
+  scheduled_trunk_headway: int
+  vehicle_id: int
+  stop_id: int
+  observation_as_of: int
+
+
+@dataclass(frozen=True)
+class LineageAudit:
+  observed_vehicle_positions: int
+  mixed_stop_timestamps: int
+  mixed_travel_times: int
+  mixed_dwell_times: int
+  observed_trunk_headways: int
+
+
+@dataclass(frozen=True)
+class HeadwayAudit:
+  source_values: int
+  derived_values: int
+  exact_matches: int
+  mismatches: int
+  boundary_only: int
+  derived_only: int
+  physical_departures: int
+  duplicate_aliases: int
+  conflicting_aliases: int
+  parent_stations: int
+  station_directions: int
+  target_bins: int
+  colliding_target_bins: int
+  max_targets_per_bin: int
 
 
 @dataclass(frozen=True)
@@ -71,23 +118,16 @@ class Observation:
   stops: int
   schedule_rows_resolved: int
   duplicate_trip_stops: int
-  missing_move_timestamp: int
-  missing_stop_timestamp: int
-  missing_scheduled_arrival: int
-  missing_scheduled_departure: int
-  missing_vehicle_id: int
-  missing_stop_id: int
-  missing_observation_as_of: int
   observation_age_available: bool
-  observed_vehicle_positions: int
-  mixed_stop_timestamps: int
-  observed_arrival_targets: int
+  missing: Missingness
+  lineage: LineageAudit
+  headway: HeadwayAudit
   schedule_union_edges: int
   active_edges: int
-  colliding_stop_bins: int
-  max_vehicles_per_stop_bin: int
-  intervals: tuple[IntervalAudit, ...]
-  stage_3_decision: str
+  arrival_target_decision: str
+  travel_time_target_decision: str
+  dwell_target_decision: str
+  headway_target_decision: str
 
 
 def observe(path: str | Path = FIXTURE) -> Observation:
@@ -104,59 +144,65 @@ def observe(path: str | Path = FIXTURE) -> Observation:
   schedule_stops = {row["stop_id"] for row in tables["schedule_stops.csv"]}
   incoming, union_edges = _topology(calls_by_trip)
   resolved = _resolve(replay, trips, calls_by_trip, schedule_stops)
+  headway = _headways(replay, calls_by_trip)
 
-  intervals: dict[int, list[ReplayRow]] = defaultdict(list)
-  stop_vehicles: dict[tuple[int, str], set[str]] = defaultdict(set)
-  interval_edges: dict[int, set[tuple[str, str]]] = defaultdict(set)
-  for row in replay:
-    event_time = row.move_timestamp if row.move_timestamp is not None else row.stop_timestamp
-    if event_time is None:
-      continue
-    interval = event_time // BIN_SECONDS * BIN_SECONDS
-    intervals[interval].append(row)
-    stop_vehicles[(interval, row.stop_id)].add(row.vehicle_id)
-    edge = incoming.get((row.instance.trip_id, row.stop_sequence))
-    if edge is not None:
-      interval_edges[interval].add(edge)
-
-  interval_audits = tuple(
-    IntervalAudit(
-      interval,
-      len(rows),
-      len({row.instance for row in rows}),
-      len({row.vehicle_id for row in rows}),
-      len(interval_edges[interval]),
-      sum(len(vehicles) > 1 for (start, _), vehicles in stop_vehicles.items() if start == interval),
-    )
-    for interval, rows in sorted(intervals.items())
-  )
-  collisions = [len(vehicles) for vehicles in stop_vehicles.values() if len(vehicles) > 1]
-  active_edges = set().union(*interval_edges.values())
+  active_edges = {
+    edge
+    for row in replay
+    if (edge := incoming.get((row.instance.trip_id, row.stop_sequence))) is not None
+  }
   provenance = manifest["provenance"]
   return Observation(
-    len(replay),
-    len({row.instance for row in replay}),
-    len({row.vehicle_id for row in replay}),
-    len({row.stop_id for row in replay}),
-    resolved,
-    len(replay) - len({(row.instance, row.stop_sequence) for row in replay}),
-    sum(row.move_timestamp is None for row in replay),
-    sum(row.stop_timestamp is None for row in replay),
-    sum(row.scheduled_arrival_time is None for row in replay),
-    sum(row.scheduled_departure_time is None for row in replay),
-    sum(not row.vehicle_id for row in replay),
-    sum(not row.stop_id for row in replay),
-    len(replay),
-    False,
-    sum(row.move_timestamp is not None and provenance["move_timestamp"] == "observed_vehicle_position" for row in replay),
-    sum(row.stop_timestamp is not None and provenance["stop_timestamp"] == "mixed_vehicle_position_or_trip_update_prediction" for row in replay),
-    0,
-    len(union_edges),
-    len(active_edges),
-    len(collisions),
-    max(collisions, default=1),
-    interval_audits,
-    "blocked:no_source_tagged_observed_arrival_target",
+    source_rows=len(replay),
+    trip_instances=len({row.instance for row in replay}),
+    vehicles=len({row.vehicle_id for row in replay}),
+    stops=len({row.stop_id for row in replay}),
+    schedule_rows_resolved=resolved,
+    duplicate_trip_stops=len(replay) - len({(row.instance, row.stop_sequence) for row in replay}),
+    observation_age_available=False,
+    missing=Missingness(
+      move_timestamp=sum(row.move_timestamp is None for row in replay),
+      stop_timestamp=sum(row.stop_timestamp is None for row in replay),
+      travel_time=sum(row.travel_time_seconds is None for row in replay),
+      dwell_time=sum(row.dwell_time_seconds is None for row in replay),
+      trunk_headway=sum(row.headway_trunk_seconds is None for row in replay),
+      scheduled_arrival=sum(row.scheduled_arrival_time is None for row in replay),
+      scheduled_departure=sum(row.scheduled_departure_time is None for row in replay),
+      scheduled_travel_time=sum(row.scheduled_travel_time is None for row in replay),
+      scheduled_trunk_headway=sum(row.scheduled_headway_trunk is None for row in replay),
+      vehicle_id=sum(not row.vehicle_id for row in replay),
+      stop_id=sum(not row.stop_id for row in replay),
+      observation_as_of=len(replay),
+    ),
+    lineage=LineageAudit(
+      observed_vehicle_positions=sum(
+        row.move_timestamp is not None and provenance["move_timestamp"] == "observed_vehicle_position" for row in replay
+      ),
+      mixed_stop_timestamps=sum(
+        row.stop_timestamp is not None and provenance["stop_timestamp"] == "mixed_vehicle_position_or_trip_update_prediction"
+        for row in replay
+      ),
+      mixed_travel_times=sum(
+        row.travel_time_seconds is not None and provenance["travel_time_seconds"] == "derived_mixed_stop_minus_observed_move"
+        for row in replay
+      ),
+      mixed_dwell_times=sum(
+        row.dwell_time_seconds is not None and provenance["dwell_time_seconds"] == "derived_observed_next_move_minus_mixed_stop"
+        for row in replay
+      ),
+      observed_trunk_headways=sum(
+        row.headway_trunk_seconds is not None
+        and provenance["headway_trunk_seconds"] == "derived_successive_observed_next_moves"
+        for row in replay
+      ),
+    ),
+    headway=headway,
+    schedule_union_edges=len(union_edges),
+    active_edges=len(active_edges),
+    arrival_target_decision="reject:mixed_stop_lineage",
+    travel_time_target_decision="reject:mixed_stop_lineage",
+    dwell_target_decision="reject:mixed_stop_lineage",
+    headway_target_decision="extend_replay:observed_movement_headway",
   )
 
 
@@ -185,29 +231,43 @@ def _replay(row: dict[str, str], line: int) -> ReplayRow:
   try:
     direction = {"False": 0, "True": 1}[row["direction_id"]]
     return ReplayRow(
-      TripInstance(int(row["service_date"]), int(row["start_time"]), row["trip_id"]),
-      row["vehicle_id"],
-      row["route_id"],
-      direction,
-      row["stop_id"],
-      int(row["stop_sequence"]),
-      _optional_int(row["move_timestamp"]),
-      _optional_int(row["stop_timestamp"]),
-      _optional_int(row["scheduled_arrival_time"]),
-      _optional_int(row["scheduled_departure_time"]),
+      instance=TripInstance(int(row["service_date"]), int(row["start_time"]), row["trip_id"]),
+      vehicle_id=row["vehicle_id"],
+      route_id=row["route_id"],
+      direction_id=direction,
+      stop_id=row["stop_id"],
+      parent_station=row["parent_station"],
+      stop_sequence=int(row["stop_sequence"]),
+      move_timestamp=_optional_int(row["move_timestamp"]),
+      stop_timestamp=_optional_int(row["stop_timestamp"]),
+      travel_time_seconds=_optional_int(row["travel_time_seconds"]),
+      dwell_time_seconds=_optional_int(row["dwell_time_seconds"]),
+      headway_trunk_seconds=_optional_int(row["headway_trunk_seconds"]),
+      trunk_route_id=row["trunk_route_id"],
+      scheduled_arrival_time=_optional_int(row["scheduled_arrival_time"]),
+      scheduled_departure_time=_optional_int(row["scheduled_departure_time"]),
+      scheduled_travel_time=_optional_int(row["scheduled_travel_time"]),
+      scheduled_headway_trunk=_optional_int(row["scheduled_headway_trunk"]),
     )
   except (KeyError, ValueError) as error:
     raise ReplayError(f"replay.csv:{line}: invalid typed value") from error
 
 
 def _validate_manifest(manifest: dict) -> None:
+  if manifest["schema"] != 2:
+    raise ReplayError("manifest: unsupported schema")
   if manifest["extraction"]["event_selector"] != "coalesce(move_timestamp, stop_timestamp)":
     raise ReplayError("manifest: unsupported event selector")
   if manifest["provenance"] != {
+    "dwell_time_seconds": "derived_observed_next_move_minus_mixed_stop",
+    "headway_trunk_seconds": "derived_successive_observed_next_moves",
     "move_timestamp": "observed_vehicle_position",
     "scheduled_arrival_time": "schedule",
     "scheduled_departure_time": "schedule",
+    "scheduled_headway_trunk": "schedule_derived",
+    "scheduled_travel_time": "schedule_derived",
     "stop_timestamp": "mixed_vehicle_position_or_trip_update_prediction",
+    "travel_time_seconds": "derived_mixed_stop_minus_observed_move",
   }:
     raise ReplayError("manifest: unsupported provenance contract")
 
@@ -259,12 +319,76 @@ def _resolve(
       raise ReplayError(f"schedule: unresolved identity {row.instance!r} stop_sequence={row.stop_sequence}")
     if (trip["route_id"], int(trip["direction_id"])) != (row.route_id, row.direction_id) or call["stop_id"] != row.stop_id:
       raise ReplayError(f"schedule: mismatched identity {row.instance!r} stop_sequence={row.stop_sequence}")
-    if (_time(call["arrival_time"]), _time(call["departure_time"])) != (
-      row.scheduled_arrival_time,
-      row.scheduled_departure_time,
-    ):
+    if (_time(call["arrival_time"]), _time(call["departure_time"])) != (row.scheduled_arrival_time, row.scheduled_departure_time):
       raise ReplayError(f"schedule: mismatched time {row.instance!r} stop_sequence={row.stop_sequence}")
   return len(replay)
+
+
+def _headways(replay: tuple[ReplayRow, ...], calls_by_trip: dict[str, tuple[dict[str, str], ...]]) -> HeadwayAudit:
+  next_sequence = {
+    (trip_id, int(current["stop_sequence"])): int(following["stop_sequence"])
+    for trip_id, calls in calls_by_trip.items() for current, following in zip(calls, calls[1:])
+  }
+  trips: dict[tuple[TripInstance, str], list[ReplayRow]] = defaultdict(list)
+  for row in replay:
+    trips[(row.instance, row.vehicle_id)].append(row)
+
+  departures = []
+  for rows in trips.values():
+    ordered = sorted(rows, key=lambda row: row.stop_sequence)
+    for current, following in zip(ordered, ordered[1:]):
+      expected = next_sequence.get((current.instance.trip_id, current.stop_sequence))
+      if expected == following.stop_sequence and following.move_timestamp is not None:
+        departures.append((current, following.move_timestamp))
+
+  physical: dict[tuple[int, str, str, int, int], list[ReplayRow]] = defaultdict(list)
+  for row, target_time in departures:
+    physical[(row.instance.service_date, row.vehicle_id, row.parent_station, row.direction_id, target_time)].append(row)
+  conflicting = sum(len({row.headway_trunk_seconds for row in rows}) > 1 for rows in physical.values())
+  if conflicting:
+    raise ReplayError(f"headway: {conflicting} physical departures have conflicting source labels")
+  canonical = [(min(rows, key=lambda row: (row.instance, row.stop_sequence)), key[-1]) for key, rows in physical.items()]
+
+  by_lane: dict[tuple[str, str, int], list[tuple[ReplayRow, int]]] = defaultdict(list)
+  for row, target_time in canonical:
+    by_lane[(row.parent_station, row.trunk_route_id, row.direction_id)].append((row, target_time))
+  derived: dict[ReplayRow, tuple[int, int]] = {}
+  for events in by_lane.values():
+    ordered = sorted(events, key=lambda item: item[1])
+    for (_, previous), (row, target_time) in zip(ordered, ordered[1:]):
+      value = target_time - previous
+      if value <= 0:
+        raise ReplayError("headway: departure time did not advance")
+      derived[row] = (target_time, value)
+
+  exact = {row for row, (_, value) in derived.items() if row.headway_trunk_seconds == value}
+  mismatches = [row for row, (_, value) in derived.items() if row.headway_trunk_seconds is not None and row.headway_trunk_seconds != value]
+  if mismatches:
+    row = mismatches[0]
+    raise ReplayError(f"headway: source mismatch for {row.instance!r} stop_sequence={row.stop_sequence}")
+  source = {row for row in replay if row.headway_trunk_seconds is not None}
+  derived_only = {row for row in derived if row.headway_trunk_seconds is None}
+  bins: dict[tuple[str, int, int], int] = defaultdict(int)
+  for row in exact:
+    target_time = derived[row][0]
+    bins[(row.parent_station, row.direction_id, target_time // BIN_SECONDS * BIN_SECONDS)] += 1
+
+  return HeadwayAudit(
+    source_values=len(source),
+    derived_values=len(derived),
+    exact_matches=len(exact),
+    mismatches=0,
+    boundary_only=len(source - exact),
+    derived_only=len(derived_only),
+    physical_departures=len(physical),
+    duplicate_aliases=len(departures) - len(physical),
+    conflicting_aliases=0,
+    parent_stations=len({row.parent_station for row in exact}),
+    station_directions=len({(row.parent_station, row.direction_id) for row in exact}),
+    target_bins=len(bins),
+    colliding_target_bins=sum(count > 1 for count in bins.values()),
+    max_targets_per_bin=max(bins.values(), default=0),
+  )
 
 
 def _time(value: str) -> int:

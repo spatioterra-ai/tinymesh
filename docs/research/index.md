@@ -19,7 +19,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Can one sparse graph represent a bounded node-time mesh? | Cartesian products, batched endpoint gathers, and batched GINE pass 30 focused tests on CPU and Metal without dense adjacency. | Yes when joint message passing needs explicit node-time vertices. Keep long fixed-topology sequences factorized. |
 | Does causal JEPA learn a useful node-time representation? | The true-mesh encoder improves over its paired random initialization in all three seeds and test agrees, but spatial-only features beat the joint product in two of three. | Continue the objective as research; reject explicit temporal edges as the incumbent on this task. Promote no JEPA API. |
 | Does real traffic support factorized causal JEPA? | Latent loss falls 75.6%, but the trained factorized encoder regresses its paired random encoder in all three seeds and loses every simpler control on mean validation RMSE. | Reject this encoder, mask, objective, and budget. Keep test closed and promote no JEPA API. |
-| Can the retained MBTA replay support an observed-arrival forecast? | All 663 rows resolve to the active Schedule, but every stop timestamp has unresolved Vehicle Position-or-prediction lineage and the export omits freshness clocks. | No. Retain the replay boundary and block Stage 3 until a source supplies tagged observations. |
+| Which LAMP field can support an operational forecast? | Arrival, travel time, and dwell inherit mixed stop provenance. Movement-derived trunk headway reproduces exactly for all 4,274 full-day Blue Line labels and 26,558 physical departures across a seven-day audit. | Retain MBTA and extend the headway replay before specifying a task. Add no public adapter or model yet. |
 
 ## Sparse core
 
@@ -75,8 +75,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   directed affinity.
 - [MUTAG](mutag-data.md) — variable-size molecular graphs with aligned atom,
   bond, and graph labels.
-- [MBTA Blue Line replay](mbta-replay-data.md) — version-aligned operational
-  rows, event provenance, interval activity, and a rejected forecast target.
+- [MBTA Blue Line replay](mbta-replay-data.md) — version-aligned operations,
+  rejected mixed-stop targets, and validated movement-derived headway.
 
 ## Forecast evidence
 
