@@ -139,7 +139,7 @@ fresh full builds produce byte-identical artifacts:
 | Artifact | SHA-256 |
 | --- | --- |
 | protocol | `e3c44f17757820eea46c7c6e066fe914991c920388e1a56a4e17f7c013303db8` |
-| validation | `2c972cff3c24bc0748742a567d6df5ad34be526b16d822e42a6f9cbbb87750de` |
+| validation | `9e3fb262e8be83314f0606b2553011d6a0a0a6d5ec96b24366334719048c3069` |
 
 ```console
 uv run --locked --with duckdb==1.4.1 --with numpy==2.3.2 -m experiments.tools.mbta_topology --source-dir /tmp/mbta-population-source --population-audit experiments/fixtures/mbta_population/audit.json --task-protocol experiments/fixtures/mbta_headway_task/protocol.json --output-dir /tmp/mbta-topology

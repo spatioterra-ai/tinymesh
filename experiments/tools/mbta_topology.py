@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 from dataclasses import dataclass
@@ -519,7 +520,7 @@ def _fit(arm: str, seed: int, train: Arrays, validation: Arrays) -> dict:
     checkpoints.append({"step": step, "mae_seconds": round(mae, 6)})
     if mae < best_mae:
       best_mae, best_step, best_state = mae, step, _state(model)
-  nn.state.load_state_dict(model, {name: Tensor(value) for name, value in best_state.items()}, verbose=False)
+  nn.state.load_state_dict(model, _tensors(best_state), verbose=False)
   prediction = _predict(model, held_out, validation_anchor, target_mean, target_scale)
   scaler = {
     "feature_mean": mean.tolist(),
@@ -549,7 +550,7 @@ def _evaluate_frozen(frozen: dict, arrays: Arrays) -> dict:
   features = ((arrays.features - np.asarray(scaler["feature_mean"])) / np.asarray(scaler["feature_scale"])).astype("float32")
   anchor = ((np.log1p(arrays.anchor) - scaler["target_mean"]) / scaler["target_scale"]).astype("float32")
   model = ResidualModel(features.shape[1], HIDDEN)
-  nn.state.load_state_dict(model, {name: Tensor(value) for name, value in frozen["state"].items()}, verbose=False)
+  nn.state.load_state_dict(model, _tensors(frozen["state"]), verbose=False)
   prediction = _predict(model, features, anchor, scaler["target_mean"], scaler["target_scale"])
   return {
     "arm": frozen["arm"],
@@ -573,8 +574,23 @@ def _predict(model: ResidualModel, features: Any, anchor: Any, target_mean: floa
   return np.expm1(np.concatenate(chunks) * target_scale + target_mean)
 
 
-def _state(model: ResidualModel) -> dict[str, list]:
-  return {name: value.numpy().tolist() for name, value in nn.state.get_state_dict(model).items()}
+def _state(model: ResidualModel) -> dict[str, dict]:
+  return {
+    name: {
+      "shape": list(value.shape),
+      "float32_base64": base64.b64encode(value.numpy().astype("<f4").tobytes()).decode(),
+    }
+    for name, value in nn.state.get_state_dict(model).items()
+  }
+
+
+def _tensors(state: dict[str, dict]) -> dict[str, Tensor]:
+  import numpy as np
+
+  return {
+    name: Tensor(np.frombuffer(base64.b64decode(value["float32_base64"]), dtype="<f4").reshape(value["shape"]).copy())
+    for name, value in state.items()
+  }
 
 
 def _baselines(arrays: Arrays) -> dict:
