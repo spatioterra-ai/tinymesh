@@ -22,10 +22,10 @@ The priority is deliberate:
 4. TorchGeo and TerraTorch bound optional geographic context and remain unused
    unless error evidence gives that context a causal role.
 
-The additional study checkouts are shallow. A stage that names one must cite the
-exact files that can change its design. Remove the gitlink when the stage closes
-unless retained executable evidence reads it; `submodules/` is not a bookmark
-collection.
+The additional study checkouts are shallow, durable, revision-bound references.
+A stage that names one must cite the exact files that can change its design.
+Retention does not authorize runtime imports or require routine pin updates;
+gitlinks move only when an intentional study needs a different revision.
 
 This produces direct classes with ordinary Tensor attributes and `__call__`,
 not a framework inside a framework. `tinymesh.nn` contains only components
