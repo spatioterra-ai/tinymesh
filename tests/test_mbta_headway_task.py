@@ -62,7 +62,7 @@ class MbtaHeadwayTaskTest(unittest.TestCase):
     self.assertEqual(split_for(date(2026, 8, 16)), "test")
     self.assertEqual(split_for(date(2026, 8, 20)), "test")
 
-  def test_retained_validation_is_exact_and_test_stays_closed(self) -> None:
+  def test_retained_validation_and_single_test_open_are_exact(self) -> None:
     result = observe()
 
     self.assertEqual(
@@ -78,8 +78,15 @@ class MbtaHeadwayTaskTest(unittest.TestCase):
       (217.968544, 157.151623, 152.647955),
     )
     self.assertEqual((result.best_baseline, result.decision), ("plan", "freeze:open_test_once"))
-    self.assertFalse((FIXTURE / "test.json").exists())
     self.assertEqual(result, observe())
+
+    test = observe(test=True)
+    self.assertEqual((test.split, test.temporal_bin_hours, test.temporal_minimum_support), ("test", 1, 4))
+    self.assertEqual(
+      (test.persistence_mae_seconds, test.temporal_mae_seconds, test.plan_mae_seconds),
+      (229.801565, 159.787552, 166.062206),
+    )
+    self.assertEqual((test.best_baseline, test.decision), ("temporal", "freeze:stage_4_input"))
 
   def test_retained_artifacts_fail_closed_on_drift(self) -> None:
     with tempfile.TemporaryDirectory() as directory:

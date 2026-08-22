@@ -1,6 +1,6 @@
 # MBTA next-headway task
 
-Status: Stage 3 validation frozen; test split remains unopened.
+Status: Stage 3 frozen; test opened once after validation freeze.
 
 ## Decision
 
@@ -89,7 +89,7 @@ errors globally rather than averaging batch summaries. PyG Temporal's static
 snapshot container is retained only as a future clock control; it cannot own
 the event-time task.
 
-## Frozen validation evidence
+## Frozen evidence
 
 Primary selection metric is micro MAE over every covered target. RMSE,
 median/p90 absolute error, per-route MAE and count, macro-route MAE, and coverage
@@ -113,6 +113,19 @@ public plan and does not require the observed vehicle to resolve to a scheduled
 trip. The mask measures provenance, while the baseline measures whether a lane
 plan exists at cutoff.
 
+The test split was opened once after commit `c44f33a39d`. The selected temporal
+configuration was not revised:
+
+| Baseline | Coverage | MAE | RMSE | Median AE | p90 AE | Macro-route MAE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| persistence | 99.3028% | 229.802 s | 437.388 s | 151 s | 512 s | 229.647 s |
+| temporal median | 100% | **159.788 s** | **346.368 s** | **102 s** | 353 s | **158.356 s** |
+| public plan | 99.9037% | 166.062 s | 351.393 s | 112 s | **352 s** | 165.392 s |
+
+The validation winner does not remain the test winner. The public plan regresses
+by 13.414 s MAE while the temporal control changes by 2.636 s. Stage 4 must beat
+both controls rather than treating either split-specific winner as sufficient.
+
 ## Freeze and reproduction
 
 The retained `protocol.json` binds the sealed source manifest, Stage 2 audit,
@@ -121,14 +134,15 @@ the protocol checksum. The test command first rebuilds and byte-compares both
 frozen artifacts, refuses an existing `test.json`, and only then evaluates test.
 
 ```console
-uv run --locked --with duckdb==1.4.1 -m experiments.tools.mbta_headway_task --source-dir /tmp/mbta-population-source --population-audit experiments/fixtures/mbta_population/audit.json --output-dir experiments/fixtures/mbta_headway_task
+uv run --locked --with duckdb==1.4.1 -m experiments.tools.mbta_headway_task --source-dir /tmp/mbta-population-source --population-audit experiments/fixtures/mbta_population/audit.json --output-dir /tmp/mbta-headway-task
 uv run --locked python -m experiments.run mbta_headway_task
 ```
 
-After validation review, the single test-opening command is:
+To reproduce the already recorded single test opening in the fresh output is:
 
 ```console
-uv run --locked --with duckdb==1.4.1 -m experiments.tools.mbta_headway_task --source-dir /tmp/mbta-population-source --population-audit experiments/fixtures/mbta_population/audit.json --output-dir experiments/fixtures/mbta_headway_task --test
+uv run --locked --with duckdb==1.4.1 -m experiments.tools.mbta_headway_task --source-dir /tmp/mbta-population-source --population-audit experiments/fixtures/mbta_population/audit.json --output-dir /tmp/mbta-headway-task --test
+uv run --locked python -m experiments.run mbta_headway_task TEST=1
 ```
 
 The executable record pins TSL `aa5f313e000d192bdec270748b8d01df5912e58e`,
