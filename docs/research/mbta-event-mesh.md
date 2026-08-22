@@ -140,11 +140,13 @@ future incident relation.
 Acquire and retain event facts, not pre-binned snapshots. Stage 2 should first
 estimate a capped 28-day, all-rapid-transit extraction, then retain the smallest
 population that covers ordinary and disrupted service without weakening
-lineage. Its manifest must preserve:
+observational lineage. Its manifest must preserve:
 
 - immutable raw checksums, license, source revision, active Schedule, route,
   service date, trip instance, vehicle, stop sequence, parent station,
   direction, trunk route, and movement timestamp;
+- exact Schedule-call identity as a separate mask: absence may disable
+  plan-derived features or baselines but cannot erase an observed movement;
 - source headway only as an audit label, plus explicit generation and ingestion
   clocks when the source actually provides them;
 - enough leading and trailing context to derive departures and headways at the

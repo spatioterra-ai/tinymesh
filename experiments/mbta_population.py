@@ -1,4 +1,4 @@
-"""Validate the retained MBTA population audit and its Stage 2 decision."""
+"""Validate the retained MBTA population audit and its Stage 3 boundary."""
 
 from __future__ import annotations
 
@@ -64,7 +64,7 @@ def observe(path: str | Path = FIXTURE) -> Observation:
     schedule_versions=len(versions),
     availability=audit["availability"],
     decision=audit["decision"],
-    stage_3_consequence="blocked:retain_no_task_until_schedule_identity_is_recoverable",
+    stage_3_consequence="advance:retrospective_event_time_with_schedule_mask",
   )
 
 
@@ -120,7 +120,7 @@ def _validate_audit(audit: dict, manifest: dict, manifest_bytes: bytes) -> None:
   versions = audit.get("schedule_versions", ())
   if len(versions) != 28 or {row["service_date"] for row in versions} != dates:
     raise PopulationError("audit: Schedule version drift")
-  expected = "stop:insufficient_schedule_identity" if unresolved else "advance:stage_3"
+  expected = "advance:stage_3_retrospective_with_schedule_mask" if unresolved else "advance:stage_3_retrospective"
   if audit.get("decision") != expected:
     raise PopulationError("audit: decision does not follow evidence")
 

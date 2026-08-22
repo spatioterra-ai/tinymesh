@@ -305,7 +305,11 @@ def audit(directory: Path) -> dict[str, object]:
     },
     "schedule_versions": versions,
     "date_routes": groups,
-    "decision": "stop:insufficient_schedule_identity" if totals["schedule_unresolved"] else "advance:stage_3",
+    "decision": (
+      "advance:stage_3_retrospective_with_schedule_mask"
+      if totals["schedule_unresolved"]
+      else "advance:stage_3_retrospective"
+    ),
   }
 
 

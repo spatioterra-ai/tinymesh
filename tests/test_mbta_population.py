@@ -150,7 +150,8 @@ class MbtaPopulationTest(unittest.TestCase):
       (821_513, 228_746, 221_220, 4_363, 3_163),
     )
     self.assertEqual(result.schedule_versions, 12)
-    self.assertEqual(result.decision, "stop:insufficient_schedule_identity")
+    self.assertEqual(result.decision, "advance:stage_3_retrospective_with_schedule_mask")
+    self.assertEqual(result.stage_3_consequence, "advance:retrospective_event_time_with_schedule_mask")
     self.assertEqual(result, observe())
 
   def test_retained_manifest_and_audit_drift_fail_closed(self) -> None:

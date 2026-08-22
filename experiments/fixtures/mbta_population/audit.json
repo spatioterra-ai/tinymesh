@@ -3138,7 +3138,7 @@
       "vehicles": 27
     }
   ],
-  "decision": "stop:insufficient_schedule_identity",
+  "decision": "advance:stage_3_retrospective_with_schedule_mask",
   "end_date": "2026-08-20",
   "population": {
     "dates": 28,

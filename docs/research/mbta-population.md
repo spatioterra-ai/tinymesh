@@ -1,14 +1,14 @@
 # MBTA event population
 
-Status: Stage 2 stopped; Stage 3 is blocked on recoverable Schedule identity.
+Status: Stage 2 passed for retrospective event-time forecasting.
 
 ## Decision
 
-Do not specify or train a headway forecast from this population. The bounded
-28-day acquisition has ample rows, dates, routes, and source headways, but
-21.8% of rows cannot round-trip to the active Schedule identity exposed by the
-public daily source. Filtering those rows would disproportionately erase added
-and disrupted service.
+Advance to Stage 3 with every observed movement retained. The bounded 28-day
+acquisition has ample dates, routes, movement rows, and source headways for a
+retrospective event-time task. Exact active-Schedule identity is available for
+78.2% of rows; Stage 3 must mask Schedule-dependent features and baselines on
+the remainder rather than erase added and disrupted service.
 
 ```text
 28 dates × 8 routes
@@ -26,14 +26,17 @@ and disrupted service.
         ADDED   NONREV     other
                    |
                    v
-     stop: insufficient Schedule identity
+      Schedule identity mask
                    |
                    v
-         do not open Stage 3
+  retrospective event-time Stage 3
 ```
 
-This is a provenance failure, not a claim that the operational observations
-are inaccurate or that headway is unforecastable.
+Physical-event identity and Schedule-call identity are different facts. The
+former is sufficient to reconstruct observed departures and headways. The
+latter identifies the exact plan used for optional plan-derived features and
+baselines. Missing Schedule identity limits those comparisons; it does not
+invalidate an observed movement.
 
 ## Bounded acquisition
 
@@ -81,9 +84,9 @@ identifier nor the version key.
 
 That omission matters because an `ADDED-*` real-time trip ID is not itself a
 Schedule trip ID. The daily row retains derived scheduled values but not the
-identity needed to independently recover the exact applicable calls. Treating
-those values as an unnamed Schedule would weaken the reversible identity
-contract established in Stage 1.
+identity needed to independently recover the exact applicable calls. Stage 3
+therefore cannot present those rows as exact Schedule round trips. It can still
+use their observed movement events and movement-derived headways.
 
 The larger public `LAMP_ALL_RT_fields.parquet` does expose
 `static_trip_id_guess` and `static_version_key`, but its observed object size was
@@ -103,16 +106,16 @@ did not acquire or silently range-project it.
 | unresolved Schedule rows | 228,746 (21.78%) |
 | unresolved `ADDED-*` / `NONREV-*` / other | 221,220 / 4,363 / 3,163 |
 
-The problem is not diffuse harmless noise. Examples include every one of the
-5,112 Green-D rows on 2026-08-12 and all 4,276 Green-D rows on 2026-08-14.
-Removing unresolved rows would remove whole route-days and preferentially
-discard atypical operations. A model trained afterward could appear clean only
-because the acquisition deleted the regimes it was meant to test.
+The missing identity is not diffuse harmless noise. Examples include every one
+of the 5,112 Green-D rows on 2026-08-12 and all 4,276 Green-D rows on
+2026-08-14. Removing unresolved rows would remove whole route-days and
+preferentially discard atypical operations. Schedule coverage must therefore
+be a reported mask, never a population filter.
 
 The daily source exposes event time but no per-event generation, ingestion, or
 as-of clock. `index.csv.last_modified` is publication metadata for a completed
-file, not fact availability. Even with Schedule identity repaired, the current
-population could support only retrospective event-time forecasting.
+file, not fact availability. The current population therefore supports only
+retrospective event-time forecasting, regardless of Schedule identity.
 
 ## Reproduction
 
@@ -129,26 +132,27 @@ The clean decision run is bound to revision
 `f31c48a6e436dd839c67264ba4b243f905ba9930`. It reads no study gitlink and
 records an empty reference set.
 
-## What would reopen Stage 3
+## Stage 3 boundary
 
-Any replacement must preserve the event carrier and satisfy one of these
-without exceeding an explicit cap:
+Stage 3 may define a retrospective event-time task under four constraints:
 
-- immutable date-partitioned rows containing the matched static trip ID and
-  Schedule version;
-- an official immutable mapping from real-time trip aliases to exact Schedule
-  identities; or
-- a fully reproducible mapping whose output is unique and agrees with every
-  exported Schedule fact, including added and disrupted service.
+- derive inputs and targets only from observed movement events;
+- retain added, disrupted, and nonrevenue rows when they satisfy the task's
+  explicit movement and lane eligibility rules;
+- expose exact Schedule identity as a mask and report baseline coverage;
+- treat source-provided scheduled values as plan-derived annotations with LAMP
+  provenance, never as independently reversible Schedule calls.
 
-Until then, retain the Stage 1 carrier and this negative population record, but
-do not add a task, model, public loader, clock default, or partial “clean”
-dataset. Reducing dates or routes does not repair the ownership hole.
+An exact Schedule baseline may be reported on the 78.2% resolved subset, but it
+must not define the population or the primary observational metrics. Persistence
+and station-local temporal baselines can cover every eligible event. A future
+identity-bearing source can expand the Schedule comparison without changing the
+event carrier.
 
 ## Limits
 
-The audit proves failure for one explicit four-week 2026 population and the
-pinned public source contract. LAMP could publish a smaller identity-bearing
-partition later. The result does not reject other transit operators, direct
-GTFS-Realtime archives with feed timestamps, or a future MBTA export with the
-missing identity and availability fields.
+The audit proves population size, source lineage, Schedule-identity coverage,
+and missing availability clocks for one explicit four-week 2026 population.
+It does not yet prove a forecast window, split, baseline score, topology value,
+or online-causal claim. Direct GTFS-Realtime archives or a future MBTA export
+with feed timestamps could support a stronger availability contract.
