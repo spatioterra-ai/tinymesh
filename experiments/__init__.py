@@ -72,6 +72,16 @@ CATALOG = {
     "gtfs_transition": Experiment("data", "research-only", ()),
     "gtfs_snapshot": Experiment("data", "research-only", ("DEV",)),
     "gtfs_replay": Experiment("data", "research-only", ()),
+    "gtfs_event_mesh": Experiment(
+        "data",
+        "research-only",
+        (),
+        references=(
+            "submodules/pytorch-geometric",
+            "submodules/pytorch-geometric-temporal",
+            "submodules/torch-spatiotemporal",
+        ),
+    ),
     "mutag_jepa": Experiment(
         "representation",
         "research-only",
