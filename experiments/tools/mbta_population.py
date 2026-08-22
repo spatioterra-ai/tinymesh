@@ -191,73 +191,9 @@ def seal(value: Plan, directory: Path) -> Plan:
 def audit(directory: Path) -> dict[str, object]:
   """Audit population and exact Schedule identity from sealed local sources."""
   manifest_path = directory / "manifest.json"
-  value = read(manifest_path)
-  _validate_plan(value)
-  for source in value.sources:
-    _verify(directory / source.filename, source)
-  try:
-    import duckdb
-  except ImportError as error:
-    raise RuntimeError("population audit requires duckdb==1.4.1") from error
-
-  connection = duckdb.connect()
-  performance = [str(directory / source.filename) for source in value.sources if source.name == "performance"]
-  trips = str(_source_path(directory, value, "trips"))
-  calls = str(_source_path(directory, value, "stop_times"))
-  stops = str(_source_path(directory, value, "stops"))
+  connection, value = open_population(directory)
   feed = str(_source_path(directory, value, "feed_info"))
-  connection.execute("CREATE TEMP TABLE performance AS SELECT * FROM read_parquet(?)", [performance])
-  connection.execute(
-    """
-    CREATE TEMP TABLE schedule_calls AS
-    WITH dates AS (SELECT DISTINCT service_date FROM performance),
-    calls AS (
-      SELECT *,
-        split_part(arrival_time, ':', 1)::INT * 3600
-          + split_part(arrival_time, ':', 2)::INT * 60
-          + split_part(arrival_time, ':', 3)::INT AS arrival,
-        split_part(departure_time, ':', 1)::INT * 3600
-          + split_part(departure_time, ':', 2)::INT * 60
-          + split_part(departure_time, ':', 3)::INT AS departure
-      FROM read_parquet(?)
-    )
-    SELECT DISTINCT dates.service_date, trips.trip_id, trips.route_id, trips.direction_id,
-      coalesce(stops.parent_station, stops.stop_id) AS parent_station,
-      calls.arrival, calls.departure
-    FROM dates
-    JOIN read_parquet(?) trips
-      ON trips.gtfs_active_date <= dates.service_date AND trips.gtfs_end_date >= dates.service_date
-    JOIN calls
-      ON calls.trip_id = trips.trip_id
-      AND calls.gtfs_active_date <= dates.service_date AND calls.gtfs_end_date >= dates.service_date
-    JOIN read_parquet(?) stops
-      ON stops.stop_id = calls.stop_id
-      AND stops.gtfs_active_date <= dates.service_date AND stops.gtfs_end_date >= dates.service_date
-    """,
-    [calls, trips, stops],
-  )
-  connection.execute(
-    """
-    CREATE TEMP TABLE population AS
-    SELECT performance.*,
-      schedule_calls.trip_id IS NOT NULL AS schedule_resolved,
-      CASE
-        WHEN performance.trip_id LIKE 'ADDED-%' THEN 'added'
-        WHEN performance.trip_id LIKE 'NONREV-%' THEN 'nonrevenue'
-        ELSE 'other'
-      END AS source_kind
-    FROM performance
-    LEFT JOIN schedule_calls
-      ON schedule_calls.service_date = performance.service_date
-      AND schedule_calls.trip_id = performance.trip_id
-      AND schedule_calls.route_id = performance.route_id
-      AND schedule_calls.direction_id = performance.direction_id
-      AND schedule_calls.parent_station = performance.parent_station
-      AND schedule_calls.arrival = performance.scheduled_arrival_time
-      AND schedule_calls.departure = performance.scheduled_departure_time
-    """
-  )
-  event_population, event_groups = _audit_events(connection)
+  event_population, event_groups = audit_events(connection)
   groups = _query(
     connection,
     """
@@ -322,7 +258,77 @@ def audit(directory: Path) -> dict[str, object]:
   }
 
 
-def _audit_events(connection: Any) -> tuple[dict[str, object], list[dict[str, object]]]:
+def open_population(directory: Path) -> tuple[Any, Plan]:
+  """Open one verified source population and its canonical DuckDB tables."""
+  value = read(directory / "manifest.json")
+  _validate_plan(value)
+  for source in value.sources:
+    _verify(directory / source.filename, source)
+  try:
+    import duckdb
+  except ImportError as error:
+    raise RuntimeError("population audit requires duckdb==1.4.1") from error
+
+  connection = duckdb.connect()
+  performance = [str(directory / source.filename) for source in value.sources if source.name == "performance"]
+  trips = str(_source_path(directory, value, "trips"))
+  calls = str(_source_path(directory, value, "stop_times"))
+  stops = str(_source_path(directory, value, "stops"))
+  connection.execute("CREATE TEMP TABLE performance AS SELECT * FROM read_parquet(?)", [performance])
+  connection.execute(
+    """
+    CREATE TEMP TABLE schedule_calls AS
+    WITH dates AS (SELECT DISTINCT service_date FROM performance),
+    calls AS (
+      SELECT *,
+        split_part(arrival_time, ':', 1)::INT * 3600
+          + split_part(arrival_time, ':', 2)::INT * 60
+          + split_part(arrival_time, ':', 3)::INT AS arrival,
+        split_part(departure_time, ':', 1)::INT * 3600
+          + split_part(departure_time, ':', 2)::INT * 60
+          + split_part(departure_time, ':', 3)::INT AS departure
+      FROM read_parquet(?)
+    )
+    SELECT DISTINCT dates.service_date, trips.trip_id, trips.route_id, trips.direction_id,
+      coalesce(stops.parent_station, stops.stop_id) AS parent_station,
+      calls.arrival, calls.departure
+    FROM dates
+    JOIN read_parquet(?) trips
+      ON trips.gtfs_active_date <= dates.service_date AND trips.gtfs_end_date >= dates.service_date
+    JOIN calls
+      ON calls.trip_id = trips.trip_id
+      AND calls.gtfs_active_date <= dates.service_date AND calls.gtfs_end_date >= dates.service_date
+    JOIN read_parquet(?) stops
+      ON stops.stop_id = calls.stop_id
+      AND stops.gtfs_active_date <= dates.service_date AND stops.gtfs_end_date >= dates.service_date
+    """,
+    [calls, trips, stops],
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE population AS
+    SELECT performance.*,
+      schedule_calls.trip_id IS NOT NULL AS schedule_resolved,
+      CASE
+        WHEN performance.trip_id LIKE 'ADDED-%' THEN 'added'
+        WHEN performance.trip_id LIKE 'NONREV-%' THEN 'nonrevenue'
+        ELSE 'other'
+      END AS source_kind
+    FROM performance
+    LEFT JOIN schedule_calls
+      ON schedule_calls.service_date = performance.service_date
+      AND schedule_calls.trip_id = performance.trip_id
+      AND schedule_calls.route_id = performance.route_id
+      AND schedule_calls.direction_id = performance.direction_id
+      AND schedule_calls.parent_station = performance.parent_station
+      AND schedule_calls.arrival = performance.scheduled_arrival_time
+      AND schedule_calls.departure = performance.scheduled_departure_time
+    """
+  )
+  return connection, value
+
+
+def audit_events(connection: Any) -> tuple[dict[str, object], list[dict[str, object]]]:
   """Reconstruct the observable event carrier without requiring Schedule identity."""
   connection.execute(
     """

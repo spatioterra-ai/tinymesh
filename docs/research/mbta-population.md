@@ -165,9 +165,10 @@ The corrected clean decision run is bound to revision
 `17df7e054df1ddd2ef78e34ea091695428016210`. It reads no study gitlink and
 records an empty reference set.
 
-## Stage 3 boundary
+## Stage 3 outcome
 
-Stage 3 may define a retrospective event-time task under five constraints:
+Stage 3 froze a [retrospective next-headway task](mbta-headway-task.md) under
+five constraints:
 
 - derive inputs and targets only from observed movement events;
 - retain added, disrupted, and `NONREV-*`-aliased rows when they satisfy the
@@ -178,16 +179,18 @@ Stage 3 may define a retrospective event-time task under five constraints:
 - treat source-provided scheduled values as plan-derived annotations with LAMP
   provenance, never as independently reversible Schedule calls.
 
-An exact Schedule baseline may be reported on the 78.2% resolved subset, but it
-must not define the population or the primary observational metrics. Persistence
-and station-local temporal baselines can cover every eligible event. A future
-identity-bearing source can expand the Schedule comparison without changing the
-event carrier.
+A public-plan baseline is reported across every lane where an active Schedule
+interval exists. Exact Schedule identity remains a provenance mask and does not
+define either that baseline or the target population. Persistence and the
+station-local temporal baseline remain independent controls. A future
+identity-bearing source can strengthen the Schedule comparison without changing
+the event carrier.
 
 ## Limits
 
 The audit proves population size, source lineage, Schedule-identity coverage,
 and missing availability clocks for one explicit four-week 2026 population.
-It does not yet prove a forecast window, split, baseline score, topology value,
-or online-causal claim. Direct GTFS-Realtime archives or a future MBTA export
-with feed timestamps could support a stronger availability contract.
+It does not itself prove a forecast split, baseline score, topology value, or
+online-causal claim; Stage 3 owns the first two. Direct GTFS-Realtime archives
+or a future MBTA export with feed timestamps could support a stronger
+availability contract.

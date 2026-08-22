@@ -1,0 +1,263 @@
+{
+  "decision": "freeze:open_test_once",
+  "metrics": [
+    {
+      "baseline": "persistence",
+      "coverage": 0.993233,
+      "macro_route_mae_seconds": 239.623074,
+      "mae_seconds": 217.968544,
+      "median_absolute_error": 145,
+      "p90_absolute_error": 481,
+      "predictions": 137970,
+      "rmse_seconds": 400.22407,
+      "targets": 138910
+    },
+    {
+      "baseline": "temporal",
+      "coverage": 1.0,
+      "macro_route_mae_seconds": 175.667339,
+      "mae_seconds": 157.151623,
+      "median_absolute_error": 103.0,
+      "p90_absolute_error": 336.0,
+      "predictions": 138910,
+      "rmse_seconds": 365.043804,
+      "targets": 138910
+    },
+    {
+      "baseline": "plan",
+      "coverage": 0.999028,
+      "macro_route_mae_seconds": 174.803722,
+      "mae_seconds": 152.647955,
+      "median_absolute_error": 99,
+      "p90_absolute_error": 323,
+      "predictions": 138775,
+      "rmse_seconds": 382.366825,
+      "targets": 138910
+    }
+  ],
+  "plan_coverage_by_schedule_identity": [
+    {
+      "predictions": 89847,
+      "schedule_resolved": true,
+      "targets": 89847
+    },
+    {
+      "predictions": 48928,
+      "schedule_resolved": false,
+      "targets": 49063
+    }
+  ],
+  "protocol_sha256": "83e048c9f6e1f7f5de1ecb70e9a0a5cee64ac699b3ce3da94f4a9cd8f60e69ed",
+  "route_metrics": [
+    {
+      "baseline": "persistence",
+      "mae_seconds": 177.816945,
+      "predictions": 19262,
+      "route_id": "Blue",
+      "targets": 19372
+    },
+    {
+      "baseline": "persistence",
+      "mae_seconds": 266.707938,
+      "predictions": 11792,
+      "route_id": "Green-B",
+      "targets": 11913
+    },
+    {
+      "baseline": "persistence",
+      "mae_seconds": 341.23153,
+      "predictions": 17095,
+      "route_id": "Green-D",
+      "targets": 17251
+    },
+    {
+      "baseline": "persistence",
+      "mae_seconds": 299.724046,
+      "predictions": 7523,
+      "route_id": "Green-E",
+      "targets": 7588
+    },
+    {
+      "baseline": "persistence",
+      "mae_seconds": 218.833254,
+      "predictions": 8438,
+      "route_id": "Mattapan",
+      "targets": 8533
+    },
+    {
+      "baseline": "persistence",
+      "mae_seconds": 156.115621,
+      "predictions": 40356,
+      "route_id": "Orange",
+      "targets": 40546
+    },
+    {
+      "baseline": "persistence",
+      "mae_seconds": 216.932187,
+      "predictions": 33504,
+      "route_id": "Red",
+      "targets": 33707
+    },
+    {
+      "baseline": "plan",
+      "mae_seconds": 124.032315,
+      "predictions": 19372,
+      "route_id": "Blue",
+      "targets": 19372
+    },
+    {
+      "baseline": "plan",
+      "mae_seconds": 184.559315,
+      "predictions": 11911,
+      "route_id": "Green-B",
+      "targets": 11913
+    },
+    {
+      "baseline": "plan",
+      "mae_seconds": 256.258738,
+      "predictions": 17195,
+      "route_id": "Green-D",
+      "targets": 17251
+    },
+    {
+      "baseline": "plan",
+      "mae_seconds": 280.46841,
+      "predictions": 7534,
+      "route_id": "Green-E",
+      "targets": 7588
+    },
+    {
+      "baseline": "plan",
+      "mae_seconds": 134.139224,
+      "predictions": 8533,
+      "route_id": "Mattapan",
+      "targets": 8533
+    },
+    {
+      "baseline": "plan",
+      "mae_seconds": 101.009303,
+      "predictions": 40523,
+      "route_id": "Orange",
+      "targets": 40546
+    },
+    {
+      "baseline": "plan",
+      "mae_seconds": 143.15875,
+      "predictions": 33707,
+      "route_id": "Red",
+      "targets": 33707
+    },
+    {
+      "baseline": "temporal",
+      "mae_seconds": 128.809054,
+      "predictions": 19372,
+      "route_id": "Blue",
+      "targets": 19372
+    },
+    {
+      "baseline": "temporal",
+      "mae_seconds": 180.342903,
+      "predictions": 11913,
+      "route_id": "Green-B",
+      "targets": 11913
+    },
+    {
+      "baseline": "temporal",
+      "mae_seconds": 258.861747,
+      "predictions": 17251,
+      "route_id": "Green-D",
+      "targets": 17251
+    },
+    {
+      "baseline": "temporal",
+      "mae_seconds": 257.285517,
+      "predictions": 7588,
+      "route_id": "Green-E",
+      "targets": 7588
+    },
+    {
+      "baseline": "temporal",
+      "mae_seconds": 141.999414,
+      "predictions": 8533,
+      "route_id": "Mattapan",
+      "targets": 8533
+    },
+    {
+      "baseline": "temporal",
+      "mae_seconds": 104.230516,
+      "predictions": 40546,
+      "route_id": "Orange",
+      "targets": 40546
+    },
+    {
+      "baseline": "temporal",
+      "mae_seconds": 158.142226,
+      "predictions": 33707,
+      "route_id": "Red",
+      "targets": 33707
+    }
+  ],
+  "schema": 1,
+  "selected_temporal": {
+    "bin_hours": 1,
+    "minimum_support": 4
+  },
+  "split": "validation",
+  "temporal_candidates": [
+    {
+      "bin_hours": 1,
+      "mae_seconds": 157.151623,
+      "minimum_support": 4
+    },
+    {
+      "bin_hours": 1,
+      "mae_seconds": 163.63179,
+      "minimum_support": 16
+    },
+    {
+      "bin_hours": 1,
+      "mae_seconds": 172.091437,
+      "minimum_support": 64
+    },
+    {
+      "bin_hours": 2,
+      "mae_seconds": 157.859362,
+      "minimum_support": 4
+    },
+    {
+      "bin_hours": 2,
+      "mae_seconds": 158.458264,
+      "minimum_support": 16
+    },
+    {
+      "bin_hours": 2,
+      "mae_seconds": 171.550464,
+      "minimum_support": 64
+    },
+    {
+      "bin_hours": 4,
+      "mae_seconds": 158.51515,
+      "minimum_support": 4
+    },
+    {
+      "bin_hours": 4,
+      "mae_seconds": 159.548773,
+      "minimum_support": 16
+    },
+    {
+      "bin_hours": 4,
+      "mae_seconds": 166.524797,
+      "minimum_support": 64
+    }
+  ],
+  "temporal_fallback": [
+    {
+      "level": "cell",
+      "predictions": 137670
+    },
+    {
+      "level": "lane",
+      "predictions": 1240
+    }
+  ]
+}
