@@ -67,6 +67,22 @@ class ReplayRow:
   scheduled_headway_trunk: int | None
 
 
+@dataclass(frozen=True, order=True)
+class ScheduleCall:
+  trip_id: str
+  stop_sequence: int
+  stop_id: str
+  arrival_time: int
+  departure_time: int
+
+
+@dataclass(frozen=True)
+class RetainedReplay:
+  rows: tuple[ReplayRow, ...]
+  calls: tuple[ScheduleCall, ...]
+  interval_utc: tuple[int, int]
+
+
 @dataclass(frozen=True)
 class Missingness:
   move_timestamp: int
@@ -132,18 +148,13 @@ class Observation:
 
 def observe(path: str | Path = FIXTURE) -> Observation:
   """Validate and audit the retained replay using only standard-library code."""
+  source = load(path)
+  replay = source.rows
+  calls_by_trip = _calls_by_trip(source.calls)
+
   directory = Path(path)
   manifest = json.loads((directory / "manifest.json").read_text())
-  tables = {filename: _table(directory, filename, artifact) for filename, artifact in manifest["artifacts"].items()}
-  replay = tuple(_replay(row, number) for number, row in enumerate(tables["replay.csv"], start=2))
-  _validate_manifest(manifest)
-  _validate_replay(replay, manifest)
-
-  trips = {row["trip_id"]: row for row in tables["schedule_trips.csv"]}
-  calls_by_trip = _calls(tables["schedule_calls.csv"])
-  schedule_stops = {row["stop_id"] for row in tables["schedule_stops.csv"]}
   incoming, union_edges = _topology(calls_by_trip)
-  resolved = _resolve(replay, trips, calls_by_trip, schedule_stops)
   headway = _headways(replay, calls_by_trip)
 
   active_edges = {
@@ -157,7 +168,7 @@ def observe(path: str | Path = FIXTURE) -> Observation:
     trip_instances=len({row.instance for row in replay}),
     vehicles=len({row.vehicle_id for row in replay}),
     stops=len({row.stop_id for row in replay}),
-    schedule_rows_resolved=resolved,
+    schedule_rows_resolved=len(replay),
     duplicate_trip_stops=len(replay) - len({(row.instance, row.stop_sequence) for row in replay}),
     observation_age_available=False,
     missing=Missingness(
@@ -204,6 +215,23 @@ def observe(path: str | Path = FIXTURE) -> Observation:
     dwell_target_decision="reject:mixed_stop_lineage",
     headway_target_decision="extend_replay:observed_movement_headway",
   )
+
+
+def load(path: str | Path = FIXTURE) -> RetainedReplay:
+  """Load one checksum-pinned replay after validating its source contract."""
+  directory = Path(path)
+  manifest = json.loads((directory / "manifest.json").read_text())
+  tables = {filename: _table(directory, filename, artifact) for filename, artifact in manifest["artifacts"].items()}
+  replay = tuple(_replay(row, number) for number, row in enumerate(tables["replay.csv"], start=2))
+  _validate_manifest(manifest)
+  _validate_replay(replay, manifest)
+
+  trips = {row["trip_id"]: row for row in tables["schedule_trips.csv"]}
+  calls = tuple(_schedule_call(row) for row in tables["schedule_calls.csv"])
+  calls_by_trip = _calls_by_trip(calls)
+  schedule_stops = {row["stop_id"] for row in tables["schedule_stops.csv"]}
+  _resolve(replay, trips, calls_by_trip, schedule_stops)
+  return RetainedReplay(replay, calls, tuple(manifest["extraction"]["interval_utc"]))
 
 
 def main() -> None:
@@ -287,20 +315,30 @@ def _validate_replay(replay: tuple[ReplayRow, ...], manifest: dict) -> None:
       raise ReplayError(f"replay.csv: row outside declared interval: {row.instance!r}")
 
 
-def _calls(rows: list[dict[str, str]]) -> dict[str, tuple[dict[str, str], ...]]:
-  grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
-  for row in rows:
-    grouped[row["trip_id"]].append(row)
-  return {trip_id: tuple(sorted(calls, key=lambda row: int(row["stop_sequence"]))) for trip_id, calls in grouped.items()}
+def _schedule_call(row: dict[str, str]) -> ScheduleCall:
+  return ScheduleCall(
+    trip_id=row["trip_id"],
+    stop_sequence=int(row["stop_sequence"]),
+    stop_id=row["stop_id"],
+    arrival_time=_time(row["arrival_time"]),
+    departure_time=_time(row["departure_time"]),
+  )
 
 
-def _topology(calls_by_trip: dict[str, tuple[dict[str, str], ...]]) -> tuple[dict[tuple[str, int], tuple[str, str]], set[tuple[str, str]]]:
+def _calls_by_trip(calls: tuple[ScheduleCall, ...]) -> dict[str, tuple[ScheduleCall, ...]]:
+  grouped: dict[str, list[ScheduleCall]] = defaultdict(list)
+  for call in calls:
+    grouped[call.trip_id].append(call)
+  return {trip_id: tuple(sorted(group, key=lambda call: call.stop_sequence)) for trip_id, group in grouped.items()}
+
+
+def _topology(calls_by_trip: dict[str, tuple[ScheduleCall, ...]]) -> tuple[dict[tuple[str, int], tuple[str, str]], set[tuple[str, str]]]:
   incoming = {}
   edges = set()
   for trip_id, calls in calls_by_trip.items():
     for previous, current in zip(calls, calls[1:]):
-      edge = (previous["stop_id"], current["stop_id"])
-      incoming[(trip_id, int(current["stop_sequence"]))] = edge
+      edge = (previous.stop_id, current.stop_id)
+      incoming[(trip_id, current.stop_sequence)] = edge
       edges.add(edge)
   return incoming, edges
 
@@ -308,25 +346,25 @@ def _topology(calls_by_trip: dict[str, tuple[dict[str, str], ...]]) -> tuple[dic
 def _resolve(
   replay: tuple[ReplayRow, ...],
   trips: dict[str, dict[str, str]],
-  calls_by_trip: dict[str, tuple[dict[str, str], ...]],
+  calls_by_trip: dict[str, tuple[ScheduleCall, ...]],
   stops: set[str],
 ) -> int:
-  calls = {(trip_id, int(call["stop_sequence"])): call for trip_id, trip_calls in calls_by_trip.items() for call in trip_calls}
+  calls = {(trip_id, call.stop_sequence): call for trip_id, trip_calls in calls_by_trip.items() for call in trip_calls}
   for row in replay:
     trip = trips.get(row.instance.trip_id)
     call = calls.get((row.instance.trip_id, row.stop_sequence))
     if trip is None or call is None or row.stop_id not in stops:
       raise ReplayError(f"schedule: unresolved identity {row.instance!r} stop_sequence={row.stop_sequence}")
-    if (trip["route_id"], int(trip["direction_id"])) != (row.route_id, row.direction_id) or call["stop_id"] != row.stop_id:
+    if (trip["route_id"], int(trip["direction_id"])) != (row.route_id, row.direction_id) or call.stop_id != row.stop_id:
       raise ReplayError(f"schedule: mismatched identity {row.instance!r} stop_sequence={row.stop_sequence}")
-    if (_time(call["arrival_time"]), _time(call["departure_time"])) != (row.scheduled_arrival_time, row.scheduled_departure_time):
+    if (call.arrival_time, call.departure_time) != (row.scheduled_arrival_time, row.scheduled_departure_time):
       raise ReplayError(f"schedule: mismatched time {row.instance!r} stop_sequence={row.stop_sequence}")
   return len(replay)
 
 
-def _headways(replay: tuple[ReplayRow, ...], calls_by_trip: dict[str, tuple[dict[str, str], ...]]) -> HeadwayAudit:
+def _headways(replay: tuple[ReplayRow, ...], calls_by_trip: dict[str, tuple[ScheduleCall, ...]]) -> HeadwayAudit:
   next_sequence = {
-    (trip_id, int(current["stop_sequence"])): int(following["stop_sequence"])
+    (trip_id, current.stop_sequence): following.stop_sequence
     for trip_id, calls in calls_by_trip.items() for current, following in zip(calls, calls[1:])
   }
   trips: dict[tuple[TripInstance, str], list[ReplayRow]] = defaultdict(list)

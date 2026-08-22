@@ -48,10 +48,17 @@ class CatalogTest(unittest.TestCase):
     def test_catalog_names_only_executable_references(self) -> None:
         tinygrad = ("submodules/tinygrad",)
         framework = tinygrad + ("submodules/pytorch-geometric-temporal",)
+        event_mesh = (
+            "submodules/pytorch-geometric",
+            "submodules/pytorch-geometric-temporal",
+            "submodules/torch-spatiotemporal",
+        )
 
         self.assertEqual(CATALOG["framework_benchmark"].references, framework)
         self.assertTrue(all(
-            experiment.references == (framework if name == "framework_benchmark" else tinygrad)
+            experiment.references == (
+                framework if name == "framework_benchmark" else event_mesh if name == "gtfs_event_mesh" else tinygrad
+            )
             for name, experiment in CATALOG.items()
         ))
 
