@@ -128,8 +128,8 @@ uv run --locked --with duckdb==1.4.1 experiments/tools/mbta_population.py record
 uv run --locked python -m experiments.run mbta_population
 ```
 
-The clean decision run is bound to revision
-`f31c48a6e436dd839c67264ba4b243f905ba9930`. It reads no study gitlink and
+The corrected clean decision run is bound to revision
+`5a6db4d10bddd5f8b2ef7edca9d5d9d275a11a98`. It reads no study gitlink and
 records an empty reference set.
 
 ## Stage 3 boundary
