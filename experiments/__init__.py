@@ -83,6 +83,16 @@ CATALOG = {
         ),
     ),
     "mbta_population": Experiment("data", "research-only", (), references=()),
+    "mbta_headway_task": Experiment(
+        "forecast",
+        "research-only",
+        ("TEST",),
+        references=(
+            "submodules/libcity",
+            "submodules/pytorch-geometric-temporal",
+            "submodules/torch-spatiotemporal",
+        ),
+    ),
     "mutag_jepa": Experiment(
         "representation",
         "research-only",

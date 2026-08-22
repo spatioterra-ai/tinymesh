@@ -193,7 +193,7 @@ def audit(directory: Path) -> dict[str, object]:
   manifest_path = directory / "manifest.json"
   connection, value = open_population(directory)
   feed = str(_source_path(directory, value, "feed_info"))
-  event_population, event_groups = _audit_events(connection)
+  event_population, event_groups = audit_events(connection)
   groups = _query(
     connection,
     """
@@ -328,7 +328,7 @@ def open_population(directory: Path) -> tuple[Any, Plan]:
   return connection, value
 
 
-def _audit_events(connection: Any) -> tuple[dict[str, object], list[dict[str, object]]]:
+def audit_events(connection: Any) -> tuple[dict[str, object], list[dict[str, object]]]:
   """Reconstruct the observable event carrier without requiring Schedule identity."""
   connection.execute(
     """

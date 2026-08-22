@@ -1,0 +1,275 @@
+{
+  "availability": "retrospective_event_time_only:no_generation_or_ingestion_clock",
+  "cutoff": "previous_departure_timestamp_plus_one_second",
+  "identity": [
+    "service_date",
+    "vehicle_id",
+    "parent_station",
+    "direction_id",
+    "departure_timestamp"
+  ],
+  "lane": [
+    "service_date",
+    "parent_station",
+    "trunk_route_id",
+    "direction_id"
+  ],
+  "mask_policy": {
+    "ambiguous_public_order": {
+      "disposition": "excluded_before_event_lowering",
+      "rows": 384
+    },
+    "ambiguous_run_source": {
+      "disposition": "retained_annotation"
+    },
+    "ambiguous_run_target": {
+      "disposition": "retained_annotation"
+    },
+    "boundary_only_source_headway": {
+      "disposition": "excluded_from_exact_target",
+      "labels": 1007
+    },
+    "mismatched_source_headway": {
+      "disposition": "excluded_from_exact_target",
+      "labels": 201
+    },
+    "simultaneous_strict_order": {
+      "disposition": "excluded_from_strict_target",
+      "events": 413
+    },
+    "unresolved_schedule_identity": {
+      "disposition": "retained_annotation"
+    }
+  },
+  "metrics": [
+    "mae_seconds",
+    "rmse_seconds",
+    "median_absolute_error",
+    "p90_absolute_error",
+    "coverage"
+  ],
+  "population_audit_sha256": "0345659ab2aa2a4c3341954dcfd789110e9567097f69532d25f895e7fa16e1bb",
+  "population_masks": {
+    "ambiguous_order_rows": 384,
+    "ambiguous_order_trips": 39,
+    "ambiguous_run_sources": 84,
+    "ambiguous_run_targets": 56,
+    "boundary_only_headways": 1007,
+    "conflicting_aliases": 0,
+    "derived_only_headways": 0,
+    "duplicate_aliases": 225,
+    "exact_headways": 940776,
+    "headway_relations": 940752,
+    "maximum_gap_seconds": 57860,
+    "median_gap_seconds": 399,
+    "minimum_gap_seconds": 1,
+    "mismatched_headways": 201,
+    "p95_gap_seconds": 960,
+    "physical_departures": 947489,
+    "represented_source_rows": 947714,
+    "run_relations": 877168,
+    "simultaneous_events": 413,
+    "simultaneous_groups": 206,
+    "station_directions": 259
+  },
+  "references": {
+    "submodules/libcity": "5a6391d41944e937f2c15e9be85ab7f40ac8b23e",
+    "submodules/pytorch-geometric-temporal": "fe555bc30ee197755c4b58a89407033a5f383415",
+    "submodules/torch-spatiotemporal": "aa5f313e000d192bdec270748b8d01df5912e58e"
+  },
+  "route_counts": [
+    {
+      "route_id": "Blue",
+      "split": "train",
+      "targets": 61007
+    },
+    {
+      "route_id": "Green-B",
+      "split": "train",
+      "targets": 76925
+    },
+    {
+      "route_id": "Green-C",
+      "split": "train",
+      "targets": 62059
+    },
+    {
+      "route_id": "Green-D",
+      "split": "train",
+      "targets": 87240
+    },
+    {
+      "route_id": "Green-E",
+      "split": "train",
+      "targets": 82503
+    },
+    {
+      "route_id": "Mattapan",
+      "split": "train",
+      "targets": 28567
+    },
+    {
+      "route_id": "Orange",
+      "split": "train",
+      "targets": 136664
+    },
+    {
+      "route_id": "Red",
+      "split": "train",
+      "targets": 90108
+    },
+    {
+      "route_id": "Blue",
+      "split": "validation",
+      "targets": 19372
+    },
+    {
+      "route_id": "Green-B",
+      "split": "validation",
+      "targets": 11913
+    },
+    {
+      "route_id": "Green-D",
+      "split": "validation",
+      "targets": 17251
+    },
+    {
+      "route_id": "Green-E",
+      "split": "validation",
+      "targets": 7588
+    },
+    {
+      "route_id": "Mattapan",
+      "split": "validation",
+      "targets": 8533
+    },
+    {
+      "route_id": "Orange",
+      "split": "validation",
+      "targets": 40546
+    },
+    {
+      "route_id": "Red",
+      "split": "validation",
+      "targets": 33707
+    },
+    {
+      "route_id": "Blue",
+      "split": "test",
+      "targets": 19662
+    },
+    {
+      "route_id": "Green-B",
+      "split": "test",
+      "targets": 20397
+    },
+    {
+      "route_id": "Green-C",
+      "split": "test",
+      "targets": 16954
+    },
+    {
+      "route_id": "Green-D",
+      "split": "test",
+      "targets": 24505
+    },
+    {
+      "route_id": "Green-E",
+      "split": "test",
+      "targets": 24436
+    },
+    {
+      "route_id": "Mattapan",
+      "split": "test",
+      "targets": 8227
+    },
+    {
+      "route_id": "Orange",
+      "split": "test",
+      "targets": 29819
+    },
+    {
+      "route_id": "Red",
+      "split": "test",
+      "targets": 32568
+    }
+  ],
+  "schema": 1,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "source_manifest_sha256": "780076ebf32ceb735b334b5bbdba0297d809088f0689fac37067db46fd36d701",
+  "splits": {
+    "test": [
+      "2026-08-16",
+      "2026-08-20"
+    ],
+    "train": [
+      "2026-07-24",
+      "2026-08-10"
+    ],
+    "validation": [
+      "2026-08-11",
+      "2026-08-15"
+    ]
+  },
+  "target": "strict_next_movement_headway_seconds",
+  "target_counts": [
+    {
+      "ambiguous_run_sources": 48,
+      "ambiguous_run_targets": 21,
+      "dates": 18,
+      "maximum_seconds": 57860,
+      "median_seconds": 403,
+      "minimum_seconds": 1,
+      "multiple_route_aliases": 25,
+      "p95_seconds": 965,
+      "routes": 8,
+      "schedule_resolved": 520724,
+      "schedule_unresolved": 104349,
+      "split": "train",
+      "targets": 625073
+    },
+    {
+      "ambiguous_run_sources": 26,
+      "ambiguous_run_targets": 33,
+      "dates": 5,
+      "maximum_seconds": 52777,
+      "median_seconds": 397,
+      "minimum_seconds": 1,
+      "multiple_route_aliases": 0,
+      "p95_seconds": 937,
+      "routes": 7,
+      "schedule_resolved": 89847,
+      "schedule_unresolved": 49063,
+      "split": "validation",
+      "targets": 138910
+    },
+    {
+      "ambiguous_run_sources": 10,
+      "ambiguous_run_targets": 2,
+      "dates": 5,
+      "maximum_seconds": 39743,
+      "median_seconds": 390,
+      "minimum_seconds": 1,
+      "multiple_route_aliases": 9,
+      "p95_seconds": 956,
+      "routes": 8,
+      "schedule_resolved": 154219,
+      "schedule_unresolved": 22349,
+      "split": "test",
+      "targets": 176568
+    }
+  ],
+  "target_masks": [
+    "ambiguous_public_order",
+    "simultaneous_strict_order",
+    "mismatched_source_headway",
+    "boundary_only_source_headway",
+    "ambiguous_run_source",
+    "ambiguous_run_target",
+    "unresolved_schedule_identity"
+  ]
+}
