@@ -4,3 +4,23 @@
 [submodule "submodules/pytorch-geometric-temporal"]
 	path = submodules/pytorch-geometric-temporal
 	url = https://github.com/benedekrozemberczki/pytorch_geometric_temporal.git
+[submodule "submodules/pytorch-geometric"]
+	path = submodules/pytorch-geometric
+	url = https://github.com/pyg-team/pytorch_geometric.git
+	shallow = true
+[submodule "submodules/torch-spatiotemporal"]
+	path = submodules/torch-spatiotemporal
+	url = https://github.com/TorchSpatiotemporal/tsl.git
+	shallow = true
+[submodule "submodules/torchgeo"]
+	path = submodules/torchgeo
+	url = https://github.com/torchgeo/torchgeo.git
+	shallow = true
+[submodule "submodules/terratorch"]
+	path = submodules/terratorch
+	url = https://github.com/torchgeo/terratorch.git
+	shallow = true
+[submodule "submodules/libcity"]
+	path = submodules/libcity
+	url = https://github.com/LibCity/Bigscity-LibCity.git
+	shallow = true
