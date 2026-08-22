@@ -171,6 +171,15 @@ class GtfsEventMeshTest(unittest.TestCase):
       with self.assertRaisesRegex(ValueError, "does not match retained artifact manifest"):
         observe(fixture)
 
+  def test_missing_artifact_fails_before_lowering(self) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+      fixture = Path(directory) / "fixture"
+      shutil.copytree(FIXTURE, fixture)
+      (fixture / "schedule_calls.csv").unlink()
+
+      with self.assertRaisesRegex(ValueError, "missing retained artifact"):
+        observe(fixture)
+
   @staticmethod
   def _duplicate_trip() -> tuple[RetainedReplay, RetainedReplay]:
     source = load()

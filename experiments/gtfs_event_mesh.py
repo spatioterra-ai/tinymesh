@@ -74,6 +74,8 @@ class EventMesh:
     endpoints: dict[tuple[EventKey, EventKey], RelationKind] = {}
     for relation in self.relations:
       identity = relation.kind, relation.source, relation.target
+      if relation.kind not in ("headway", "run"):
+        raise EventMeshError(f"relation: unknown type {identity!r}")
       if relation.source not in known or relation.target not in known:
         raise EventMeshError(f"relation: unresolved endpoint {identity!r}")
       if relation.source == relation.target:
@@ -158,6 +160,8 @@ class Observation:
 def lower(source: RetainedReplay) -> EventMesh:
   """Lower validated replay facts into physical departures and typed edges."""
   calls = {(call.trip_id, call.stop_sequence): call for call in source.calls}
+  if len(calls) != len(source.calls):
+    raise EventMeshError("schedule: duplicate trip-stop identity")
   following = _following(source.calls)
   _validate_rows(source.rows, calls)
 

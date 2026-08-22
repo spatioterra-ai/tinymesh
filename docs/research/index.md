@@ -20,6 +20,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Does causal JEPA learn a useful node-time representation? | The true-mesh encoder improves over its paired random initialization in all three seeds and test agrees, but spatial-only features beat the joint product in two of three. | Continue the objective as research; reject explicit temporal edges as the incumbent on this task. Promote no JEPA API. |
 | Does real traffic support factorized causal JEPA? | Latent loss falls 75.6%, but the trained factorized encoder regresses its paired random encoder in all three seeds and loses every simpler control on mean validation RMSE. | Reject this encoder, mask, objective, and budget. Keep test closed and promote no JEPA API. |
 | Which LAMP field can support an operational forecast? | Arrival, travel time, and dwell inherit mixed stop provenance. Movement-derived trunk headway reproduces exactly for all 4,274 full-day Blue Line labels and 26,558 physical departures across a seven-day audit. | Retain MBTA and extend the headway replay before specifying a task. Add no public adapter or model yet. |
+| Should MBTA headway use events or a fixed clock as source truth? | A 597-event, 1,109-relation mesh reproduces all 575 derivable labels. 30/60-second clocks preserve identity but are 89.1%/78.2% empty; five-minute bins merge 90 identities. | Retain reversible departure events. Derive clocks only as matched controls after the task fixes their aggregation and missingness policy. |
 
 ## Sparse core
 
@@ -77,6 +78,9 @@ They are evidence, not API promises. This page is the current decision ledger;
   bond, and graph labels.
 - [MBTA Blue Line replay](mbta-replay-data.md) — version-aligned operations,
   rejected mixed-stop targets, and validated movement-derived headway.
+- [MBTA departure-event mesh](mbta-event-mesh.md) — reversible physical
+  departures, typed causal relations, strict prefixes, and measured clock
+  alternatives.
 
 ## Forecast evidence
 
