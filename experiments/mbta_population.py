@@ -32,6 +32,24 @@ class Observation:
   unresolved_nonrevenue: int
   unresolved_other: int
   schedule_versions: int
+  represented_source_rows: int
+  physical_departures: int
+  duplicate_aliases: int
+  conflicting_aliases: int
+  ambiguous_order_trips: int
+  ambiguous_order_rows: int
+  run_relations: int
+  ambiguous_run_sources: int
+  ambiguous_run_targets: int
+  headway_relations: int
+  exact_headways: int
+  mismatched_headways: int
+  boundary_only_headways: int
+  simultaneous_events: int
+  station_directions: int
+  median_gap_seconds: int
+  p95_gap_seconds: int
+  maximum_gap_seconds: int
   availability: str
   decision: str
   stage_3_consequence: str
@@ -45,6 +63,7 @@ def observe(path: str | Path = FIXTURE) -> Observation:
   _validate_manifest(manifest)
   _validate_audit(audit, manifest, manifest_bytes)
   population = audit["population"]
+  events = audit["event_population"]
   versions = {row["feed_version"] for row in audit["schedule_versions"]}
   return Observation(
     source_files=audit["source_files"],
@@ -62,6 +81,24 @@ def observe(path: str | Path = FIXTURE) -> Observation:
     unresolved_nonrevenue=population["unresolved_nonrevenue"],
     unresolved_other=population["unresolved_other"],
     schedule_versions=len(versions),
+    represented_source_rows=events["represented_source_rows"],
+    physical_departures=events["physical_departures"],
+    duplicate_aliases=events["duplicate_aliases"],
+    conflicting_aliases=events["conflicting_aliases"],
+    ambiguous_order_trips=events["ambiguous_order_trips"],
+    ambiguous_order_rows=events["ambiguous_order_rows"],
+    run_relations=events["run_relations"],
+    ambiguous_run_sources=events["ambiguous_run_sources"],
+    ambiguous_run_targets=events["ambiguous_run_targets"],
+    headway_relations=events["headway_relations"],
+    exact_headways=events["exact_headways"],
+    mismatched_headways=events["mismatched_headways"],
+    boundary_only_headways=events["boundary_only_headways"],
+    simultaneous_events=events["simultaneous_events"],
+    station_directions=events["station_directions"],
+    median_gap_seconds=events["median_gap_seconds"],
+    p95_gap_seconds=events["p95_gap_seconds"],
+    maximum_gap_seconds=events["maximum_gap_seconds"],
     availability=audit["availability"],
     decision=audit["decision"],
     stage_3_consequence="advance:retrospective_event_time_with_schedule_mask",
@@ -88,7 +125,7 @@ def _validate_manifest(manifest: dict) -> None:
 
 
 def _validate_audit(audit: dict, manifest: dict, manifest_bytes: bytes) -> None:
-  if audit.get("schema") != 1 or audit.get("source_manifest_sha256") != hashlib.sha256(manifest_bytes).hexdigest():
+  if audit.get("schema") != 2 or audit.get("source_manifest_sha256") != hashlib.sha256(manifest_bytes).hexdigest():
     raise PopulationError("audit: manifest drift")
   if (audit.get("source_files"), audit.get("source_bytes")) != (len(manifest["sources"]), 110_610_188):
     raise PopulationError("audit: source boundary drift")
@@ -120,7 +157,65 @@ def _validate_audit(audit: dict, manifest: dict, manifest_bytes: bytes) -> None:
   versions = audit.get("schedule_versions", ())
   if len(versions) != 28 or {row["service_date"] for row in versions} != dates:
     raise PopulationError("audit: Schedule version drift")
-  expected = "advance:stage_3_retrospective_with_schedule_mask" if unresolved else "advance:stage_3_retrospective"
+  events = audit.get("event_population", {})
+  expected_events = {
+    "ambiguous_order_rows": 384,
+    "ambiguous_order_trips": 39,
+    "ambiguous_run_sources": 84,
+    "ambiguous_run_targets": 56,
+    "boundary_only_headways": 1_007,
+    "conflicting_aliases": 0,
+    "derived_only_headways": 0,
+    "duplicate_aliases": 225,
+    "exact_headways": 940_776,
+    "headway_relations": 940_752,
+    "maximum_gap_seconds": 57_860,
+    "median_gap_seconds": 399,
+    "minimum_gap_seconds": 1,
+    "mismatched_headways": 201,
+    "p95_gap_seconds": 960,
+    "physical_departures": 947_489,
+    "represented_source_rows": 947_714,
+    "run_relations": 877_168,
+    "simultaneous_events": 413,
+    "simultaneous_groups": 206,
+    "station_directions": 259,
+  }
+  if events != expected_events:
+    raise PopulationError("audit: event population drift")
+  if events["represented_source_rows"] != events["physical_departures"] + events["duplicate_aliases"]:
+    raise PopulationError("audit: physical identity drift")
+  if events["exact_headways"] + events["mismatched_headways"] + events["boundary_only_headways"] != population.get(
+    "source_headways"
+  ):
+    raise PopulationError("audit: headway coverage drift")
+  event_sums = {
+    field: sum(row[field] for row in groups)
+    for field in (
+      "ambiguous_order_rows",
+      "ambiguous_order_trips",
+      "boundary_only_headways",
+      "exact_headways",
+      "mismatched_headways",
+      "represented_source_rows",
+      "run_relations",
+    )
+  }
+  if any(event_sums[field] != events[field] for field in event_sums):
+    raise PopulationError("audit: event group drift")
+  if any(
+    row["exact_headways"] + row["mismatched_headways"] + row["boundary_only_headways"] != row["source_headways"]
+    for row in groups
+  ):
+    raise PopulationError("audit: group headway coverage drift")
+  sufficient = events["exact_headways"] > 0 and events["conflicting_aliases"] == 0
+  expected = (
+    "advance:stage_3_retrospective_with_schedule_mask"
+    if sufficient and unresolved
+    else "advance:stage_3_retrospective"
+    if sufficient
+    else "stop:insufficient_event_population"
+  )
   if audit.get("decision") != expected:
     raise PopulationError("audit: decision does not follow evidence")
 

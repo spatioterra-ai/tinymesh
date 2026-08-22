@@ -4,7 +4,7 @@ Status: Stage 2 passed for retrospective event-time forecasting.
 
 ## Decision
 
-Advance to Stage 3 with every observed movement retained. The bounded 28-day
+Advance to Stage 3 without filtering the source population. The bounded 28-day
 acquisition has ample dates, routes, movement rows, and source headways for a
 retrospective event-time task. Exact active-Schedule identity is available for
 78.2% of rows; Stage 3 must mask Schedule-dependent features and baselines on
@@ -14,28 +14,26 @@ the remainder rather than erase added and disrupted service.
 28 dates × 8 routes
       1,050,259 rows
             |
-      +-----+------+
-      |            |
-      v            v
-  821,513       228,746
-  resolved      unresolved
-                   |
-          +--------+--------+
-          |        |        |
-       221,220   4,363    3,163
-        ADDED   NONREV     other
-                   |
-                   v
-      Schedule identity mask
-                   |
-                   v
-  retrospective event-time Stage 3
+            v
+  observable trip ordering
+     |                |
+     v                v
+947,489 events   384 ambiguous rows
+     |
+     v
+940,776 exact movement-headway labels
+     |
+     +---------------------------+
+     |                           |
+     v                           v
+retrospective Stage 3      Schedule identity mask
+                            821,513 / 228,746
 ```
 
 Physical-event identity and Schedule-call identity are different facts. The
-former is sufficient to reconstruct observed departures and headways. The
-latter identifies the exact plan used for optional plan-derived features and
-baselines. Missing Schedule identity limits those comparisons; it does not
+former supports the event carrier and 940,776 exact eligible headway labels.
+The latter identifies the exact plan used for optional plan-derived features
+and baselines. Missing Schedule identity limits those comparisons; it does not
 invalidate an observed movement.
 
 ## Bounded acquisition
@@ -64,7 +62,7 @@ by its declared size and a 30-second socket timeout, validates already-known
 Schedule checksums, computes SHA-256 for every daily source, and publishes the
 directory only after all 34 sources seal. Raw parquet and operational rows
 remain outside Git. The repository retains only a 16 KiB source manifest and
-an 88 KiB date-route audit.
+a 208 KiB date-route audit.
 
 ## Source contract
 
@@ -94,6 +92,32 @@ The larger public `LAMP_ALL_RT_fields.parquet` does expose
 mutable monolithic object rather than immutable daily partitions, so Stage 2
 did not acquire or silently range-project it.
 
+## Event contract
+
+The public trip identity is `(service_date, route_id, trip_id)`, matching the
+unique trip key in pinned LAMP. Within each trip, LAMP orders rows by a
+coalesced movement/stop event timestamp and defines a station departure as the
+following row's Vehicle Position movement timestamp. The audit applies the
+closest publicly reproducible rule and lowers the result to the Stage 1
+physical key:
+
+```text
+(service_date, vehicle_id, parent_station,
+ direction_id, departure_timestamp)
+```
+
+The daily export does not distinguish Vehicle Position stop times from Trip
+Update stop predictions after coalescing them. Thirty-nine trips contain equal
+exported ordering timestamps, so their 384 rows cannot recover a unique public
+order and remain explicitly ineligible for event lowering. For the remaining
+rows, exact agreement with the source movement-headway label is the target
+eligibility witness; mismatch and boundary classes remain measured masks.
+
+Simultaneous departures retain their separate physical identities but cannot
+form one strict `headway` order. Likewise, duplicate aliases collapse only when
+trunk and source label agree. `run` relations retain only physical endpoints
+with one predecessor and one successor; ambiguous continuations remain counted.
+
 ## Population audit
 
 | Measure | Result |
@@ -105,6 +129,15 @@ did not acquire or silently range-project it.
 | exact active-Schedule rows | 821,513 (78.22%) |
 | unresolved Schedule rows | 228,746 (21.78%) |
 | unresolved `ADDED-*` / `NONREV-*` / other | 221,220 / 4,363 / 3,163 |
+| represented source rows / physical departures | 947,714 / 947,489 |
+| duplicate / conflicting physical aliases | 225 / 0 |
+| ambiguous-order trips / rows | 39 / 384 |
+| exact / mismatched / boundary-only source headways | 940,776 / 201 / 1,007 |
+| strict headway / unambiguous run relations | 940,752 / 877,168 |
+| simultaneous departure groups / events | 206 / 413 |
+| ambiguous run sources / targets | 84 / 56 |
+| station-trunk-directions | 259 |
+| median / p95 / maximum derived gap | 399 / 960 / 57,860 seconds |
 
 The missing identity is not diffuse harmless noise. Examples include every one
 of the 5,112 Green-D rows on 2026-08-12 and all 4,276 Green-D rows on
@@ -122,9 +155,9 @@ retrospective event-time forecasting, regardless of Schedule identity.
 The acquisition commands require explicit temporary or external directories:
 
 ```console
-uv run --locked experiments/tools/mbta_population.py plan --observed-at 2026-08-22T20:24:04+00:00 --output /tmp/mbta-population-plan.json
-uv run --locked experiments/tools/mbta_population.py acquire --plan /tmp/mbta-population-plan.json --source-dir /tmp/mbta-population-source
-uv run --locked --with duckdb==1.4.1 experiments/tools/mbta_population.py record --source-dir /tmp/mbta-population-source --output-dir experiments/fixtures/mbta_population
+uv run --locked python -m experiments.tools.mbta_population plan --observed-at 2026-08-22T20:24:04+00:00 --output /tmp/mbta-population-plan.json
+uv run --locked python -m experiments.tools.mbta_population acquire --plan /tmp/mbta-population-plan.json --source-dir /tmp/mbta-population-source
+uv run --locked --with duckdb==1.4.1 python -m experiments.tools.mbta_population record --source-dir /tmp/mbta-population-source --output-dir experiments/fixtures/mbta_population
 uv run --locked python -m experiments.run mbta_population
 ```
 
@@ -134,11 +167,13 @@ records an empty reference set.
 
 ## Stage 3 boundary
 
-Stage 3 may define a retrospective event-time task under four constraints:
+Stage 3 may define a retrospective event-time task under five constraints:
 
 - derive inputs and targets only from observed movement events;
-- retain added, disrupted, and nonrevenue rows when they satisfy the task's
-  explicit movement and lane eligibility rules;
+- retain added, disrupted, and `NONREV-*`-aliased rows when they satisfy the
+  task's explicit movement and lane eligibility rules;
+- mask ambiguous order, simultaneous strict-order, mismatched-label, boundary,
+  and ambiguous-run cases by their named reason;
 - expose exact Schedule identity as a mask and report baseline coverage;
 - treat source-provided scheduled values as plan-derived annotations with LAMP
   provenance, never as independently reversible Schedule calls.

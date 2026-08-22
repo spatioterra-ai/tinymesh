@@ -150,6 +150,39 @@ class MbtaPopulationTest(unittest.TestCase):
       (821_513, 228_746, 221_220, 4_363, 3_163),
     )
     self.assertEqual(result.schedule_versions, 12)
+    self.assertEqual(
+      (
+        result.represented_source_rows,
+        result.physical_departures,
+        result.duplicate_aliases,
+        result.conflicting_aliases,
+        result.ambiguous_order_trips,
+        result.ambiguous_order_rows,
+      ),
+      (947_714, 947_489, 225, 0, 39, 384),
+    )
+    self.assertEqual(
+      (
+        result.run_relations,
+        result.ambiguous_run_sources,
+        result.ambiguous_run_targets,
+        result.headway_relations,
+      ),
+      (877_168, 84, 56, 940_752),
+    )
+    self.assertEqual(
+      (
+        result.exact_headways,
+        result.mismatched_headways,
+        result.boundary_only_headways,
+        result.simultaneous_events,
+      ),
+      (940_776, 201, 1_007, 413),
+    )
+    self.assertEqual(
+      (result.station_directions, result.median_gap_seconds, result.p95_gap_seconds, result.maximum_gap_seconds),
+      (259, 399, 960, 57_860),
+    )
     self.assertEqual(result.decision, "advance:stage_3_retrospective_with_schedule_mask")
     self.assertEqual(result.stage_3_consequence, "advance:retrospective_event_time_with_schedule_mask")
     self.assertEqual(result, observe())

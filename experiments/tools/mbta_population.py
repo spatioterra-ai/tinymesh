@@ -257,6 +257,7 @@ def audit(directory: Path) -> dict[str, object]:
       AND schedule_calls.departure = performance.scheduled_departure_time
     """
   )
+  event_population, event_groups = _audit_events(connection)
   groups = _query(
     connection,
     """
@@ -276,6 +277,10 @@ def audit(directory: Path) -> dict[str, object]:
     ORDER BY service_date, route_id
     """,
   )
+  event_by_group = {(row["service_date"], row["route_id"]): row for row in event_groups}
+  groups = [row | event_by_group[(row["service_date"], row["route_id"])] for row in groups]
+  for row in groups:
+    row["boundary_only_headways"] = row["source_headways"] - row["exact_headways"] - row["mismatched_headways"]
   versions = _query(
     connection,
     """
@@ -290,8 +295,9 @@ def audit(directory: Path) -> dict[str, object]:
     [feed],
   )
   totals = _sum_groups(groups)
+  sufficient = event_population["exact_headways"] > 0 and event_population["conflicting_aliases"] == 0
   return {
-    "schema": 1,
+    "schema": 2,
     "source_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
     "source_files": len(value.sources),
     "source_bytes": value.source_bytes,
@@ -303,14 +309,260 @@ def audit(directory: Path) -> dict[str, object]:
       "routes": sorted({row["route_id"] for row in groups}),
       **totals,
     },
+    "event_population": event_population,
     "schedule_versions": versions,
     "date_routes": groups,
     "decision": (
       "advance:stage_3_retrospective_with_schedule_mask"
-      if totals["schedule_unresolved"]
+      if sufficient and totals["schedule_unresolved"]
       else "advance:stage_3_retrospective"
+      if sufficient
+      else "stop:insufficient_event_population"
     ),
   }
+
+
+def _audit_events(connection: Any) -> tuple[dict[str, object], list[dict[str, object]]]:
+  """Reconstruct the observable event carrier without requiring Schedule identity."""
+  connection.execute(
+    """
+    CREATE TEMP TABLE ambiguous_trips AS
+    SELECT DISTINCT service_date, route_id, trip_id
+    FROM population
+    QUALIFY count(*) OVER (
+      PARTITION BY service_date, route_id, trip_id, coalesce(move_timestamp, stop_timestamp)
+    ) > 1
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE ordered_population AS
+    SELECT population.*,
+      coalesce(move_timestamp, stop_timestamp) AS event_order_timestamp,
+      row_number() OVER trip AS trip_position,
+      lead(stop_id) OVER trip AS following_stop_id,
+      lead(stop_sequence) OVER trip AS following_stop_sequence,
+      lead(move_timestamp) OVER trip AS departure_timestamp
+    FROM population
+    ANTI JOIN ambiguous_trips USING (service_date, route_id, trip_id)
+    WINDOW trip AS (
+      PARTITION BY service_date, route_id, trip_id
+      ORDER BY coalesce(move_timestamp, stop_timestamp)
+    )
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE event_aliases AS
+    SELECT *
+    FROM ordered_population
+    WHERE stop_count > 1 AND departure_timestamp IS NOT NULL
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE events AS
+    SELECT service_date, vehicle_id, parent_station, direction_id, departure_timestamp,
+      any_value(trunk_route_id) AS trunk_route_id,
+      max(headway_trunk_seconds) AS source_headway_seconds,
+      count(*) AS aliases,
+      count(DISTINCT trunk_route_id) AS trunk_routes,
+      count(DISTINCT headway_trunk_seconds) FILTER (WHERE headway_trunk_seconds IS NOT NULL) AS source_labels
+    FROM event_aliases
+    GROUP BY service_date, vehicle_id, parent_station, direction_id, departure_timestamp
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE lane_times AS
+    SELECT service_date, parent_station, trunk_route_id, direction_id, departure_timestamp,
+      count(*) AS event_count
+    FROM events
+    GROUP BY service_date, parent_station, trunk_route_id, direction_id, departure_timestamp
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE headway_relations AS
+    WITH ordered AS (
+      SELECT *,
+        lag(departure_timestamp) OVER lane AS source_timestamp,
+        lag(event_count) OVER lane AS source_count
+      FROM lane_times
+      WINDOW lane AS (
+        PARTITION BY service_date, parent_station, trunk_route_id, direction_id
+        ORDER BY departure_timestamp
+      )
+    )
+    SELECT *, departure_timestamp - source_timestamp AS elapsed_seconds
+    FROM ordered
+    WHERE event_count = 1 AND source_count = 1
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE run_relations AS
+    WITH successors AS (
+      SELECT *,
+        lead(trip_position) OVER trip AS target_position,
+        lead(vehicle_id) OVER trip AS target_vehicle_id,
+        lead(parent_station) OVER trip AS target_parent_station,
+        lead(direction_id) OVER trip AS target_direction_id,
+        lead(departure_timestamp) OVER trip AS target_timestamp
+      FROM event_aliases
+      WINDOW trip AS (
+        PARTITION BY service_date, route_id, trip_id
+        ORDER BY trip_position
+      )
+    )
+    SELECT DISTINCT service_date, route_id,
+      vehicle_id, parent_station, direction_id, departure_timestamp,
+      target_vehicle_id, target_parent_station, target_direction_id, target_timestamp
+    FROM successors
+    WHERE target_position = trip_position + 1 AND departure_timestamp < target_timestamp
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE run_conflict_sources AS
+    SELECT service_date, vehicle_id, parent_station, direction_id, departure_timestamp
+    FROM run_relations
+    GROUP BY ALL
+    HAVING count(DISTINCT (target_vehicle_id, target_parent_station, target_direction_id, target_timestamp)) > 1
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE run_conflict_targets AS
+    SELECT service_date, target_vehicle_id, target_parent_station, target_direction_id, target_timestamp
+    FROM run_relations
+    GROUP BY ALL
+    HAVING count(DISTINCT (vehicle_id, parent_station, direction_id, departure_timestamp)) > 1
+    """
+  )
+  connection.execute(
+    """
+    CREATE TEMP TABLE exact_run_relations AS
+    SELECT run_relations.*
+    FROM run_relations
+    ANTI JOIN run_conflict_sources USING (
+      service_date, vehicle_id, parent_station, direction_id, departure_timestamp
+    )
+    ANTI JOIN run_conflict_targets USING (
+      service_date, target_vehicle_id, target_parent_station, target_direction_id, target_timestamp
+    )
+    """
+  )
+  population = _query(
+    connection,
+    """
+    SELECT
+      (SELECT count(*) FROM ambiguous_trips) AS ambiguous_order_trips,
+      (SELECT count(*) FROM population SEMI JOIN ambiguous_trips USING (service_date, route_id, trip_id)) AS ambiguous_order_rows,
+      (SELECT count(*) FROM event_aliases) AS represented_source_rows,
+      (SELECT count(*) FROM events) AS physical_departures,
+      (SELECT sum(aliases - 1) FROM events) AS duplicate_aliases,
+      (SELECT count(*) FROM events WHERE trunk_routes > 1 OR source_labels > 1) AS conflicting_aliases,
+      (SELECT count(*) FROM lane_times WHERE event_count > 1) AS simultaneous_groups,
+      (SELECT coalesce(sum(event_count), 0) FROM lane_times WHERE event_count > 1) AS simultaneous_events,
+      (SELECT count(*) FROM exact_run_relations) AS run_relations,
+      (SELECT count(*) FROM run_conflict_sources) AS ambiguous_run_sources,
+      (SELECT count(*) FROM run_conflict_targets) AS ambiguous_run_targets,
+      (SELECT count(*) FROM headway_relations) AS headway_relations,
+      (SELECT count(*) FROM event_aliases aliases JOIN headway_relations relations
+        USING (service_date, parent_station, trunk_route_id, direction_id, departure_timestamp)
+        WHERE aliases.headway_trunk_seconds = relations.elapsed_seconds) AS exact_headways,
+      (SELECT count(*) FROM event_aliases aliases JOIN headway_relations relations
+        USING (service_date, parent_station, trunk_route_id, direction_id, departure_timestamp)
+        WHERE aliases.headway_trunk_seconds IS NOT NULL
+          AND aliases.headway_trunk_seconds != relations.elapsed_seconds) AS mismatched_headways,
+      (SELECT count(*) FROM headway_relations relations JOIN events
+        USING (service_date, parent_station, trunk_route_id, direction_id, departure_timestamp)
+        WHERE events.source_headway_seconds IS NULL) AS derived_only_headways,
+      (SELECT count(headway_trunk_seconds) FROM population)
+        - (SELECT count(*) FROM event_aliases aliases JOIN headway_relations relations
+          USING (service_date, parent_station, trunk_route_id, direction_id, departure_timestamp)
+          WHERE aliases.headway_trunk_seconds = relations.elapsed_seconds)
+        - (SELECT count(*) FROM event_aliases aliases JOIN headway_relations relations
+          USING (service_date, parent_station, trunk_route_id, direction_id, departure_timestamp)
+          WHERE aliases.headway_trunk_seconds IS NOT NULL
+            AND aliases.headway_trunk_seconds != relations.elapsed_seconds) AS boundary_only_headways,
+      (SELECT count(DISTINCT (parent_station, trunk_route_id, direction_id)) FROM events) AS station_directions,
+      (SELECT min(elapsed_seconds) FROM headway_relations) AS minimum_gap_seconds,
+      (SELECT quantile_disc(elapsed_seconds, 0.5) FROM headway_relations) AS median_gap_seconds,
+      (SELECT quantile_disc(elapsed_seconds, 0.95) FROM headway_relations) AS p95_gap_seconds,
+      (SELECT max(elapsed_seconds) FROM headway_relations) AS maximum_gap_seconds
+    """,
+  )[0]
+  groups = _query(
+    connection,
+    """
+    WITH date_routes AS (
+      SELECT DISTINCT service_date, route_id FROM population
+    ), carrier AS (
+      SELECT service_date, route_id,
+        count(*) AS represented_source_rows,
+        count(DISTINCT (vehicle_id, parent_station, direction_id, departure_timestamp)) AS physical_departures,
+        count(*) - count(DISTINCT (vehicle_id, parent_station, direction_id, departure_timestamp)) AS duplicate_aliases,
+        count(DISTINCT (parent_station, trunk_route_id, direction_id)) AS lanes,
+        min(departure_timestamp) AS first_departure_timestamp,
+        max(departure_timestamp) AS last_departure_timestamp
+      FROM event_aliases
+      GROUP BY service_date, route_id
+    ), labels AS (
+      SELECT aliases.service_date, aliases.route_id,
+        count(*) FILTER (WHERE aliases.headway_trunk_seconds = relations.elapsed_seconds) AS exact_headways,
+        count(*) FILTER (
+          WHERE aliases.headway_trunk_seconds IS NOT NULL
+            AND aliases.headway_trunk_seconds != relations.elapsed_seconds
+        ) AS mismatched_headways,
+        count(*) FILTER (WHERE aliases.headway_trunk_seconds IS NULL) AS derived_only_headways,
+        count(*) AS headway_relations,
+        quantile_disc(relations.elapsed_seconds, 0.5) AS median_gap_seconds,
+        quantile_disc(relations.elapsed_seconds, 0.95) AS p95_gap_seconds,
+        max(relations.elapsed_seconds) AS maximum_gap_seconds
+      FROM event_aliases aliases
+      JOIN headway_relations relations
+        USING (service_date, parent_station, trunk_route_id, direction_id, departure_timestamp)
+      GROUP BY aliases.service_date, aliases.route_id
+    ), ambiguous AS (
+      SELECT population.service_date, population.route_id,
+        count(DISTINCT population.trip_id) AS ambiguous_order_trips,
+        count(*) AS ambiguous_order_rows
+      FROM population
+      JOIN ambiguous_trips USING (service_date, route_id, trip_id)
+      GROUP BY population.service_date, population.route_id
+    ), runs AS (
+      SELECT service_date, route_id, count(*) AS run_relations
+      FROM exact_run_relations
+      GROUP BY service_date, route_id
+    )
+    SELECT date_routes.service_date, date_routes.route_id,
+      coalesce(carrier.represented_source_rows, 0) AS represented_source_rows,
+      coalesce(carrier.physical_departures, 0) AS physical_departures,
+      coalesce(carrier.duplicate_aliases, 0) AS duplicate_aliases,
+      coalesce(carrier.lanes, 0) AS lanes,
+      coalesce(carrier.first_departure_timestamp, 0) AS first_departure_timestamp,
+      coalesce(carrier.last_departure_timestamp, 0) AS last_departure_timestamp,
+      coalesce(ambiguous.ambiguous_order_trips, 0) AS ambiguous_order_trips,
+      coalesce(ambiguous.ambiguous_order_rows, 0) AS ambiguous_order_rows,
+      coalesce(runs.run_relations, 0) AS run_relations,
+      coalesce(labels.headway_relations, 0) AS headway_relations,
+      coalesce(labels.exact_headways, 0) AS exact_headways,
+      coalesce(labels.mismatched_headways, 0) AS mismatched_headways,
+      coalesce(labels.derived_only_headways, 0) AS derived_only_headways,
+      coalesce(labels.median_gap_seconds, 0) AS median_gap_seconds,
+      coalesce(labels.p95_gap_seconds, 0) AS p95_gap_seconds,
+      coalesce(labels.maximum_gap_seconds, 0) AS maximum_gap_seconds
+    FROM date_routes
+    LEFT JOIN carrier USING (service_date, route_id)
+    LEFT JOIN labels USING (service_date, route_id)
+    LEFT JOIN ambiguous USING (service_date, route_id)
+    LEFT JOIN runs USING (service_date, route_id)
+    ORDER BY date_routes.service_date, date_routes.route_id
+    """,
+  )
+  return population, groups
 
 
 def read(path: Path) -> Plan:
