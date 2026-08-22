@@ -155,14 +155,14 @@ retrospective event-time forecasting, regardless of Schedule identity.
 The acquisition commands require explicit temporary or external directories:
 
 ```console
-uv run --locked python -m experiments.tools.mbta_population plan --observed-at 2026-08-22T20:24:04+00:00 --output /tmp/mbta-population-plan.json
-uv run --locked python -m experiments.tools.mbta_population acquire --plan /tmp/mbta-population-plan.json --source-dir /tmp/mbta-population-source
-uv run --locked --with duckdb==1.4.1 python -m experiments.tools.mbta_population record --source-dir /tmp/mbta-population-source --output-dir experiments/fixtures/mbta_population
+uv run --locked -m experiments.tools.mbta_population plan --observed-at 2026-08-22T20:24:04+00:00 --output /tmp/mbta-population-plan.json
+uv run --locked -m experiments.tools.mbta_population acquire --plan /tmp/mbta-population-plan.json --source-dir /tmp/mbta-population-source
+uv run --locked --with duckdb==1.4.1 -m experiments.tools.mbta_population record --source-dir /tmp/mbta-population-source --output-dir experiments/fixtures/mbta_population
 uv run --locked python -m experiments.run mbta_population
 ```
 
 The corrected clean decision run is bound to revision
-`5a6db4d10bddd5f8b2ef7edca9d5d9d275a11a98`. It reads no study gitlink and
+`17df7e054df1ddd2ef78e34ea091695428016210`. It reads no study gitlink and
 records an empty reference set.
 
 ## Stage 3 boundary
