@@ -82,8 +82,27 @@ class MbtaReplayFixtureTest(unittest.TestCase):
     )
     self.assertNotIn("observed_arrival", self.manifest["provenance"].values())
     self.assertEqual(
+      self.manifest["provenance"],
+      {
+        "dwell_time_seconds": "derived_observed_next_move_minus_mixed_stop",
+        "headway_trunk_seconds": "derived_successive_observed_next_moves",
+        "move_timestamp": "observed_vehicle_position",
+        "scheduled_arrival_time": "schedule",
+        "scheduled_departure_time": "schedule",
+        "scheduled_headway_trunk": "schedule_derived",
+        "scheduled_travel_time": "schedule_derived",
+        "stop_timestamp": "mixed_vehicle_position_or_trip_update_prediction",
+        "travel_time_seconds": "derived_mixed_stop_minus_observed_move",
+      },
+    )
+    self.assertEqual(
       self.manifest["source_audit"],
       {
+        "blue_derived_headways": 4274,
+        "blue_exact_headways": 4274,
+        "blue_headway_mismatches": 0,
+        "blue_rows": 4706,
+        "blue_source_headways": 4274,
         "full_day_duplicate_trip_stops": 59,
         "full_day_missing_move": 2242,
         "full_day_missing_stop": 583,
@@ -92,6 +111,14 @@ class MbtaReplayFixtureTest(unittest.TestCase):
         "full_day_vehicles": 241,
       },
     )
+
+  def test_fixture_retains_only_fields_needed_for_target_audit(self) -> None:
+    self.assertEqual(sum(bool(row["headway_trunk_seconds"]) for row in self.replay), 608)
+    self.assertEqual(sum(bool(row["travel_time_seconds"]) for row in self.replay), 663)
+    self.assertEqual(sum(bool(row["dwell_time_seconds"]) for row in self.replay), 553)
+    self.assertEqual(sum(bool(row["scheduled_headway_trunk"]) for row in self.replay), 663)
+    self.assertEqual({row["trunk_route_id"] for row in self.replay}, {"Blue"})
+    self.assertEqual(len({row["parent_station"] for row in self.replay}), 12)
 
   def test_source_guard_rejects_size_and_checksum_drift(self) -> None:
     with tempfile.TemporaryDirectory() as directory:

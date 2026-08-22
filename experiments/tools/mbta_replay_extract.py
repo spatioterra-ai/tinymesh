@@ -116,11 +116,18 @@ def extract(directory: Path) -> dict[str, Any]:
       "route_id",
       "direction_id",
       "stop_id",
+      "parent_station",
       "stop_sequence",
       "move_timestamp",
       "stop_timestamp",
+      "travel_time_seconds",
+      "dwell_time_seconds",
+      "headway_trunk_seconds",
+      "trunk_route_id",
       "scheduled_arrival_time",
       "scheduled_departure_time",
+      "scheduled_travel_time",
+      "scheduled_headway_trunk",
     },
   )
   for name, columns in {
@@ -158,11 +165,18 @@ def extract(directory: Path) -> dict[str, Any]:
     "route_id",
     "direction_id",
     "stop_id",
+    "parent_station",
     "stop_sequence",
     "move_timestamp",
     "stop_timestamp",
+    "travel_time_seconds",
+    "dwell_time_seconds",
+    "headway_trunk_seconds",
+    "trunk_route_id",
     "scheduled_arrival_time",
     "scheduled_departure_time",
+    "scheduled_travel_time",
+    "scheduled_headway_trunk",
   )
   replay = _rows(
     connection,
@@ -225,9 +239,25 @@ def extract(directory: Path) -> dict[str, Any]:
     "FROM read_parquet(?) GROUP BY ALL HAVING n > 1)",
     [performance],
   ).fetchone()[0]
+  headway = connection.execute(
+    "WITH departures AS ("
+    "SELECT *, lead(move_timestamp) OVER ("
+    "PARTITION BY service_date, start_time, trip_id, vehicle_id "
+    "ORDER BY coalesce(move_timestamp, stop_timestamp), stop_sequence"
+    ") target_time FROM read_parquet(?) WHERE route_id = ?"
+    "), derived AS ("
+    "SELECT *, target_time - lag(target_time) OVER ("
+    "PARTITION BY parent_station, trunk_route_id, direction_id ORDER BY target_time"
+    ") derived_headway FROM departures"
+    ") SELECT count(*), count(headway_trunk_seconds), count(derived_headway), "
+    "count(*) FILTER (WHERE headway_trunk_seconds = derived_headway), "
+    "count(*) FILTER (WHERE headway_trunk_seconds IS NOT NULL AND derived_headway IS NOT NULL "
+    "AND headway_trunk_seconds <> derived_headway) FROM derived",
+    [performance, ROUTE_ID],
+  ).fetchone()
 
   return {
-    "schema": 1,
+    "schema": 2,
     "source": {
       "publisher": "Massachusetts Bay Transportation Authority via LAMP",
       "lamp_revision": "e266440db994ed33eede5e44a137b205e4a1e8dd",
@@ -260,12 +290,22 @@ def extract(directory: Path) -> dict[str, Any]:
       "full_day_missing_move": full_day[3],
       "full_day_missing_stop": full_day[4],
       "full_day_duplicate_trip_stops": duplicate_groups,
+      "blue_rows": headway[0],
+      "blue_source_headways": headway[1],
+      "blue_derived_headways": headway[2],
+      "blue_exact_headways": headway[3],
+      "blue_headway_mismatches": headway[4],
     },
     "provenance": {
       "move_timestamp": "observed_vehicle_position",
       "stop_timestamp": "mixed_vehicle_position_or_trip_update_prediction",
+      "travel_time_seconds": "derived_mixed_stop_minus_observed_move",
+      "dwell_time_seconds": "derived_observed_next_move_minus_mixed_stop",
+      "headway_trunk_seconds": "derived_successive_observed_next_moves",
       "scheduled_arrival_time": "schedule",
       "scheduled_departure_time": "schedule",
+      "scheduled_travel_time": "schedule_derived",
+      "scheduled_headway_trunk": "schedule_derived",
     },
   }
 
