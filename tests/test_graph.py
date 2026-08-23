@@ -1,4 +1,5 @@
 import unittest
+from collections import Counter
 from dataclasses import FrozenInstanceError
 from math import prod
 
@@ -68,6 +69,25 @@ class GraphTest(unittest.TestCase):
         self.assertEqual(product.source, (0, 1, 2, 3, 0, 1, 2, 3, 4, 5))
         self.assertEqual(product.target, (2, 3, 4, 5, 1, 0, 3, 2, 5, 4))
         self.assertEqual(product.edges, time.edges * space.nodes + time.nodes * space.edges)
+
+    def test_cartesian_product_preserves_identity(self):
+        graph = Graph(3, [0, 1, 1], [1, 0, 2])
+        identity = Graph(1, [], [])
+
+        self.assertEqual(identity.cartesian(graph), graph)
+        self.assertEqual(graph.cartesian(identity), graph)
+
+    def test_cartesian_product_is_associative_as_an_edge_multiset(self):
+        first = Graph(2, [0], [1])
+        second = Graph(3, [0, 1], [1, 2])
+        third = Graph(2, [0, 1], [1, 0])
+
+        left = first.cartesian(second).cartesian(third)
+        right = first.cartesian(second.cartesian(third))
+
+        self.assertEqual(left.nodes, right.nodes)
+        self.assertEqual(Counter(zip(left.source, left.target)), Counter(zip(right.source, right.target)))
+        self.assertNotEqual((left.source, left.target), (right.source, right.target))
 
 
 class CSRBackendTest(unittest.TestCase):

@@ -199,6 +199,13 @@ domains can therefore reuse the same `Graph` and sparse operations. The
 [time concept](time.md#a-node-time-mesh-is-a-graph-product) gives the concrete
 node-time construction and its factorized alternative.
 
+The one-node graph with no edges is an exact left and right identity. Products
+are associative as directed edge multisets, but not as ordered COO edges:
+regrouping factors can permute the edge list because every binary product emits
+its left-factor edges first. Derive aligned edge values after choosing a
+bracketing; do not reuse COO-aligned values across a regrouping without applying
+the corresponding permutation.
+
 The current sparse invariant is:
 
 > Network-scale graph computation may store or visit node and edge lanes, but
