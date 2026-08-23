@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from math import sqrt
 from time import perf_counter
@@ -33,6 +34,15 @@ class LocalForecast:
 
 
 Model = LocalForecast | DiffusionForecast
+
+
+@dataclass(frozen=True)
+class ForecastArm:
+    model: Model
+    predict: Callable[[Tensor, bool], Tensor]
+
+    def __call__(self, values: Tensor, *, realize_steps: bool = False) -> Tensor:
+        return self.predict(values, realize_steps)
 
 
 @dataclass(frozen=True, eq=False)
@@ -248,11 +258,9 @@ def forecast(
     for name in models:
         for seed in seeds:
             Tensor.manual_seed(seed)
-            model = _model(name, hidden_features)
-            operator = None if name == "lstm" else diffusion[name]
+            forecast_arm = _model(name, hidden_features, diffusion)
             best_epoch, runtime, checkpoints, validation = _fit(
-                model,
-                operator,
+                forecast_arm,
                 normalized.train,
                 normalized.validation,
                 target_standardizer,
@@ -267,14 +275,13 @@ def forecast(
                     name,
                     seed,
                     best_epoch,
-                    _parameter_count(model),
-                    _sparse_calls(model, operator, data.signal.graph.nodes, device),
+                    _parameter_count(forecast_arm.model),
+                    _sparse_calls(forecast_arm, data.signal.graph.nodes, device),
                     runtime,
                     checkpoints,
                     validation,
                     _evaluate(
-                        model,
-                        operator,
+                        forecast_arm,
                         normalized.test,
                         target_standardizer,
                         history=history,
@@ -376,15 +383,21 @@ def _changes(values: Tensor, unit: Tensor) -> int:
     return int(((values - unit).abs() > 1e-6).sum().item())
 
 
-def _model(name: str, hidden_features: int) -> Model:
+def _model(
+    name: str,
+    hidden_features: int,
+    diffusion: dict[str, DirectedDiffusion],
+) -> ForecastArm:
     if name == "lstm":
-        return LocalForecast(1, hidden_features)
-    return DiffusionForecast(1, hidden_features)
+        model = LocalForecast(1, hidden_features)
+        return ForecastArm(model, lambda values, realize_steps: model(values, realize_steps=realize_steps))
+    model = DiffusionForecast(1, hidden_features)
+    operator = diffusion[name]
+    return ForecastArm(model, lambda values, realize_steps: model(values, operator, realize_steps=realize_steps))
 
 
 def _fit(
-    model: Model,
-    diffusion: DirectedDiffusion | None,
+    forecast_arm: ForecastArm,
     train: StaticGraphTemporalSignal,
     validation: StaticGraphTemporalSignal,
     target_standardizer: Standardizer,
@@ -395,6 +408,7 @@ def _fit(
     learning_rate: float,
     checkpoint_every: int,
 ) -> tuple[int, float, tuple[Checkpoint, ...], Metrics]:
+    model = forecast_arm.model
     optimizer = nn.optim.Adam(
         nn.state.get_parameters(model),
         lr=learning_rate,
@@ -406,7 +420,7 @@ def _fit(
         @Context(TRAINING=1)
         def step(values: Tensor, target: Tensor) -> Tensor:
             optimizer.zero_grad()
-            loss = (_predict(model, values, diffusion) - target).square().mean().backward()
+            loss = (forecast_arm(values) - target).square().mean().backward()
             return loss.realize(*optimizer.schedule_step())
 
         return step
@@ -414,8 +428,7 @@ def _fit(
     start = perf_counter()
     best_epoch = 0
     best_metrics = _evaluate(
-        model,
-        diffusion,
+        forecast_arm,
         validation,
         target_standardizer,
         history=history,
@@ -436,8 +449,7 @@ def _fit(
         if epoch % checkpoint_every != 0 and epoch != epochs:
             continue
         validation_metrics = _evaluate(
-            model,
-            diffusion,
+            forecast_arm,
             validation,
             target_standardizer,
             history=history,
@@ -454,8 +466,7 @@ def _fit(
 
 
 def _evaluate(
-    model: Model,
-    diffusion: DirectedDiffusion | None,
+    forecast_arm: ForecastArm,
     signal: StaticGraphTemporalSignal,
     target_standardizer: Standardizer,
     *,
@@ -468,7 +479,7 @@ def _evaluate(
         history=history,
     ):
         prediction = target_standardizer.restore(
-            _predict(model, values, diffusion, realize_steps=True)
+            forecast_arm(values, realize_steps=True)
         )
         raw_target = target_standardizer.restore(target)
         error = prediction - raw_target
@@ -478,20 +489,6 @@ def _evaluate(
         square += squared_error.item()
         targets += target.numel()
     return Metrics(absolute / targets, sqrt(square / targets))
-
-
-def _predict(
-    model: Model,
-    values: Tensor,
-    diffusion: DirectedDiffusion | None,
-    *,
-    realize_steps: bool = False,
-) -> Tensor:
-    if isinstance(model, LocalForecast):
-        return model(values, realize_steps=realize_steps)
-    if diffusion is None:
-        raise ValueError("diffusion model requires one operator")
-    return model(values, diffusion, realize_steps=realize_steps)
 
 
 def _snapshot(model: Model) -> dict[str, Tensor]:
@@ -506,15 +503,12 @@ def _parameter_count(model: Model) -> int:
 
 
 def _sparse_calls(
-    model: Model,
-    diffusion: DirectedDiffusion | None,
+    forecast_arm: ForecastArm,
     nodes: int,
     device: str,
 ) -> int:
-    output = _predict(
-        model,
+    output = forecast_arm(
         Tensor.zeros(1, 1, nodes, 1, device=device),
-        diffusion,
     )
     return sum(
         uop.src[0].arg.name == "csr_sum"
