@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from experiments.mbta_clock import (
   EXPECTED_CANDIDATES,
@@ -14,6 +15,7 @@ from experiments.mbta_clock import (
   observe,
   retains_target,
 )
+from experiments.tools.mbta_clock import ClockBuildError, build
 
 
 class MbtaClockTest(unittest.TestCase):
@@ -61,6 +63,21 @@ class MbtaClockTest(unittest.TestCase):
       audit_path.write_text(json.dumps(audit))
       with self.assertRaisesRegex(ClockError, "target accounting drift"):
         observe(fixture)
+
+  def test_source_artifact_drift_fails_before_rebuild(self) -> None:
+    root = Path(__file__).parents[1] / "experiments" / "fixtures"
+    with tempfile.TemporaryDirectory() as directory:
+      source = Path(directory) / "source"
+      source.mkdir()
+      shutil.copy(root / "mbta_population" / "manifest.json", source / "manifest.json")
+      population = root / "mbta_population" / "audit.json"
+      task = root / "mbta_headway_task" / "protocol.json"
+      topology = Path(directory) / "topology.json"
+      topology.write_bytes((root / "mbta_topology" / "protocol.json").read_bytes() + b"\n")
+      with patch("experiments.tools.mbta_clock.open_task") as open_task:
+        with self.assertRaisesRegex(ClockBuildError, "frozen digest drift"):
+          build(source, population, task, topology)
+        open_task.assert_not_called()
 
 
 if __name__ == "__main__":

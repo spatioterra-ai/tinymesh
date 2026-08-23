@@ -44,6 +44,7 @@ nav = [
     "research/mbta-replay-data.md",
     "research/mbta-event-mesh.md",
     "research/mbta-population.md",
+    "research/mbta-clock.md",
     "research/mbta-headway-task.md",
     "research/mbta-topology.md",
     "research/metr-la-forecast.md",

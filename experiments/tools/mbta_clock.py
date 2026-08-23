@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from experiments.mbta_clock import INTERVALS, admissible
+from experiments.mbta_clock import EXPECTED_DIGESTS, INTERVALS, admissible
 from experiments.tools.mbta_headway_task import _digest, open_task
 
 
@@ -28,6 +28,12 @@ def build(
   topology_protocol_path: Path,
 ) -> dict:
   """Rebuild frozen facts and measure each candidate without materializing cells."""
+  digests = _verify_artifacts(
+    source_dir / "manifest.json",
+    population_audit_path,
+    task_protocol_path,
+    topology_protocol_path,
+  )
   connection, rebuilt_task, _, _ = open_task(source_dir, population_audit_path)
   connection.execute("SET threads = 1")
   task = _read(task_protocol_path)
@@ -53,10 +59,7 @@ def build(
   selected = max(admitted, default=None)
   return {
     "schema": 1,
-    "source_manifest_sha256": hashlib.sha256((source_dir / "manifest.json").read_bytes()).hexdigest(),
-    "population_audit_sha256": hashlib.sha256(population_audit_path.read_bytes()).hexdigest(),
-    "task_protocol_sha256": hashlib.sha256(task_protocol_path.read_bytes()).hexdigest(),
-    "topology_protocol_sha256": hashlib.sha256(topology_protocol_path.read_bytes()).hexdigest(),
+    **digests,
     "population": population,
     "clock_domain": "inclusive_lane_day_span_from_first_event_bin_through_last_event_bin",
     "bin_semantics": "UTC_half_open_[start,end)",
@@ -199,6 +202,22 @@ def _read(path: Path) -> dict:
   if not isinstance(value, dict):
     raise ClockBuildError(f"{path.name}: frozen artifact is not an object")
   return value
+
+
+def _verify_artifacts(manifest: Path, population: Path, task: Path, topology: Path) -> dict[str, str]:
+  paths = {
+    "source_manifest_sha256": manifest,
+    "population_audit_sha256": population,
+    "task_protocol_sha256": task,
+    "topology_protocol_sha256": topology,
+  }
+  try:
+    observed = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in paths.items()}
+  except FileNotFoundError as error:
+    raise ClockBuildError(f"{error.filename}: missing frozen artifact") from error
+  if observed != EXPECTED_DIGESTS:
+    raise ClockBuildError("artifacts: frozen digest drift")
+  return observed
 
 
 def _write(path: Path, value: object) -> None:
