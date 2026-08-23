@@ -174,7 +174,9 @@ Left-factor edges come first in COO order, each repeated across the right
 factor's nodes; right-factor edges follow, each repeated across the left
 factor's nodes. Callers can therefore align edge types and values without a
 second topology map. For `time.cartesian(space)`, temporal edges precede
-spatial edges.
+spatial edges. This order belongs to that binary bracketing: regrouping three or
+more factors preserves the directed edge multiset but can permute COO order, so
+aligned edge values must be derived for the selected bracketing.
 
 This explicit form costs `O(TN + E_T N + T E_G)` storage. Use it when a joint
 message-passing rule needs it and keep long fixed-topology sequences

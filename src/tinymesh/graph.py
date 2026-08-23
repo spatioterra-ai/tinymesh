@@ -45,6 +45,8 @@ class Graph:
         """Return the directed Cartesian product over left-major node pairs.
 
         Left-factor edges precede right-factor edges in the returned COO order.
+        The one-node edgeless graph is an exact identity. Products are associative
+        as edge multisets; regrouping factors can permute COO edge order.
         """
         return Graph(
             self.nodes * other.nodes,
