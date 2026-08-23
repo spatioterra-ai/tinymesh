@@ -5,62 +5,32 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from math import gcd, sqrt
-from random import Random
+from math import sqrt
 from time import perf_counter
 
 from tinygrad import Context, Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 
 from experiments.directed_gru import DiffusionForecast
+from experiments.transport_protocol import (
+  DATA_SEED,
+  FORWARD,
+  LOCAL,
+  NODES,
+  REVERSE,
+  TEST_TRAJECTORIES,
+  TRAIN_TRAJECTORIES,
+  VALIDATION_TRAJECTORIES,
+  Topology,
+  Trajectories,
+  permuted,
+  self_topology,
+  symmetric,
+  topology as transport_topology,
+  trajectories,
+)
 from tinymesh import Graph
 from tinymesh.nn import DirectedDiffusion, GConvGRU
-
-
-DATA_SEED = 20260729
-NODES = 24
-TRAIN_TRAJECTORIES = 128
-VALIDATION_TRAJECTORIES = 32
-TEST_TRAJECTORIES = 32
-LOCAL, FORWARD, REVERSE = 0.25, 0.55, 0.20
-
-
-@dataclass(frozen=True)
-class Topology:
-  nodes: int
-  source: tuple[int, ...]
-  target: tuple[int, ...]
-  affinity: tuple[float, ...]
-
-
-@dataclass(frozen=True, eq=False)
-class Trajectories:
-  values: Tensor
-
-  @property
-  def count(self) -> int:
-    return int(self.values.shape[0])
-
-  @property
-  def steps(self) -> int:
-    return int(self.values.shape[1])
-
-  def windows(self, history: int) -> tuple[Tensor, Tensor]:
-    if history <= 0 or history >= self.steps:
-      raise ValueError(f"history must be in [1, {self.steps})")
-    starts = self.steps - history
-    values = Tensor.stack(
-      *(self.values[:, start : start + history] for start in range(starts)),
-      dim=1,
-    )
-    target = Tensor.stack(
-      *(self.values[:, start + history] for start in range(starts)),
-      dim=1,
-    )
-    return (
-      values.reshape(self.count * starts, history, *self.values.shape[2:]).realize(),
-      target.reshape(self.count * starts, *self.values.shape[2:]).realize(),
-    )
 
 
 class LocalForecast:
@@ -195,17 +165,17 @@ def compare(
     hidden_features=hidden_features,
     learning_rate=learning_rate,
   )
-  topology = _topology(NODES)
+  topology = transport_topology(NODES)
   steps = history + horizon
-  train = _trajectories(topology, TRAIN_TRAJECTORIES, steps, DATA_SEED, device)
-  validation = _trajectories(
+  train = trajectories(topology, TRAIN_TRAJECTORIES, steps, DATA_SEED, device)
+  validation = trajectories(
     topology,
     VALIDATION_TRAJECTORIES,
     steps,
     DATA_SEED + 1,
     device,
   )
-  test = _trajectories(
+  test = trajectories(
     topology,
     TEST_TRAJECTORIES,
     steps,
@@ -214,14 +184,14 @@ def compare(
   )
 
   Tensor.manual_seed(seed)
-  forecast = _model(
+  forecast = create_forecast(
     model_name,
     topology_name,
     topology,
     hidden_features,
     device,
   )
-  best_epoch, runtime, checkpoints = _fit(
+  best_epoch, runtime, checkpoints = fit(
     forecast,
     train,
     validation,
@@ -250,120 +220,18 @@ def compare(
     epochs=epochs,
     learning_rate=learning_rate,
     transport=(LOCAL, FORWARD, REVERSE),
-    parameters=_parameter_count(forecast.model),
+    parameters=parameter_count(forecast.model),
     best_epoch=best_epoch,
     runtime_seconds=runtime,
     checkpoints=checkpoints,
-    validation_persistence=_persistence(validation, history, horizon),
-    test_persistence=_persistence(test, history, horizon),
+    validation_persistence=persistence(validation, history, horizon),
+    test_persistence=persistence(test, history, horizon),
     validation=_evaluate(forecast, validation, history, horizon),
     test=_evaluate(forecast, test, history, horizon),
   )
 
 
-def _topology(nodes: int) -> Topology:
-  if nodes < 8:
-    raise ValueError("nodes must be at least eight")
-  edges = [(node, (node + 1) % nodes, 1.0 + 0.05 * (node % 5)) for node in range(nodes)]
-  edges.extend(
-    (
-      node,
-      (node + 3 + node % 3) % nodes,
-      0.25 + 0.05 * (node % 4),
-    )
-    for node in range(0, nodes, 2)
-  )
-  return Topology(
-    nodes,
-    tuple(source for source, _, _ in edges),
-    tuple(target for _, target, _ in edges),
-    tuple(affinity for _, _, affinity in edges),
-  )
-
-
-def _permuted(topology: Topology) -> Topology:
-  stride = next(value for value in range(topology.nodes - 1, 1, -1) if gcd(value, topology.nodes) == 1)
-  permutation = tuple((stride * node + 1) % topology.nodes for node in range(topology.nodes))
-  return Topology(
-    topology.nodes,
-    tuple(permutation[node] for node in topology.source),
-    tuple(permutation[node] for node in topology.target),
-    topology.affinity,
-  )
-
-
-def _self(topology: Topology) -> Topology:
-  nodes = tuple(range(topology.nodes))
-  return Topology(topology.nodes, nodes, nodes, (1.0,) * topology.nodes)
-
-
-def _symmetric(topology: Topology) -> Graph:
-  edges = dict.fromkeys(edge for source, target in zip(topology.source, topology.target) for edge in ((source, target), (target, source)))
-  return Graph(
-    topology.nodes,
-    [source for source, _ in edges],
-    [target for _, target in edges],
-  )
-
-
-def _trajectories(
-  topology: Topology,
-  count: int,
-  steps: int,
-  seed: int,
-  device: str,
-  *,
-  initial: str = "dense",
-) -> Trajectories:
-  if initial not in ("dense", "pulse"):
-    raise ValueError("initial must be 'dense' or 'pulse'")
-  random = Random(seed)
-  trajectories = []
-  for _ in range(count):
-    values = _initial(topology.nodes, random, pulse=initial == "pulse")
-    mean = sum(values) / topology.nodes
-    values = [value - mean for value in values]
-    trajectory = [[[value] for value in values]]
-    for _ in range(steps - 1):
-      values = _step(values, topology)
-      trajectory.append([[value] for value in values])
-    trajectories.append(trajectory)
-  return Trajectories(Tensor(trajectories, device=device).realize())
-
-
-def _initial(nodes: int, random: Random, *, pulse: bool) -> list[float]:
-  if not pulse:
-    return [random.uniform(-1, 1) for _ in range(nodes)]
-  values = [0.0] * nodes
-  selected = random.sample(range(nodes), 4)
-  for first, second in zip(selected[::2], selected[1::2]):
-    amplitude = random.uniform(0.5, 1)
-    values[first], values[second] = amplitude, -amplitude
-  return values
-
-
-def _step(values: list[float], topology: Topology) -> list[float]:
-  outgoing, incoming = [0.0] * topology.nodes, [0.0] * topology.nodes
-  for source, target, affinity in zip(
-    topology.source,
-    topology.target,
-    topology.affinity,
-  ):
-    outgoing[source] += affinity
-    incoming[target] += affinity
-
-  forward, reverse = [0.0] * topology.nodes, [0.0] * topology.nodes
-  for source, target, affinity in zip(
-    topology.source,
-    topology.target,
-    topology.affinity,
-  ):
-    forward[target] += affinity / outgoing[source] * values[source]
-    reverse[source] += affinity / incoming[target] * values[target]
-  return [LOCAL * value + FORWARD * downstream + REVERSE * upstream for value, downstream, upstream in zip(values, forward, reverse)]
-
-
-def _model(
+def create_forecast(
   model_name: str,
   topology_name: str,
   topology: Topology,
@@ -379,10 +247,10 @@ def _model(
     model = LinearDiffusionForecast()
   else:
     model = DiffusionForecast(1, hidden_features)
-  return _forecast(model, topology_name, topology, device)
+  return bind(model, topology_name, topology, device)
 
 
-def _forecast(
+def bind(
   model: Model,
   topology_name: str,
   topology: Topology,
@@ -392,11 +260,11 @@ def _forecast(
     return Forecast(model, 0, lambda values, realize_steps: model(values, realize_steps=realize_steps))
   selected = {
     "true": topology,
-    "permuted": _permuted(topology),
-    "self": _self(topology),
+    "permuted": permuted(topology),
+    "self": self_topology(topology),
   }[topology_name]
   if isinstance(model, GConvForecast):
-    graph = _symmetric(selected)
+    graph = symmetric(selected)
     return Forecast(model, graph.edges, lambda values, realize_steps: model(values, graph, realize_steps=realize_steps))
 
   graph = Graph(selected.nodes, selected.source, selected.target)
@@ -408,7 +276,7 @@ def _forecast(
   return Forecast(model, graph.edges, lambda values, realize_steps: model(values, diffusion, realize_steps=realize_steps))
 
 
-def _fit(
+def fit(
   forecast: Forecast,
   train: Trajectories,
   validation: Trajectories,
@@ -440,7 +308,7 @@ def _fit(
   start = perf_counter()
   interval = max(1, epochs // 6)
   best_epoch = 0
-  best_error = _metrics(forecast(validation_values), validation_target).rmse
+  best_error = metrics(forecast(validation_values), validation_target).rmse
   best_state = _snapshot(model)
   checkpoints = [Checkpoint(0, best_error)]
   steps: dict[tuple[int, ...], TinyJit] = {}
@@ -454,7 +322,7 @@ def _fit(
       step(values.contiguous(), target.contiguous())
     if epoch % interval != 0 and epoch != epochs:
       continue
-    error = _metrics(
+    error = metrics(
       forecast(validation_values, realize_steps=True),
       validation_target,
     ).rmse
@@ -473,7 +341,7 @@ def _evaluate(
   horizon: int,
 ) -> Evaluation:
   values, target = data.windows(history)
-  one_step = _metrics(
+  one_step = metrics(
     forecast(values, realize_steps=True),
     target,
   )
@@ -487,18 +355,18 @@ def _evaluate(
   expected = data.values[:, history : history + horizon]
   return Evaluation(
     one_step,
-    _metrics(rollout, expected),
-    _metrics(rollout[:, -1], expected[:, -1]),
+    metrics(rollout, expected),
+    metrics(rollout[:, -1], expected[:, -1]),
   )
 
 
-def _persistence(
+def persistence(
   data: Trajectories,
   history: int,
   horizon: int,
 ) -> Evaluation:
   values, target = data.windows(history)
-  one_step = _metrics(values[:, -1], target)
+  one_step = metrics(values[:, -1], target)
   current = data.values[:, history - 1]
   rollout = current.unsqueeze(1).expand(
     data.count,
@@ -508,12 +376,12 @@ def _persistence(
   expected = data.values[:, history : history + horizon]
   return Evaluation(
     one_step,
-    _metrics(rollout, expected),
-    _metrics(rollout[:, -1], expected[:, -1]),
+    metrics(rollout, expected),
+    metrics(rollout[:, -1], expected[:, -1]),
   )
 
 
-def _metrics(prediction: Tensor, target: Tensor) -> Metrics:
+def metrics(prediction: Tensor, target: Tensor) -> Metrics:
   error = prediction - target
   absolute, square = error.abs().mean(), error.square().mean()
   Tensor.realize(absolute, square)
@@ -524,7 +392,7 @@ def _snapshot(model: Model) -> dict[str, Tensor]:
   return {name: value.detach().clone().realize() for name, value in nn.state.get_state_dict(model).items()}
 
 
-def _parameter_count(model: Model) -> int:
+def parameter_count(model: Model) -> int:
   return sum(int(parameter.numel()) for parameter in nn.state.get_parameters(model))
 
 

@@ -10,23 +10,25 @@ from tinygrad import Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 
 from experiments.transport_forecast import (
-  DATA_SEED,
-  NODES,
-  TRAIN_TRAJECTORIES,
-  VALIDATION_TRAJECTORIES,
   Checkpoint,
   Evaluation,
   Forecast,
   Model,
+  bind,
+  create_forecast,
+  fit,
+  metrics,
+  parameter_count,
+  persistence,
+)
+from experiments.transport_protocol import (
+  DATA_SEED,
+  NODES,
+  TRAIN_TRAJECTORIES,
+  VALIDATION_TRAJECTORIES,
   Trajectories,
-  _fit,
-  _forecast,
-  _metrics,
-  _model,
-  _parameter_count,
-  _persistence,
-  _topology,
-  _trajectories,
+  topology,
+  trajectories,
 )
 
 
@@ -111,10 +113,10 @@ def study(
     hidden_features=hidden_features,
     learning_rate=learning_rate,
   )
-  source = _topology(NODES)
+  source = topology(NODES)
   steps = history + TRAIN_HORIZON
-  train = _trajectories(source, TRAIN_TRAJECTORIES, steps, DATA_SEED, device)
-  validation = _trajectories(
+  train = trajectories(source, TRAIN_TRAJECTORIES, steps, DATA_SEED, device)
+  validation = trajectories(
     source,
     VALIDATION_TRAJECTORIES,
     steps,
@@ -122,14 +124,14 @@ def study(
     device,
   )
   Tensor.manual_seed(seed)
-  forecast = _model(
+  forecast = create_forecast(
     model_name,
     "none" if model_name == "lstm" else "true",
     source,
     hidden_features,
     device,
   )
-  best_epoch, training_seconds, checkpoints = _fit(
+  best_epoch, training_seconds, checkpoints = fit(
     forecast,
     train,
     validation,
@@ -176,7 +178,7 @@ def study(
     hidden_features=hidden_features,
     epochs=epochs,
     learning_rate=learning_rate,
-    parameters=_parameter_count(model),
+    parameters=parameter_count(model),
     best_epoch=best_epoch,
     training_seconds=training_seconds,
     state=state,
@@ -195,16 +197,16 @@ def _scope(
   history: int,
   horizon: int,
 ) -> InitialResult:
-  topology = _topology(nodes)
+  selected = topology(nodes)
   structures = ("none",) if model_name == "lstm" else ("true", "permuted", "self")
   forecasts = []
   for structure in structures:
-    forecast = _forecast(model, structure, topology, device)
+    forecast = bind(model, structure, selected, device)
     forecasts.append((structure, forecast, _predictor(forecast)))
 
   seed = TRANSFER_SEED + nodes + int(initial == "pulse")
-  data = _trajectories(
-    topology,
+  data = trajectories(
+    selected,
     TRANSFER_TRAJECTORIES,
     history + horizon,
     seed,
@@ -214,7 +216,7 @@ def _scope(
   return InitialResult(
     initial,
     seed,
-    _persistence(data, history, horizon),
+    persistence(data, history, horizon),
     tuple(
       Result(
         structure,
@@ -248,7 +250,7 @@ def _evaluate(
   horizon: int,
 ) -> Evaluation:
   values, target = data.windows(history)
-  one_step = _metrics(
+  one_step = metrics(
     forecast(values, realize_steps=True),
     target,
   )
@@ -262,8 +264,8 @@ def _evaluate(
   expected = data.values[:, history : history + horizon]
   return Evaluation(
     one_step,
-    _metrics(rollout, expected),
-    _metrics(rollout[:, -1], expected[:, -1]),
+    metrics(rollout, expected),
+    metrics(rollout[:, -1], expected[:, -1]),
   )
 
 

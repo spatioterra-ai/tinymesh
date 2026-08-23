@@ -4,11 +4,10 @@ from tinygrad import Device, Tensor
 
 from experiments.directed_gru import DiffusionForecast
 from experiments.transport_forecast import (
-  _forecast,
-  _model,
-  _topology,
-  _trajectories,
+  bind,
+  create_forecast,
 )
+from experiments.transport_protocol import topology as transport_topology, trajectories
 from experiments.transport_transfer import _initials, _nodes, _state, _validate
 
 
@@ -27,9 +26,9 @@ class TransportTransferTest(unittest.TestCase):
       _initials("constant")
 
   def test_pulse_fields_are_sparse_zero_mean_and_deterministic(self) -> None:
-    topology = _topology(24)
+    topology = transport_topology(24)
 
-    first = _trajectories(
+    first = trajectories(
       topology,
       2,
       5,
@@ -37,7 +36,7 @@ class TransportTransferTest(unittest.TestCase):
       Device.DEFAULT,
       initial="pulse",
     )
-    again = _trajectories(
+    again = trajectories(
       topology,
       2,
       5,
@@ -53,10 +52,10 @@ class TransportTransferTest(unittest.TestCase):
 
   def test_one_model_accepts_unseen_graph_sizes_without_mutation(self) -> None:
     Tensor.manual_seed(0)
-    source = _model(
+    source = create_forecast(
       "diffusion_gru",
       "true",
-      _topology(24),
+      transport_topology(24),
       hidden_features=2,
       device=Device.DEFAULT,
     )
@@ -65,11 +64,11 @@ class TransportTransferTest(unittest.TestCase):
     before = _state(model)
 
     for nodes in (32, 48):
-      topology = _topology(nodes)
-      forecast = _forecast(
+      selected = transport_topology(nodes)
+      forecast = bind(
         model,
         "true",
-        topology,
+        selected,
         Device.DEFAULT,
       )
       prediction = forecast(

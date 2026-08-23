@@ -9,7 +9,7 @@ from math import sqrt
 from tinygrad import Context, Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 
-from experiments.transport_forecast import (
+from experiments.transport_protocol import (
   DATA_SEED,
   NODES,
   TEST_TRAJECTORIES,
@@ -17,9 +17,9 @@ from experiments.transport_forecast import (
   VALIDATION_TRAJECTORIES,
   Topology,
   Trajectories,
-  _permuted,
-  _topology,
-  _trajectories,
+  permuted,
+  topology as transport_topology,
+  trajectories,
 )
 from tinymesh import Graph
 
@@ -172,11 +172,11 @@ def compare(
     ema_decay=ema_decay,
     probe_learning_rate=probe_learning_rate,
   )
-  topology = _topology(NODES)
+  topology = transport_topology(NODES)
   total_steps = history + horizon
-  train = _trajectories(topology, TRAIN_TRAJECTORIES, total_steps, DATA_SEED, device)
-  validation = _trajectories(topology, VALIDATION_TRAJECTORIES, total_steps, DATA_SEED + 1, device)
-  test = _trajectories(topology, TEST_TRAJECTORIES, total_steps, DATA_SEED + 2, device)
+  train = trajectories(topology, TRAIN_TRAJECTORIES, total_steps, DATA_SEED, device)
+  validation = trajectories(topology, VALIDATION_TRAJECTORIES, total_steps, DATA_SEED + 1, device)
+  test = trajectories(topology, TEST_TRAJECTORIES, total_steps, DATA_SEED + 2, device)
   train_context, train_target = _blocks(train, history)
   validation_context, validation_target = _blocks(validation, history)
   test_context, test_target = _blocks(test, history)
@@ -331,7 +331,7 @@ def _mesh(topology: Topology, name: str, steps: int, device: str) -> Mesh:
     raise ValueError(f"unknown topology {name!r}")
   if steps <= 0:
     raise ValueError("mesh steps must be positive")
-  selected = _permuted(topology) if name == "permuted" else topology
+  selected = permuted(topology) if name == "permuted" else topology
   time = Graph(steps, list(range(steps - 1)), list(range(1, steps))) if name != "spatial" else Graph(steps, [], [])
   if name == "temporal":
     space, spatial_values = Graph(topology.nodes, [], []), []
