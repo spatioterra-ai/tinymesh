@@ -1,4 +1,4 @@
-"""Plan and atomically acquire a bounded MBTA LAMP population."""
+"""Plan and atomically acquire a sealed MBTA LAMP population."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import hashlib
 import json
 import shutil
 import tempfile
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
 from io import StringIO
 from pathlib import Path
@@ -35,18 +35,27 @@ class PopulationError(ValueError):
 
 
 @dataclass(frozen=True)
-class Source:
+class SourceIdentity:
   name: str
   filename: str
   url: str
   bytes: int
   last_modified: str | None
   service_date: str | None
+
+
+@dataclass(frozen=True)
+class PlannedSource(SourceIdentity):
   sha256: str | None
 
 
+@dataclass(frozen=True)
+class Source(SourceIdentity):
+  sha256: str
+
+
 SCHEDULE_EXTRAS = (
-  Source(
+  PlannedSource(
     "calendar",
     "mbta-2026-calendar.parquet",
     "https://performancedata.mbta.com/lamp/gtfs_archive/2026/calendar.parquet",
@@ -55,7 +64,7 @@ SCHEDULE_EXTRAS = (
     None,
     None,
   ),
-  Source(
+  PlannedSource(
     "calendar_dates",
     "mbta-2026-calendar_dates.parquet",
     "https://performancedata.mbta.com/lamp/gtfs_archive/2026/calendar_dates.parquet",
@@ -68,7 +77,7 @@ SCHEDULE_EXTRAS = (
 
 
 @dataclass(frozen=True)
-class Plan:
+class Population:
   schema: int
   observed_at: str
   start_date: str
@@ -78,6 +87,19 @@ class Plan:
   index_bytes: int
   index_sha256: str
   availability: str
+
+
+@dataclass(frozen=True)
+class Plan(Population):
+  sources: tuple[PlannedSource, ...]
+
+  @property
+  def source_bytes(self) -> int:
+    return sum(source.bytes for source in self.sources)
+
+
+@dataclass(frozen=True)
+class Manifest(Population):
   sources: tuple[Source, ...]
 
   @property
@@ -97,7 +119,7 @@ def plan(index: bytes, observed_at: datetime) -> Plan:
   if tuple(reader.fieldnames or ()) != INDEX_FIELDS:
     raise PopulationError("index: unexpected fields")
 
-  selected: dict[date, Source] = {}
+  selected: dict[date, PlannedSource] = {}
   for line, row in enumerate(reader, start=2):
     try:
       service_date = date.fromisoformat(row["service_date"])
@@ -115,7 +137,7 @@ def plan(index: bytes, observed_at: datetime) -> Plan:
     raise PopulationError(f"index: missing service dates {missing!r}")
 
   schedule = tuple(
-    Source(source.name, source.filename, source.url, source.bytes, None, None, source.sha256)
+    PlannedSource(source.name, source.filename, source.url, source.bytes, None, None, source.sha256)
     for source in REPLAY_SOURCES
     if source.name != "performance"
   ) + SCHEDULE_EXTRAS
@@ -147,8 +169,8 @@ def fetch_plan(observed_at: datetime) -> Plan:
   return plan(index, observed_at)
 
 
-def acquire(value: Plan, directory: Path) -> Plan:
-  """Download every planned source into one atomically published directory."""
+def acquire(value: Plan, directory: Path) -> Manifest:
+  """Download a plan into one atomically published sealed manifest."""
   _validate_plan(value)
   if directory.exists():
     raise PopulationError(f"acquisition: target already exists {directory}")
@@ -158,7 +180,7 @@ def acquire(value: Plan, directory: Path) -> Plan:
   try:
     for source in value.sources:
       acquired.append(_download(source, staging / source.filename))
-    sealed = replace(value, sources=tuple(acquired))
+    sealed = _manifest(value, acquired)
     _write(staging / "manifest.json", sealed)
     staging.replace(directory)
     return sealed
@@ -167,8 +189,8 @@ def acquire(value: Plan, directory: Path) -> Plan:
     raise
 
 
-def seal(value: Plan, directory: Path) -> Plan:
-  """Seal already acquired exact-size files against a refreshed index plan."""
+def seal(value: Plan, directory: Path) -> Manifest:
+  """Seal already acquired exact-size files into a manifest."""
   _validate_plan(value)
   acquired = []
   for source in value.sources:
@@ -182,8 +204,8 @@ def seal(value: Plan, directory: Path) -> Plan:
     actual = digest.hexdigest()
     if source.sha256 is not None and source.sha256 != actual:
       raise PopulationError(f"{source.filename}: checksum drift")
-    acquired.append(replace(source, sha256=actual))
-  sealed = replace(value, sources=tuple(acquired))
+    acquired.append(_source(source, actual))
+  sealed = _manifest(value, acquired)
   _write(directory / "manifest.json", sealed)
   return sealed
 
@@ -258,10 +280,10 @@ def audit(directory: Path) -> dict[str, object]:
   }
 
 
-def open_population(directory: Path) -> tuple[Any, Plan]:
+def open_population(directory: Path) -> tuple[Any, Manifest]:
   """Open one verified source population and its canonical DuckDB tables."""
-  value = read(directory / "manifest.json")
-  _validate_plan(value)
+  value = read_manifest(directory / "manifest.json")
+  _validate_manifest(value)
   for source in value.sources:
     _verify(directory / source.filename, source)
   try:
@@ -571,7 +593,8 @@ def audit_events(connection: Any) -> tuple[dict[str, object], list[dict[str, obj
   return population, groups
 
 
-def read(path: Path) -> Plan:
+def read_plan(path: Path) -> Plan:
+  """Read a plan whose checksums are optional acquisition expectations."""
   value = json.loads(path.read_text())
   try:
     return Plan(
@@ -584,13 +607,36 @@ def read(path: Path) -> Plan:
       index_bytes=value["index_bytes"],
       index_sha256=value["index_sha256"],
       availability=value["availability"],
-      sources=tuple(Source(**source) for source in value["sources"]),
+      sources=tuple(PlannedSource(**source) for source in value["sources"]),
+    )
+  except (KeyError, TypeError) as error:
+    raise PopulationError(f"plan: invalid {path}") from error
+
+
+def read_manifest(path: Path) -> Manifest:
+  """Read a manifest whose sources all carry sealed checksums."""
+  value = json.loads(path.read_text())
+  try:
+    sources = tuple(Source(**source) for source in value["sources"])
+    if any(not source.sha256 for source in sources):
+      raise PopulationError(f"manifest: unsealed checksum {path}")
+    return Manifest(
+      schema=value["schema"],
+      observed_at=value["observed_at"],
+      start_date=value["start_date"],
+      end_date=value["end_date"],
+      cap_bytes=value["cap_bytes"],
+      index_url=value["index_url"],
+      index_bytes=value["index_bytes"],
+      index_sha256=value["index_sha256"],
+      availability=value["availability"],
+      sources=sources,
     )
   except (KeyError, TypeError) as error:
     raise PopulationError(f"manifest: invalid {path}") from error
 
 
-def _performance_source(row: dict[str, str], line: int, observed_at: datetime) -> Source:
+def _performance_source(row: dict[str, str], line: int, observed_at: datetime) -> PlannedSource:
   service_date = date.fromisoformat(row["service_date"])
   filename = f"{service_date}-subway-on-time-performance-v1.parquet"
   url = f"{PERFORMANCE_BASE}/{filename}"
@@ -606,18 +652,26 @@ def _performance_source(row: dict[str, str], line: int, observed_at: datetime) -
   local_day = observed_at.astimezone(ZoneInfo("America/New_York")).date()
   if service_date >= local_day:
     raise PopulationError(f"index:{line}: incomplete service date {service_date}")
-  return Source("performance", filename, url, size, modified.isoformat(), service_date.isoformat(), None)
+  return PlannedSource("performance", filename, url, size, modified.isoformat(), service_date.isoformat(), None)
 
 
 def _validate_plan(value: Plan) -> None:
+  _validate_population(value, value.sources)
+
+
+def _validate_population(
+  value: Population,
+  sources: tuple[PlannedSource, ...] | tuple[Source, ...],
+) -> None:
   if value.schema != 1 or value.cap_bytes != CAP_BYTES:
     raise PopulationError("plan: unsupported contract")
-  if value.source_bytes > value.cap_bytes:
-    raise PopulationError(f"plan: declared {value.source_bytes} bytes exceeds cap {value.cap_bytes}")
-  filenames = tuple(source.filename for source in value.sources)
+  source_bytes = sum(source.bytes for source in sources)
+  if source_bytes > value.cap_bytes:
+    raise PopulationError(f"plan: declared {source_bytes} bytes exceeds cap {value.cap_bytes}")
+  filenames = tuple(source.filename for source in sources)
   if len(filenames) != len(set(filenames)):
     raise PopulationError("plan: duplicate filename")
-  performance = tuple(source for source in value.sources if source.name == "performance")
+  performance = tuple(source for source in sources if source.name == "performance")
   if len(performance) != 28 or (performance[0].service_date, performance[-1].service_date) != (
     value.start_date,
     value.end_date,
@@ -625,7 +679,13 @@ def _validate_plan(value: Plan) -> None:
     raise PopulationError("plan: population drift")
 
 
-def _download(source: Source, path: Path) -> Source:
+def _validate_manifest(value: Manifest) -> None:
+  _validate_population(value, value.sources)
+  if any(not source.sha256 for source in value.sources):
+    raise PopulationError("manifest: unsealed checksum")
+
+
+def _download(source: PlannedSource, path: Path) -> Source:
   request = Request(source.url, headers={"User-Agent": USER_AGENT})
   digest = hashlib.sha256()
   remaining = source.bytes
@@ -641,7 +701,7 @@ def _download(source: Source, path: Path) -> Source:
   actual = digest.hexdigest()
   if source.sha256 is not None and actual != source.sha256:
     raise PopulationError(f"{source.filename}: checksum drift")
-  return replace(source, sha256=actual)
+  return _source(source, actual)
 
 
 def _verify(path: Path, source: Source) -> None:
@@ -657,7 +717,7 @@ def _verify(path: Path, source: Source) -> None:
     raise PopulationError(f"{source.filename}: checksum drift")
 
 
-def _source_path(directory: Path, value: Plan, name: str) -> Path:
+def _source_path(directory: Path, value: Manifest, name: str) -> Path:
   source = next((source for source in value.sources if source.name == name), None)
   if source is None:
     raise PopulationError(f"manifest: missing {name}")
@@ -685,7 +745,26 @@ def _sum_groups(groups: list[dict[str, object]]) -> dict[str, int]:
   return {field: sum(int(row[field]) for row in groups) for field in fields}
 
 
-def _write(path: Path, value: Plan) -> None:
+def _source(value: PlannedSource, sha256: str) -> Source:
+  return Source(value.name, value.filename, value.url, value.bytes, value.last_modified, value.service_date, sha256)
+
+
+def _manifest(value: Plan, sources: list[Source]) -> Manifest:
+  return Manifest(
+    value.schema,
+    value.observed_at,
+    value.start_date,
+    value.end_date,
+    value.cap_bytes,
+    value.index_url,
+    value.index_bytes,
+    value.index_sha256,
+    value.availability,
+    tuple(sources),
+  )
+
+
+def _write(path: Path, value: Plan | Manifest) -> None:
   _write_json(path, asdict(value))
 
 
@@ -720,10 +799,10 @@ def main() -> None:
     _write(arguments.output, value)
     print(json.dumps({"sources": len(value.sources), "bytes": value.source_bytes, "cap_bytes": value.cap_bytes}))
   elif arguments.command == "acquire":
-    value = acquire(read(arguments.plan), arguments.source_dir)
+    value = acquire(read_plan(arguments.plan), arguments.source_dir)
     print(json.dumps({"sources": len(value.sources), "bytes": value.source_bytes, "manifest": str(arguments.source_dir / "manifest.json")}))
   elif arguments.command == "seal":
-    value = seal(read(arguments.plan), arguments.source_dir)
+    value = seal(read_plan(arguments.plan), arguments.source_dir)
     print(json.dumps({"sources": len(value.sources), "bytes": value.source_bytes, "manifest": str(arguments.source_dir / "manifest.json")}))
   elif arguments.command == "audit":
     result = audit(arguments.source_dir)
@@ -731,7 +810,7 @@ def main() -> None:
     print(json.dumps({"decision": result["decision"], "output": str(arguments.output)}))
   else:
     arguments.output_dir.mkdir(parents=True, exist_ok=True)
-    manifest = read(arguments.source_dir / "manifest.json")
+    manifest = read_manifest(arguments.source_dir / "manifest.json")
     result = audit(arguments.source_dir)
     _write(arguments.output_dir / "manifest.json", manifest)
     _write_json(arguments.output_dir / "audit.json", result)
