@@ -83,6 +83,12 @@ CATALOG = {
         ),
     ),
     "mbta_population": Experiment("data", "research-only", (), references=()),
+    "mbta_clock": Experiment(
+        "data",
+        "research-only",
+        (),
+        references=("submodules/pytorch-geometric-temporal",),
+    ),
     "mbta_headway_task": Experiment(
         "forecast",
         "research-only",

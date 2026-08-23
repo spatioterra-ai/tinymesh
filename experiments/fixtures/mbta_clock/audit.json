@@ -1,0 +1,841 @@
+{
+  "bin_semantics": "UTC_half_open_[start,end)",
+  "candidates": [
+    {
+      "causal_collision_bins": 1461,
+      "causal_collision_events": 2932,
+      "cells": 14333994,
+      "cells_per_event": 15.128401,
+      "colliding_targets": 1459,
+      "collision_extremes": [
+        {
+          "collision_bins": 22,
+          "collision_events": 44,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260729,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 22,
+          "collision_events": 44,
+          "direction_id": false,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-pktrm",
+          "service_date": 20260804,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 22,
+          "collision_events": 44,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260805,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 22,
+          "collision_events": 44,
+          "direction_id": false,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-pktrm",
+          "service_date": 20260818,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 21,
+          "collision_events": 42,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260730,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 21,
+          "collision_events": 42,
+          "direction_id": false,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-pktrm",
+          "service_date": 20260805,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 21,
+          "collision_events": 42,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260817,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 20,
+          "collision_events": 40,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 20,
+          "collision_events": 40,
+          "direction_id": false,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-pktrm",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 20,
+          "collision_events": 40,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260806,
+          "trunk_route_id": "Green"
+        }
+      ],
+      "empty_cells": 13388177,
+      "empty_rate": 0.934016,
+      "equal_time_events": 413,
+      "equal_time_sets": 206,
+      "event_records": 947489,
+      "identity_retained": false,
+      "maximum_events_per_cell": 3,
+      "occupied_cells": 945817,
+      "retained_targets": 939092,
+      "route_targets": [
+        {
+          "colliding_targets": 2,
+          "retained_targets": 100039,
+          "route_id": "Blue",
+          "targets": 100041
+        },
+        {
+          "colliding_targets": 411,
+          "retained_targets": 108824,
+          "route_id": "Green-B",
+          "targets": 109235
+        },
+        {
+          "colliding_targets": 334,
+          "retained_targets": 78679,
+          "route_id": "Green-C",
+          "targets": 79013
+        },
+        {
+          "colliding_targets": 376,
+          "retained_targets": 128620,
+          "route_id": "Green-D",
+          "targets": 128996
+        },
+        {
+          "colliding_targets": 166,
+          "retained_targets": 114361,
+          "route_id": "Green-E",
+          "targets": 114527
+        },
+        {
+          "colliding_targets": 19,
+          "retained_targets": 45308,
+          "route_id": "Mattapan",
+          "targets": 45327
+        },
+        {
+          "colliding_targets": 10,
+          "retained_targets": 207019,
+          "route_id": "Orange",
+          "targets": 207029
+        },
+        {
+          "colliding_targets": 141,
+          "retained_targets": 156242,
+          "route_id": "Red",
+          "targets": 156383
+        }
+      ],
+      "seconds": 30,
+      "split_targets": [
+        {
+          "colliding_targets": 278,
+          "retained_targets": 176290,
+          "split": "test",
+          "targets": 176568
+        },
+        {
+          "colliding_targets": 1087,
+          "retained_targets": 623986,
+          "split": "train",
+          "targets": 625073
+        },
+        {
+          "colliding_targets": 94,
+          "retained_targets": 138816,
+          "split": "validation",
+          "targets": 138910
+        }
+      ],
+      "targets": 940551,
+      "work_extremes": [
+        {
+          "cells": 2712,
+          "direction_id": true,
+          "empty_cells": 2678,
+          "occupied_cells": 34,
+          "parent_station": "place-clmnl",
+          "service_date": 20260727,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2740,
+          "direction_id": false,
+          "empty_cells": 2629,
+          "occupied_cells": 111,
+          "parent_station": "place-woodl",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2739,
+          "direction_id": false,
+          "empty_cells": 2628,
+          "occupied_cells": 111,
+          "parent_station": "place-waban",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2738,
+          "direction_id": false,
+          "empty_cells": 2627,
+          "occupied_cells": 111,
+          "parent_station": "place-eliot",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2737,
+          "direction_id": false,
+          "empty_cells": 2626,
+          "occupied_cells": 111,
+          "parent_station": "place-newtn",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2630,
+          "direction_id": true,
+          "empty_cells": 2586,
+          "occupied_cells": 44,
+          "parent_station": "place-clmnl",
+          "service_date": 20260731,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2702,
+          "direction_id": false,
+          "empty_cells": 2576,
+          "occupied_cells": 126,
+          "parent_station": "place-sougr",
+          "service_date": 20260724,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2671,
+          "direction_id": false,
+          "empty_cells": 2548,
+          "occupied_cells": 123,
+          "parent_station": "place-denrd",
+          "service_date": 20260724,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2671,
+          "direction_id": false,
+          "empty_cells": 2548,
+          "occupied_cells": 123,
+          "parent_station": "place-tapst",
+          "service_date": 20260724,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 2670,
+          "direction_id": false,
+          "empty_cells": 2547,
+          "occupied_cells": 123,
+          "parent_station": "place-bcnwa",
+          "service_date": 20260724,
+          "trunk_route_id": "Green"
+        }
+      ]
+    },
+    {
+      "causal_collision_bins": 3811,
+      "causal_collision_events": 7648,
+      "cells": 7170046,
+      "cells_per_event": 7.567419,
+      "colliding_targets": 3823,
+      "collision_extremes": [
+        {
+          "collision_bins": 52,
+          "collision_events": 105,
+          "direction_id": false,
+          "maximum_events_per_cell": 3,
+          "parent_station": "place-pktrm",
+          "service_date": 20260804,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 49,
+          "collision_events": 99,
+          "direction_id": false,
+          "maximum_events_per_cell": 3,
+          "parent_station": "place-pktrm",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 43,
+          "collision_events": 86,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260729,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 40,
+          "collision_events": 81,
+          "direction_id": true,
+          "maximum_events_per_cell": 3,
+          "parent_station": "place-kencl",
+          "service_date": 20260803,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 40,
+          "collision_events": 80,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260730,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 39,
+          "collision_events": 78,
+          "direction_id": false,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-pktrm",
+          "service_date": 20260818,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 38,
+          "collision_events": 76,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 38,
+          "collision_events": 76,
+          "direction_id": true,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-kencl",
+          "service_date": 20260805,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 38,
+          "collision_events": 76,
+          "direction_id": false,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-pktrm",
+          "service_date": 20260805,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 38,
+          "collision_events": 76,
+          "direction_id": false,
+          "maximum_events_per_cell": 2,
+          "parent_station": "place-pktrm",
+          "service_date": 20260819,
+          "trunk_route_id": "Green"
+        }
+      ],
+      "empty_cells": 6226594,
+      "empty_rate": 0.868418,
+      "equal_time_events": 413,
+      "equal_time_sets": 206,
+      "event_records": 947489,
+      "identity_retained": false,
+      "maximum_events_per_cell": 3,
+      "occupied_cells": 943452,
+      "retained_targets": 936728,
+      "route_targets": [
+        {
+          "colliding_targets": 2,
+          "retained_targets": 100039,
+          "route_id": "Blue",
+          "targets": 100041
+        },
+        {
+          "colliding_targets": 1083,
+          "retained_targets": 108152,
+          "route_id": "Green-B",
+          "targets": 109235
+        },
+        {
+          "colliding_targets": 913,
+          "retained_targets": 78100,
+          "route_id": "Green-C",
+          "targets": 79013
+        },
+        {
+          "colliding_targets": 817,
+          "retained_targets": 128179,
+          "route_id": "Green-D",
+          "targets": 128996
+        },
+        {
+          "colliding_targets": 590,
+          "retained_targets": 113937,
+          "route_id": "Green-E",
+          "targets": 114527
+        },
+        {
+          "colliding_targets": 41,
+          "retained_targets": 45286,
+          "route_id": "Mattapan",
+          "targets": 45327
+        },
+        {
+          "colliding_targets": 22,
+          "retained_targets": 207007,
+          "route_id": "Orange",
+          "targets": 207029
+        },
+        {
+          "colliding_targets": 355,
+          "retained_targets": 156028,
+          "route_id": "Red",
+          "targets": 156383
+        }
+      ],
+      "seconds": 60,
+      "split_targets": [
+        {
+          "colliding_targets": 721,
+          "retained_targets": 175847,
+          "split": "test",
+          "targets": 176568
+        },
+        {
+          "colliding_targets": 2915,
+          "retained_targets": 622158,
+          "split": "train",
+          "targets": 625073
+        },
+        {
+          "colliding_targets": 187,
+          "retained_targets": 138723,
+          "split": "validation",
+          "targets": 138910
+        }
+      ],
+      "targets": 940551,
+      "work_extremes": [
+        {
+          "cells": 1357,
+          "direction_id": true,
+          "empty_cells": 1323,
+          "occupied_cells": 34,
+          "parent_station": "place-clmnl",
+          "service_date": 20260727,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1315,
+          "direction_id": true,
+          "empty_cells": 1271,
+          "occupied_cells": 44,
+          "parent_station": "place-clmnl",
+          "service_date": 20260731,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1285,
+          "direction_id": false,
+          "empty_cells": 1264,
+          "occupied_cells": 21,
+          "parent_station": "place-balsq",
+          "service_date": 20260802,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1370,
+          "direction_id": false,
+          "empty_cells": 1259,
+          "occupied_cells": 111,
+          "parent_station": "place-eliot",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1370,
+          "direction_id": false,
+          "empty_cells": 1259,
+          "occupied_cells": 111,
+          "parent_station": "place-waban",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1370,
+          "direction_id": false,
+          "empty_cells": 1259,
+          "occupied_cells": 111,
+          "parent_station": "place-woodl",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1369,
+          "direction_id": false,
+          "empty_cells": 1258,
+          "occupied_cells": 111,
+          "parent_station": "place-newtn",
+          "service_date": 20260725,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1298,
+          "direction_id": true,
+          "empty_cells": 1244,
+          "occupied_cells": 54,
+          "parent_station": "place-balsq",
+          "service_date": 20260815,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1298,
+          "direction_id": true,
+          "empty_cells": 1244,
+          "occupied_cells": 54,
+          "parent_station": "place-mgngl",
+          "service_date": 20260815,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 1297,
+          "direction_id": true,
+          "empty_cells": 1243,
+          "occupied_cells": 54,
+          "parent_station": "place-esomr",
+          "service_date": 20260815,
+          "trunk_route_id": "Green"
+        }
+      ]
+    },
+    {
+      "causal_collision_bins": 102906,
+      "causal_collision_events": 223764,
+      "cells": 1438867,
+      "cells_per_event": 1.518611,
+      "colliding_targets": 120752,
+      "collision_extremes": [
+        {
+          "collision_bins": 178,
+          "collision_events": 472,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-armnl",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 180,
+          "collision_events": 468,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-boyls",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 177,
+          "collision_events": 466,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-coecl",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 175,
+          "collision_events": 464,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-armnl",
+          "service_date": 20260804,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 175,
+          "collision_events": 462,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-boyls",
+          "service_date": 20260804,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 169,
+          "collision_events": 460,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-coecl",
+          "service_date": 20260727,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 182,
+          "collision_events": 459,
+          "direction_id": true,
+          "maximum_events_per_cell": 4,
+          "parent_station": "place-boyls",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 174,
+          "collision_events": 459,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-boyls",
+          "service_date": 20260805,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 173,
+          "collision_events": 459,
+          "direction_id": false,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-coecl",
+          "service_date": 20260804,
+          "trunk_route_id": "Green"
+        },
+        {
+          "collision_bins": 172,
+          "collision_events": 458,
+          "direction_id": true,
+          "maximum_events_per_cell": 5,
+          "parent_station": "place-coecl",
+          "service_date": 20260727,
+          "trunk_route_id": "Green"
+        }
+      ],
+      "empty_cells": 612393,
+      "empty_rate": 0.425608,
+      "equal_time_events": 413,
+      "equal_time_sets": 206,
+      "event_records": 947489,
+      "identity_retained": false,
+      "maximum_events_per_cell": 6,
+      "occupied_cells": 826474,
+      "retained_targets": 819799,
+      "route_targets": [
+        {
+          "colliding_targets": 8897,
+          "retained_targets": 91144,
+          "route_id": "Blue",
+          "targets": 100041
+        },
+        {
+          "colliding_targets": 15299,
+          "retained_targets": 93936,
+          "route_id": "Green-B",
+          "targets": 109235
+        },
+        {
+          "colliding_targets": 16023,
+          "retained_targets": 62990,
+          "route_id": "Green-C",
+          "targets": 79013
+        },
+        {
+          "colliding_targets": 20491,
+          "retained_targets": 108505,
+          "route_id": "Green-D",
+          "targets": 128996
+        },
+        {
+          "colliding_targets": 20852,
+          "retained_targets": 93675,
+          "route_id": "Green-E",
+          "targets": 114527
+        },
+        {
+          "colliding_targets": 781,
+          "retained_targets": 44546,
+          "route_id": "Mattapan",
+          "targets": 45327
+        },
+        {
+          "colliding_targets": 22916,
+          "retained_targets": 184113,
+          "route_id": "Orange",
+          "targets": 207029
+        },
+        {
+          "colliding_targets": 15493,
+          "retained_targets": 140890,
+          "route_id": "Red",
+          "targets": 156383
+        }
+      ],
+      "seconds": 300,
+      "split_targets": [
+        {
+          "colliding_targets": 24838,
+          "retained_targets": 151730,
+          "split": "test",
+          "targets": 176568
+        },
+        {
+          "colliding_targets": 82941,
+          "retained_targets": 542132,
+          "split": "train",
+          "targets": 625073
+        },
+        {
+          "colliding_targets": 12973,
+          "retained_targets": 125937,
+          "split": "validation",
+          "targets": 138910
+        }
+      ],
+      "targets": 940551,
+      "work_extremes": [
+        {
+          "cells": 272,
+          "direction_id": true,
+          "empty_cells": 239,
+          "occupied_cells": 33,
+          "parent_station": "place-clmnl",
+          "service_date": 20260727,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 257,
+          "direction_id": false,
+          "empty_cells": 236,
+          "occupied_cells": 21,
+          "parent_station": "place-balsq",
+          "service_date": 20260802,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 241,
+          "direction_id": true,
+          "empty_cells": 233,
+          "occupied_cells": 8,
+          "parent_station": "place-unsqu",
+          "service_date": 20260814,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 263,
+          "direction_id": true,
+          "empty_cells": 220,
+          "occupied_cells": 43,
+          "parent_station": "place-clmnl",
+          "service_date": 20260731,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 256,
+          "direction_id": true,
+          "empty_cells": 216,
+          "occupied_cells": 40,
+          "parent_station": "place-clmnl",
+          "service_date": 20260728,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 249,
+          "direction_id": true,
+          "empty_cells": 210,
+          "occupied_cells": 39,
+          "parent_station": "place-clmnl",
+          "service_date": 20260818,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 244,
+          "direction_id": true,
+          "empty_cells": 208,
+          "occupied_cells": 36,
+          "parent_station": "place-clmnl",
+          "service_date": 20260729,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 261,
+          "direction_id": true,
+          "empty_cells": 207,
+          "occupied_cells": 54,
+          "parent_station": "place-mgngl",
+          "service_date": 20260815,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 260,
+          "direction_id": true,
+          "empty_cells": 207,
+          "occupied_cells": 53,
+          "parent_station": "place-balsq",
+          "service_date": 20260815,
+          "trunk_route_id": "Green"
+        },
+        {
+          "cells": 260,
+          "direction_id": true,
+          "empty_cells": 207,
+          "occupied_cells": 53,
+          "parent_station": "place-esomr",
+          "service_date": 20260815,
+          "trunk_route_id": "Green"
+        }
+      ]
+    }
+  ],
+  "clock_domain": "inclusive_lane_day_span_from_first_event_bin_through_last_event_bin",
+  "collision": "two_or_more_distinct_lane_event_timestamps_in_one_bin",
+  "decision": "stop:no_identity_preserving_clock",
+  "population": {
+    "lanes": 259,
+    "physical_departures": 947489,
+    "targets": 940551
+  },
+  "population_audit_sha256": "0345659ab2aa2a4c3341954dcfd789110e9567097f69532d25f895e7fa16e1bb",
+  "references": {
+    "submodules/pytorch-geometric-temporal": "fe555bc30ee197755c4b58a89407033a5f383415"
+  },
+  "schema": 1,
+  "selected_seconds": null,
+  "source_manifest_sha256": "780076ebf32ceb735b334b5bbdba0297d809088f0689fac37067db46fd36d701",
+  "stage_1_consequence": "close:stage_1_snapshot",
+  "target_identity": "exact_predecessor_and_target_occupy_distinct_bins",
+  "task_protocol_sha256": "83e048c9f6e1f7f5de1ecb70e9a0a5cee64ac699b3ce3da94f4a9cd8f60e69ed",
+  "topology_protocol_sha256": "e3c44f17757820eea46c7c6e066fe914991c920388e1a56a4e17f7c013303db8"
+}
+
