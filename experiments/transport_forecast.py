@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from math import gcd, sqrt
 from random import Random
@@ -108,7 +109,16 @@ class LinearDiffusionForecast:
 
 
 Model = LocalForecast | GConvForecast | DiffusionForecast | LinearDiffusionForecast
-Operator = Graph | DirectedDiffusion | None
+
+
+@dataclass(frozen=True)
+class Forecast:
+  model: Model
+  edges: int
+  predict: Callable[[Tensor, bool], Tensor]
+
+  def __call__(self, values: Tensor, *, realize_steps: bool = False) -> Tensor:
+    return self.predict(values, realize_steps)
 
 
 @dataclass(frozen=True)
@@ -204,7 +214,7 @@ def compare(
   )
 
   Tensor.manual_seed(seed)
-  model, operator, model_edges = _model(
+  forecast = _model(
     model_name,
     topology_name,
     topology,
@@ -212,8 +222,7 @@ def compare(
     device,
   )
   best_epoch, runtime, checkpoints = _fit(
-    model,
-    operator,
+    forecast,
     train,
     validation,
     epochs=epochs,
@@ -229,7 +238,7 @@ def compare(
     topology=topology_name,
     nodes=NODES,
     source_edges=len(topology.source),
-    model_edges=model_edges,
+    model_edges=forecast.edges,
     train_trajectories=TRAIN_TRAJECTORIES,
     validation_trajectories=VALIDATION_TRAJECTORIES,
     test_trajectories=TEST_TRAJECTORIES,
@@ -241,14 +250,14 @@ def compare(
     epochs=epochs,
     learning_rate=learning_rate,
     transport=(LOCAL, FORWARD, REVERSE),
-    parameters=_parameter_count(model),
+    parameters=_parameter_count(forecast.model),
     best_epoch=best_epoch,
     runtime_seconds=runtime,
     checkpoints=checkpoints,
     validation_persistence=_persistence(validation, history, horizon),
     test_persistence=_persistence(test, history, horizon),
-    validation=_evaluate(model, operator, validation, history, horizon),
-    test=_evaluate(model, operator, test, history, horizon),
+    validation=_evaluate(forecast, validation, history, horizon),
+    test=_evaluate(forecast, test, history, horizon),
   )
 
 
@@ -360,7 +369,7 @@ def _model(
   topology: Topology,
   hidden_features: int,
   device: str,
-) -> tuple[Model, Operator, int]:
+) -> Forecast:
   model: Model
   if model_name == "lstm":
     model = LocalForecast(hidden_features)
@@ -370,37 +379,37 @@ def _model(
     model = LinearDiffusionForecast()
   else:
     model = DiffusionForecast(1, hidden_features)
-  operator, edges = _operator(model_name, topology_name, topology, device)
-  return model, operator, edges
+  return _forecast(model, topology_name, topology, device)
 
 
-def _operator(
-  model_name: str,
+def _forecast(
+  model: Model,
   topology_name: str,
   topology: Topology,
   device: str,
-) -> tuple[Operator, int]:
-  if model_name == "lstm":
-    return None, 0
+) -> Forecast:
+  if isinstance(model, LocalForecast):
+    return Forecast(model, 0, lambda values, realize_steps: model(values, realize_steps=realize_steps))
   selected = {
     "true": topology,
     "permuted": _permuted(topology),
     "self": _self(topology),
   }[topology_name]
-  if model_name == "gconv_gru":
+  if isinstance(model, GConvForecast):
     graph = _symmetric(selected)
-    return graph, graph.edges
+    return Forecast(model, graph.edges, lambda values, realize_steps: model(values, graph, realize_steps=realize_steps))
 
   graph = Graph(selected.nodes, selected.source, selected.target)
   affinity = Tensor(selected.affinity, device=device).realize()
   diffusion = DirectedDiffusion(graph, affinity)
   Tensor.realize(diffusion.forward_weight, diffusion.reverse_weight)
-  return diffusion, graph.edges
+  if isinstance(model, LinearDiffusionForecast):
+    return Forecast(model, graph.edges, lambda values, _realize_steps: model(values, diffusion))
+  return Forecast(model, graph.edges, lambda values, realize_steps: model(values, diffusion, realize_steps=realize_steps))
 
 
 def _fit(
-  model: Model,
-  operator: Operator,
+  forecast: Forecast,
   train: Trajectories,
   validation: Trajectories,
   *,
@@ -409,6 +418,7 @@ def _fit(
   batch_size: int,
   learning_rate: float,
 ) -> tuple[int, float, tuple[Checkpoint, ...]]:
+  model = forecast.model
   optimizer = nn.optim.Adam(
     nn.state.get_parameters(model),
     lr=learning_rate,
@@ -422,7 +432,7 @@ def _fit(
     @Context(TRAINING=1)
     def step(values: Tensor, target: Tensor) -> Tensor:
       optimizer.zero_grad()
-      loss = (_predict(model, values, operator) - target).square().mean().backward()
+      loss = (forecast(values) - target).square().mean().backward()
       return loss.realize(*optimizer.schedule_step())
 
     return step
@@ -430,7 +440,7 @@ def _fit(
   start = perf_counter()
   interval = max(1, epochs // 6)
   best_epoch = 0
-  best_error = _metrics(_predict(model, validation_values, operator), validation_target).rmse
+  best_error = _metrics(forecast(validation_values), validation_target).rmse
   best_state = _snapshot(model)
   checkpoints = [Checkpoint(0, best_error)]
   steps: dict[tuple[int, ...], TinyJit] = {}
@@ -445,7 +455,7 @@ def _fit(
     if epoch % interval != 0 and epoch != epochs:
       continue
     error = _metrics(
-      _predict(model, validation_values, operator, realize_steps=True),
+      forecast(validation_values, realize_steps=True),
       validation_target,
     ).rmse
     checkpoints.append(Checkpoint(epoch, error))
@@ -457,21 +467,20 @@ def _fit(
 
 
 def _evaluate(
-  model: Model,
-  operator: Operator,
+  forecast: Forecast,
   data: Trajectories,
   history: int,
   horizon: int,
 ) -> Evaluation:
   values, target = data.windows(history)
   one_step = _metrics(
-    _predict(model, values, operator, realize_steps=True),
+    forecast(values, realize_steps=True),
     target,
   )
   window = data.values[:, :history]
   predictions = []
   for _ in range(horizon):
-    prediction = _predict(model, window, operator, realize_steps=True).realize()
+    prediction = forecast(window, realize_steps=True).realize()
     predictions.append(prediction)
     window = window[:, 1:].cat(prediction.unsqueeze(1), dim=1).realize()
   rollout = Tensor.stack(*predictions, dim=1)
@@ -502,26 +511,6 @@ def _persistence(
     _metrics(rollout, expected),
     _metrics(rollout[:, -1], expected[:, -1]),
   )
-
-
-def _predict(
-  model: Model,
-  values: Tensor,
-  operator: Operator,
-  *,
-  realize_steps: bool = False,
-) -> Tensor:
-  if isinstance(model, LocalForecast):
-    return model(values, realize_steps=realize_steps)
-  if isinstance(model, GConvForecast):
-    if not isinstance(operator, Graph):
-      raise ValueError("GConvGRU requires one graph")
-    return model(values, operator, realize_steps=realize_steps)
-  if not isinstance(operator, DirectedDiffusion):
-    raise ValueError("diffusion models require one operator")
-  if isinstance(model, LinearDiffusionForecast):
-    return model(values, operator)
-  return model(values, operator, realize_steps=realize_steps)
 
 
 def _metrics(prediction: Tensor, target: Tensor) -> Metrics:
