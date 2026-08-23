@@ -3,14 +3,18 @@ from math import sqrt
 
 from tinygrad import Device, Tensor
 
+from experiments.directed_gru import DiffusionForecast
 from experiments.montevideo_forecast import (
+    LocalForecast,
     Standardizer,
     _baselines,
+    _model,
     forecast,
     normalize_splits,
     split_signal,
 )
 from tinymesh import Graph, StaticGraphTemporalSignal
+from tinymesh.nn import DirectedDiffusion
 
 
 def signal() -> StaticGraphTemporalSignal:
@@ -104,6 +108,22 @@ class MontevideoForecastTest(unittest.TestCase):
         self.assert_metrics(test.zero, mae=14.25, rmse=sqrt(226.25))
         self.assert_metrics(test.persistence, mae=1.5, rmse=sqrt(2.5))
         self.assert_metrics(test.train_mean, mae=8.25, rmse=sqrt(76.25))
+
+    def test_models_bind_prediction_dependencies_once(self) -> None:
+        graph = Graph(2, [0, 1], [1, 0])
+        diffusion = {
+            "unit": DirectedDiffusion(
+                graph,
+                Tensor.ones(graph.edges, device=Device.DEFAULT).realize(),
+            )
+        }
+        values = Tensor.zeros(2, 3, graph.nodes, 1, device=Device.DEFAULT)
+
+        for name, expected in (("lstm", LocalForecast), ("unit", DiffusionForecast)):
+            with self.subTest(model=name):
+                forecast_arm = _model(name, hidden_features=2, diffusion=diffusion)
+                self.assertIsInstance(forecast_arm.model, expected)
+                self.assertEqual(forecast_arm(values, realize_steps=True).shape, (2, graph.nodes, 1))
 
     def test_rejects_invalid_or_short_split(self) -> None:
         for history in (0, True):
