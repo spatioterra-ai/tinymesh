@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from itertools import islice
 from time import perf_counter
@@ -128,6 +129,15 @@ class LocalDiffusionForecast:
 
 
 Forecast = A3Forecast | DiffusionForecast | LocalDiffusionForecast
+
+
+@dataclass(frozen=True)
+class ForecastArm:
+    model: Forecast
+    predict: Callable[[Tensor, Tensor], Tensor]
+
+    def __call__(self, values: Tensor, anchor: Tensor) -> Tensor:
+        return self.predict(values, anchor)
 
 
 @dataclass(frozen=True)
@@ -272,10 +282,10 @@ def smoke(
 
     tensors = _execution_tensors(protocol, device)
     Tensor.manual_seed(seed)
-    model = _model(architecture, protocol, hidden_features, head)
     operator = operators(protocol, architecture, device)["true"]
-    optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, operator, optimizer, loss)
+    forecast_arm = _forecast(architecture, protocol, hidden_features, head, operator)
+    optimizer = nn.optim.Adam(nn.state.get_parameters(forecast_arm.model), lr=learning_rate, fused=False)
+    train_step = _training_step(forecast_arm, optimizer, loss)
     losses = []
     start = perf_counter()
     for batch in islice(batches(protocol, protocol.train, batch_size, shuffle=seed, tensors=tensors), steps):
@@ -295,8 +305,8 @@ def smoke(
         horizon,
         protocol.data.graph.nodes,
         protocol.data.graph.edges,
-        _parameter_count(model),
-        _sparse_calls(model, operator, protocol, device),
+        _parameter_count(forecast_arm.model),
+        _sparse_calls(forecast_arm, protocol, device),
         losses[0],
         losses[-1],
         perf_counter() - start,
@@ -326,10 +336,9 @@ def train(
     for topology in topologies:
         for seed in seeds:
             Tensor.manual_seed(seed)
-            model = _model(architecture, protocol, hidden_features, head)
+            forecast_arm = _forecast(architecture, protocol, hidden_features, head, selected_operators[topology])
             best_epoch, runtime, checkpoints, validation = _fit(
-                model,
-                selected_operators[topology],
+                forecast_arm,
                 protocol,
                 tensors,
                 device=device,
@@ -345,15 +354,14 @@ def train(
                     topology,
                     seed,
                     best_epoch,
-                    _parameter_count(model),
-                    _sparse_calls(model, selected_operators[topology], protocol, device),
+                    _parameter_count(forecast_arm.model),
+                    _sparse_calls(forecast_arm, protocol, device),
                     runtime,
                     checkpoints,
                     validation,
                     (
                         _evaluate(
-                            model,
-                            selected_operators[topology],
+                            forecast_arm,
                             protocol,
                             protocol.test,
                             tensors,
@@ -381,29 +389,30 @@ def train(
     )
 
 
-def _model(
+def _forecast(
     architecture: str,
     protocol: Protocol,
     hidden_features: int,
     head: str,
-) -> Forecast:
-    model = {
+    operator: Graph | DirectedDiffusion,
+) -> ForecastArm:
+    model_type = {
         "a3tgcn": A3Forecast,
         "diffusion_gru": DiffusionForecast,
         "local_diffusion": LocalDiffusionForecast,
     }[architecture]
-    return model(
+    model = model_type(
         protocol.features.shape[2],
         hidden_features,
         protocol.train.history,
         protocol.train.horizon,
         head,
     )
+    return ForecastArm(model, lambda values, anchor: model(values, operator, anchor))
 
 
 def _fit(
-    model: Forecast,
-    operator: Graph | DirectedDiffusion,
+    forecast_arm: ForecastArm,
     protocol: Protocol,
     tensors: tuple[Tensor, Tensor, Tensor],
     *,
@@ -415,13 +424,13 @@ def _fit(
     checkpoint_every: int,
     loss: str,
 ) -> tuple[int, float, tuple[Checkpoint, ...], Scores]:
+    model = forecast_arm.model
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
-    train_step = _training_step(model, operator, optimizer, loss)
+    train_step = _training_step(forecast_arm, optimizer, loss)
     start = perf_counter()
     best_epoch = 0
     best = _evaluate(
-        model,
-        operator,
+        forecast_arm,
         protocol,
         protocol.validation,
         tensors,
@@ -442,8 +451,7 @@ def _fit(
         if epoch % checkpoint_every != 0 and epoch != epochs:
             continue
         validation = _evaluate(
-            model,
-            operator,
+            forecast_arm,
             protocol,
             protocol.validation,
             tensors,
@@ -459,8 +467,7 @@ def _fit(
 
 
 def _training_step(
-    model: Forecast,
-    operator: Graph | DirectedDiffusion,
+    forecast_arm: ForecastArm,
     optimizer,
     loss: str,
 ) -> TinyJit:
@@ -468,7 +475,7 @@ def _training_step(
     @Context(TRAINING=1)
     def step(values: Tensor, anchor: Tensor, target: Tensor, observed: Tensor) -> Tensor:
         optimizer.zero_grad()
-        objective = _objective(model(values, operator, anchor) - target, observed, loss).backward()
+        objective = _objective(forecast_arm(values, anchor) - target, observed, loss).backward()
         return objective.realize(*optimizer.schedule_step())
 
     return step
@@ -487,8 +494,7 @@ def _objective(error: Tensor, observed: Tensor, loss: str) -> Tensor:
 
 
 def _evaluate(
-    model: Forecast,
-    operator: Graph | DirectedDiffusion,
+    forecast_arm: ForecastArm,
     protocol: Protocol,
     span,
     tensors: tuple[Tensor, Tensor, Tensor],
@@ -504,7 +510,7 @@ def _evaluate(
             execution = execution_batch(batch, device, batch_size)
             predict = predictors.get(execution.values.shape)
             if predict is None:
-                predictors[execution.values.shape] = predict = _predictor(model, operator)
+                predictors[execution.values.shape] = predict = _predictor(forecast_arm)
             prediction = predict(execution.values, execution.anchor)[:size].to(protocol.data.speed.device).realize()
             target = batch.target.to(protocol.data.speed.device).realize()
             yield protocol.standardizer.restore(prediction) - protocol.standardizer.restore(target), batch.observed.to(
@@ -515,12 +521,11 @@ def _evaluate(
 
 
 def _predictor(
-    model: Forecast,
-    operator: Graph | DirectedDiffusion,
+    forecast_arm: ForecastArm,
 ):
     @TinyJit
     def predict(values: Tensor, anchor: Tensor) -> Tensor:
-        return model(values, operator, anchor).realize()
+        return forecast_arm(values, anchor).realize()
 
     return predict
 
@@ -574,14 +579,12 @@ def _parameter_count(model: Forecast) -> int:
 
 
 def _sparse_calls(
-    model: Forecast,
-    operator: Graph | DirectedDiffusion,
+    forecast_arm: ForecastArm,
     protocol: Protocol,
     device: str,
 ) -> int:
-    output = model(
+    output = forecast_arm(
         Tensor.zeros(1, protocol.train.history, protocol.data.graph.nodes, protocol.features.shape[2], device=device),
-        operator,
         Tensor.zeros(1, protocol.data.graph.nodes, 1, device=device),
     )
     return sum(uop.src[0].arg.name == "csr_sum" for uop in output.uop.toposort() if uop.op is Ops.CALL)
