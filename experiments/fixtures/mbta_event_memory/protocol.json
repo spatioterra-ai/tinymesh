@@ -1,0 +1,144 @@
+{
+  "arms": [
+    "node_local",
+    "self",
+    "true",
+    "reverse",
+    "permuted"
+  ],
+  "availability": "retrospective_event_time_only:no_generation_or_ingestion_clock",
+  "clock_audit_sha256": "79755025ce1cc343fa59fedd2c34391dafa38bacf357564e00f93a5517234276",
+  "cutoff": "previous_departure_timestamp_plus_one_second",
+  "encoder": {
+    "batch_lane_days": 256,
+    "hidden_features": 4,
+    "objective": "huber_delta_0.25_standardized_log1p_seconds",
+    "selected_train_lane_days": 1024,
+    "selection": "validation_micro_mae_seconds_after_one_bounded_pass",
+    "selection_seed": 20260823,
+    "time_encoding": "cosine_of_learned_normalized_log1p_elapsed_projection",
+    "time_features": 2,
+    "truncation_events": 8
+  },
+  "encoder_scaler": {
+    "mean": 5.8972110679000735,
+    "scale": 0.7324146088010466
+  },
+  "equal_time_policy": "all_reads_then_deterministic_updates:no_cross_visibility",
+  "head": {
+    "architecture": "zero_initialized_residual_mlp",
+    "batch_size": 4096,
+    "checkpoint_every": 50,
+    "hidden_features": 16,
+    "learning_rate": 0.003,
+    "selection": "validation_micro_mae_seconds",
+    "shared_features": "frozen_stage_4_anchor_inputs_plus_local_and_asof_memory",
+    "steps": 250
+  },
+  "maximum_lane_day_events": 513,
+  "memory_read_cutoff": "frozen_source_timestamp_plus_one_second",
+  "memory_update": "lane_local_gru_after_observed_headway",
+  "nodes": 259,
+  "population_audit_sha256": "0345659ab2aa2a4c3341954dcfd789110e9567097f69532d25f895e7fa16e1bb",
+  "prediction_order": "read_before_event_update",
+  "references": {
+    "submodules/pytorch-geometric": "5c6461b2305ad068a6d61165b3c55852a11aaa41",
+    "submodules/pytorch-geometric-temporal": "fe555bc30ee197755c4b58a89407033a5f383415",
+    "submodules/tinygrad": "33755a34657d25920914badbe32a9d70489669c7"
+  },
+  "route_blend": [
+    {
+      "plan_weight": 0.1,
+      "route_id": "Blue"
+    },
+    {
+      "plan_weight": 0.0,
+      "route_id": "Green-B"
+    },
+    {
+      "plan_weight": 0.0,
+      "route_id": "Green-C"
+    },
+    {
+      "plan_weight": 0.05,
+      "route_id": "Green-D"
+    },
+    {
+      "plan_weight": 0.0,
+      "route_id": "Green-E"
+    },
+    {
+      "plan_weight": 0.65,
+      "route_id": "Mattapan"
+    },
+    {
+      "plan_weight": 0.55,
+      "route_id": "Orange"
+    },
+    {
+      "plan_weight": 0.55,
+      "route_id": "Red"
+    }
+  ],
+  "schema": 1,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "source_manifest_sha256": "780076ebf32ceb735b334b5bbdba0297d809088f0689fac37067db46fd36d701",
+  "split_counts": [
+    {
+      "lane_days": 1135,
+      "split": "test",
+      "targets": 176568,
+      "timestamp_groups": 138102
+    },
+    {
+      "lane_days": 4057,
+      "split": "train",
+      "targets": 625073,
+      "timestamp_groups": 491791
+    },
+    {
+      "lane_days": 898,
+      "split": "validation",
+      "targets": 138910,
+      "timestamp_groups": 115188
+    }
+  ],
+  "splits": {
+    "test": [
+      "2026-08-16",
+      "2026-08-20"
+    ],
+    "train": [
+      "2026-07-24",
+      "2026-08-10"
+    ],
+    "validation": [
+      "2026-08-11",
+      "2026-08-15"
+    ]
+  },
+  "state_bound": "O(nodes*hidden)+O(edges):no_event_pair_or_clock_carrier",
+  "state_reset": "every_service_day_lane_and_independent_replay",
+  "target": "strict_next_movement_headway_seconds",
+  "target_masks": [
+    "ambiguous_public_order",
+    "simultaneous_strict_order",
+    "mismatched_source_headway",
+    "boundary_only_source_headway",
+    "ambiguous_run_source",
+    "ambiguous_run_target",
+    "unresolved_schedule_identity"
+  ],
+  "targets": 940551,
+  "task_protocol_sha256": "83e048c9f6e1f7f5de1ecb70e9a0a5cee64ac699b3ce3da94f4a9cd8f60e69ed",
+  "test_policy": "confirmatory_reuse_after_validation_freeze",
+  "topology_protocol_sha256": "e3c44f17757820eea46c7c6e066fe914991c920388e1a56a4e17f7c013303db8",
+  "topology_read": "affinity_weighted_latest_upstream_memory_at_strictly_earlier_timestamp",
+  "topology_test_sha256": "d2cf0d52bbb0aabba48fc25b561a49bfc7102feb2865764f469e94d0133c9e9a",
+  "topology_validation_sha256": "9e3fb262e8be83314f0606b2553011d6a0a0a6d5ec96b24366334719048c3069",
+  "true_edges": 831
+}

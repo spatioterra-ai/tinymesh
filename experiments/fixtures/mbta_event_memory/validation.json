@@ -1,0 +1,3647 @@
+{
+  "baselines": {
+    "anchor": {
+      "coverage": 1.0,
+      "macro_route_mae_seconds": 171.847916,
+      "mae_seconds": 152.175644,
+      "median_absolute_error": 99.200012,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 325.150024,
+      "predictions": 138910,
+      "rmse_seconds": 362.958223,
+      "targets": 138910
+    },
+    "persistence": {
+      "coverage": 0.993233,
+      "macro_route_mae_seconds": 239.623077,
+      "mae_seconds": 217.968536,
+      "median_absolute_error": 145.0,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 481.0,
+      "predictions": 137970,
+      "rmse_seconds": 400.224078,
+      "targets": 138910
+    },
+    "plan": {
+      "coverage": 0.999028,
+      "macro_route_mae_seconds": 174.803711,
+      "mae_seconds": 152.647949,
+      "median_absolute_error": 99.0,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 323.0,
+      "predictions": 138775,
+      "rmse_seconds": 382.366827,
+      "targets": 138910
+    },
+    "temporal": {
+      "coverage": 1.0,
+      "macro_route_mae_seconds": 175.667328,
+      "mae_seconds": 157.151627,
+      "median_absolute_error": 103.0,
+      "nonpositive_predictions": 0,
+      "p90_absolute_error": 336.0,
+      "predictions": 138910,
+      "rmse_seconds": 365.043812,
+      "targets": 138910
+    }
+  },
+  "decision": "stop:event_memory",
+  "encoders": [
+    {
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "pass": 0
+        },
+        {
+          "mae_seconds": 153.507294,
+          "pass": 1
+        }
+      ],
+      "parameters": 105,
+      "seed": 0,
+      "selected_pass": 0,
+      "selected_train_lane_days": 1024,
+      "state": {
+        "candidate.bias": {
+          "float32_base64": "TlPEPencWD7E8cY8ppR8Pg==",
+          "shape": [
+            4
+          ]
+        },
+        "candidate.weight": {
+          "float32_base64": "t2fGvbqvsT5ts6Y+l78ivSlQG71sI6Y+jvuMvilui73okoO+UXPrvQURwT5kLos+tyu9Pmwvr75KeRW+Q2+3PsJ5hL4t5Vu+HNWPvUOQqb7ekZc+pyRyPtTUmT1hMYY9PKSwvhMBM732RU8+YZJLvg==",
+          "shape": [
+            4,
+            7
+          ]
+        },
+        "gates.bias": {
+          "float32_base64": "54P5vRbSgz2Fua+8aVjkvTrdwD6Gpba+BMy4Pu/Rsz4=",
+          "shape": [
+            8
+          ]
+        },
+        "gates.weight": {
+          "float32_base64": "JNX6vSUZJj4TYSm+gtS1Ph7Xhj3JB1u5eeCCvB5Zvb6ODzI9gN09vny9gr4Tg30+hkOhvnOMXD7U8qU8F9VdPgEcJb6kFhg+oQ/xPcG3dD5bsCi+bx6WvXlKXb41xIO+Oj/cuumZBT30Utm9EIWHPswLuD4Mbr49OQmKvnkWFb2AIkw+TxwkvoxehD6Je7M+rDCFvq3SCL6qy0o+8Cu0vtWrqj7IaHU9dry3Pjbjlb7Cm/+9oHURvvYdmL7z4EI9K+y9PkWpt75Ydbm9oQbmvXLBnL42sy4++UnJva0Wvj4=",
+          "shape": [
+            8,
+            7
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "AAAAAA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "AAAAAAAAAAAAAAAAAAAAAA==",
+          "shape": [
+            1,
+            4
+          ]
+        },
+        "time.bias": {
+          "float32_base64": "CNfqvohAob4=",
+          "shape": [
+            2
+          ]
+        },
+        "time.weight": {
+          "float32_base64": "SPivPiD1MT8=",
+          "shape": [
+            2,
+            1
+          ]
+        }
+      },
+      "trained_events": 154563
+    },
+    {
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "pass": 0
+        },
+        {
+          "mae_seconds": 155.692551,
+          "pass": 1
+        }
+      ],
+      "parameters": 105,
+      "seed": 1,
+      "selected_pass": 0,
+      "selected_train_lane_days": 1024,
+      "state": {
+        "candidate.bias": {
+          "float32_base64": "GdpwPrDdKLxTtaK+jUqlvg==",
+          "shape": [
+            4
+          ]
+        },
+        "candidate.weight": {
+          "float32_base64": "U43WvbEHXz6Y3TA+YWhPvnnOFb5x/wk+SO6jvn8jY75RJx++K/5RvmGcpL76xEA+80CzvWyZfL7c9zw9AmuSPhvrND4ssiG+JcjOPW4Qu72mMIe96IL3vIaRFT69LKg+eWViPtVMML0Ps5++Nty/vg==",
+          "shape": [
+            4,
+            7
+          ]
+        },
+        "gates.bias": {
+          "float32_base64": "laIyPVmB5z24HgS+61ycPjMeOr167HG+3u2vPRXHZj4=",
+          "shape": [
+            8
+          ]
+        },
+        "gates.weight": {
+          "float32_base64": "0YcDvXD4sr6p7wI+PYz2vYKZlb6X6Qc+rDkWPgDdobsragK+gXywvlJmnz2bk7W+bS6PvZSnor7qppI+SseSPiS8gD4y0wi+XHMNvW6n/T1c70y9JASSPriUZTxhwJK+u/2xvl8jk70Yery+mkiNvvb8hL0ttXM9A/ewvlGywL7Xt5u+gPmlPj2VTj7h6ri+Yv+jvlKKIb3s4EO8MiXuPRv9MD68Q54+ix3ovQC5IT3i3KS+S0UUvtICo72k+DK+qsvBPW/Kr75wS8O9oEKoPsm+pL6WbHi+YJgtPq51XD4=",
+          "shape": [
+            8,
+            7
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "AAAAAA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "AAAAAAAAAAAAAAAAAAAAAA==",
+          "shape": [
+            1,
+            4
+          ]
+        },
+        "time.bias": {
+          "float32_base64": "QFIOv4CUAb8=",
+          "shape": [
+            2
+          ]
+        },
+        "time.weight": {
+          "float32_base64": "TG87v5AEBr4=",
+          "shape": [
+            2,
+            1
+          ]
+        }
+      },
+      "trained_events": 154563
+    },
+    {
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "pass": 0
+        },
+        {
+          "mae_seconds": 151.527985,
+          "pass": 1
+        }
+      ],
+      "parameters": 105,
+      "seed": 2,
+      "selected_pass": 1,
+      "selected_train_lane_days": 1024,
+      "state": {
+        "candidate.bias": {
+          "float32_base64": "C8MDvdr8f74x8Ce+pQNJPg==",
+          "shape": [
+            4
+          ]
+        },
+        "candidate.weight": {
+          "float32_base64": "5c5rPtpxFD07Fje+4SuWvWBnTD44j5++eg4Kv/nE4b6dZou9K3utPRRuJj4v2Hi+vxY4Pi8Wjz4zyfY++WLnvYFAYz1H15a8axg7PdtkT70xIKi+idQ+PbrbYzv/6xS/aSN5PeyEy76WZq4+039qvQ==",
+          "shape": [
+            4,
+            7
+          ]
+        },
+        "gates.bias": {
+          "float32_base64": "Vac+vlJvtDzyQgG/8EUcP4hQNb0Ypwo+znKaPNwUBD8=",
+          "shape": [
+            8
+          ]
+        },
+        "gates.weight": {
+          "float32_base64": "eo4Fvr5tPr75j4y+jNOIPj/XRb4mvhE/ZcJuvqrdT74LaQe/yweeviYCET/odx2+iW/zPqg5wDzEG4i+uBQVv91KOr4FPL09O/JaPlkuST522IO+sK2TPgsjvb0fxMa9L+++vWzs6b6KH7i+xjl8vtS8OT53PKA9EFCBPROEmT7MfLq+JwdDPj36uz2jwoQ+pwTkPq7PqL7vuZk+aOCQvntveT6YfCw/Wu6dPjs8Ij22HFU+qxZrvtPlpr7+Pfi9yXjGviHAeT5m84U+z9vbPhPXnL7Iq6a+wY6avj/31D4=",
+          "shape": [
+            8,
+            7
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "3D33vA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "QjsBvrJAPz6CQJe9zabgPQ==",
+          "shape": [
+            1,
+            4
+          ]
+        },
+        "time.bias": {
+          "float32_base64": "xyNNP67NZ78=",
+          "shape": [
+            2
+          ]
+        },
+        "time.weight": {
+          "float32_base64": "tDwYvke2ar8=",
+          "shape": [
+            2,
+            1
+          ]
+        }
+      },
+      "trained_events": 154563
+    }
+  ],
+  "protocol_sha256": "5db57ecb2f93b1db2ed90afc2d37b41d5c38557f29c21aa6ed901d2df71ebfa9",
+  "results": [
+    {
+      "arm": "node_local",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.407898,
+          "step": 50
+        },
+        {
+          "mae_seconds": 152.944763,
+          "step": 100
+        },
+        {
+          "mae_seconds": 152.176056,
+          "step": 150
+        },
+        {
+          "mae_seconds": 152.197174,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.459961,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 212.308945,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.231995,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.447128,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 220.160065,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.457886,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 160.285934,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 172.335739,
+        "mae_seconds": 151.459961,
+        "median_absolute_error": 95.815216,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 323.850403,
+        "predictions": 138910,
+        "rmse_seconds": 364.03376,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 0,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 0,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 0,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 0,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 128.086182,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 176.113235,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 260.811859,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 269.746521,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.46933,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 98.412636,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 142.710617,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.5365340113639832,
+          -0.023254986852407455,
+          0.0856645330786705,
+          0.236289843916893,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.06913299858570099,
+          0.12585508823394775,
+          0.09669379889965057,
+          0.1659768670797348,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "XwT9PVKgKj43KKq9ecXpPicuXjuIhHK9pmkEvpHgJ713UMe+vzfPvhI6ir7e6LI9RL6qveeEtDz9qwa9lS61Pg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "+geWvA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "ga+nPV3cZL0zzIE9W5NSPofOuL33uWw9KccZPW6AjD3muok9sBwvPjEpPT6JSLE9w4N2vVMd9zwgPt87AWWHPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "self",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.113876,
+          "step": 50
+        },
+        {
+          "mae_seconds": 152.314453,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.374466,
+          "step": 150
+        },
+        {
+          "mae_seconds": 151.399139,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.031509,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 211.398102,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.066956,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.018433,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 220.891373,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.029266,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 160.436737,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 171.491669,
+        "mae_seconds": 151.031509,
+        "median_absolute_error": 95.479431,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 324.938934,
+        "predictions": 138910,
+        "rmse_seconds": 363.123128,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 621016,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 621016,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 138012,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 138012,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 128.306702,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.741959,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 260.245087,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 265.769745,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.579468,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 98.283638,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 142.515076,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.5365340113639832,
+          -0.023254986852407455,
+          0.0856645330786705,
+          0.236289843916893,
+          0.5365340113639832,
+          -0.023254986852407455,
+          0.0856645330786705,
+          0.236289843916893,
+          0.6871233582496643,
+          0.9935095310211182
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.06913299858570099,
+          0.12585508823394775,
+          0.09669379889965057,
+          0.1659768670797348,
+          0.06913299858570099,
+          0.12585508823394775,
+          0.09669379889965057,
+          0.1659768670797348,
+          0.12890245020389557,
+          0.08011160045862198
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "gGEPPoftibw9UWW+XvrRPvE+3D0hFl68934uvo67gz2uhvm+E/Nzvu7UDb7kJDy9MR0Hvpl1E7z2MPm+ql/GPQ==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "XDNvOw==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "1YKfPW0kNz1GXOU9kKRSPgrH1L3Mt7c9xtkZPaf6WT00HSg+Z2PNPf7YNryz2p47u9LAvY7VbjyJLuY9jjI3PQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "true",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 150.490356,
+          "step": 50
+        },
+        {
+          "mae_seconds": 150.713669,
+          "step": 100
+        },
+        {
+          "mae_seconds": 149.295395,
+          "step": 150
+        },
+        {
+          "mae_seconds": 148.844635,
+          "step": 200
+        },
+        {
+          "mae_seconds": 147.712479,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 205.03923,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 116.40789,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 147.70343,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 195.971207,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 147.712357,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 148.226288,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 168.21933,
+        "mae_seconds": 147.712479,
+        "median_absolute_error": 93.56488,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 314.617126,
+        "predictions": 138910,
+        "rmse_seconds": 361.024053,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 595783,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 2070170,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 130351,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 313439,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 126.570175,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.844452,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 249.200302,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 258.062103,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 133.994263,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.505196,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 137.358765,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.5365340113639832,
+          -0.023254986852407455,
+          0.0856645330786705,
+          0.236289843916893,
+          0.5083543658256531,
+          -0.016494184732437134,
+          0.09059066325426102,
+          0.2127562314271927,
+          4.468683242797852,
+          0.953141450881958
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.06913299858570099,
+          0.12585508823394775,
+          0.09669379889965057,
+          0.1659768670797348,
+          0.1299678087234497,
+          0.1309165358543396,
+          0.10541607439517975,
+          0.18218615651130676,
+          1.1946873664855957,
+          0.21085526049137115
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "xds5PauavD7uc9k+yaigPh0Zcz5u6kG+TzfgvQ1qZz7scf++THxxvj9skr2c32I7lKQgvgQzwzqY3sK9OdoLPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "EefovQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "cQIavpXGIr5ofWk+Ovg+PrXtGr6TVrU9zJIvPkO0UT6IVIA+hEd4vsbSEj75Zy8+JcVmvsfxcT0eYQW+r4YXPg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "reverse",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.166245,
+          "step": 50
+        },
+        {
+          "mae_seconds": 152.519836,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.881088,
+          "step": 150
+        },
+        {
+          "mae_seconds": 151.919022,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.6259,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 212.434341,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.420067,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.612518,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 223.122711,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.623962,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 159.802765,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 172.382965,
+        "mae_seconds": 151.6259,
+        "median_absolute_error": 95.73938,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 325.018494,
+        "predictions": 138910,
+        "rmse_seconds": 365.972975,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 593745,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 2073968,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 129320,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 310498,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.695465,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 176.78331,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 261.45575,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 268.156677,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.920349,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 98.60836,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.060913,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.5365340113639832,
+          -0.023254986852407455,
+          0.0856645330786705,
+          0.236289843916893,
+          0.5113902688026428,
+          -0.019194917753338814,
+          0.08472965657711029,
+          0.2207956314086914,
+          5.244430065155029,
+          0.9498810768127441
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.06913299858570099,
+          0.12585508823394775,
+          0.09669379889965057,
+          0.1659768670797348,
+          0.13049161434173584,
+          0.1236141249537468,
+          0.09710962325334549,
+          0.16960814595222473,
+          1.5419316291809082,
+          0.21786166727542877
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "KSuCPUqGXT7ulYQ+dmrKPjQeQT52biG+wIkpvipOyDxN1QC/NN70vcP4p749qTm8Y3SUO0D20jxVbEA+wArAPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "vykUvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "axgGPnbNYb0fKeW9c7VVPhPKFL6xUSu90AfhPGQGmbys/9M9G8H3O+U67D2EmoS8CUmZvfp5Wjw+U7g9tTasPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "permuted",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.002274,
+          "step": 50
+        },
+        {
+          "mae_seconds": 152.509918,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.947678,
+          "step": 150
+        },
+        {
+          "mae_seconds": 151.685104,
+          "step": 200
+        },
+        {
+          "mae_seconds": 150.880646,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 211.78302,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.623512,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.867935,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 218.788544,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.879028,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 157.689819,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 171.82338,
+        "mae_seconds": 150.880646,
+        "median_absolute_error": 95.177399,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 322.912689,
+        "predictions": 138910,
+        "rmse_seconds": 364.874893,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 573315,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 1642399,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 120436,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 217838,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 126.786003,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 176.409546,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 259.907715,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 269.25589,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.219055,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.571625,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 142.613831,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.5365340113639832,
+          -0.023254986852407455,
+          0.0856645330786705,
+          0.236289843916893,
+          0.4951849579811096,
+          -0.046478141099214554,
+          0.06380032747983932,
+          0.24440009891986847,
+          4.849187850952148,
+          0.9171968698501587
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.06913299858570099,
+          0.12585508823394775,
+          0.09669379889965057,
+          0.1659768670797348,
+          0.15978237986564636,
+          0.10448332130908966,
+          0.08203379809856415,
+          0.1594613790512085,
+          1.7858777046203613,
+          0.27651676535606384
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 0,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "vdkAPOtcjD6SVJm93ub/Pp3GGz7vedW9gMj+vXM3N72cZN2+1EVbPRG3Kr0sIyc9iicfvdQ5mTw/M6y8Il2xPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "DPkTPgFihz374ig+gzN8vs1xWj3Sq4S7i56bPU6hh732BoG9ZU6xvfHYij7zN9G9zKTaPTQR7r1HqoA9HKQ0vtkUjr4Str28bqqIPUrt+r3mriQ9ixLUu2svkD55PAM/P4bPvr40Vb7nfAo+Ps5Xvsnbzb47mDo80w0Fvd+FLT7cBk29XfEHPop7u7yXVfg873kfvoEfE76B9t+9QIT2PfzwTb1+la29yHfrvEBas7zDfc6+zTgWvjNepj2NUa68NHXtO+oFuD2+5Am+JFDFvc4sErx5KLu8wd8fPaqwID5HSJY92h1/PfmUkb6Jaj69qWlTPg97Az7UPHK9SjV5vbFDgzy9Sru7CXoRPZpTnr1qbvY9PDMCvq4lBT5AP9y9Un3wPYyZAb4PdR2+QkrpPJUd+DwRKmE+AOYfPZ9EoT1fWDC+UbSbPibViD55ng6/1cFcvYhusz07iye8OgLhPL5Ge73tecW8zrUMPmVdITunXgy+MaKSPTfFZb1mkhK+OwAavg6yob3N9Yq9+SH5vUJOoD1WPL++wJvhvU1P1r2RgZ+9KMmcvUmApT28CLo9qP2/vUjKFb6EBXg+DP48PVBRAb4Bou27wobxu2ok3z1dQic8hxJzPnAYIr7qjzS+pOfZPdWSb7y71gq+MjkHPqnxrT3uQh6/sdyQvoqwlb0Kd2Y+GgISvkd3mL0oEeq8u3ZoPUtGlz1fFIO9LMz8PUDYBD5zUAo+zMA6PpNu8ryOZmI6dEQNPtzBOz2xWAm8MYnwPRu6Nr4gzu+9YJ2NPnq55L1KdQC9ZoKUvqT07rwt9zG+HJWKvbHvUz3wHla+cqgQvA11br2oHgY+cOAyvriH3T04YKS9q530Pe3Ju728eWW+AmoHPmg5IL6n6Y+9ZaAwPmYrxj0kSKM9isQMPmLmoj24BIe+3qaSPTnliL6PRVA9OU21PWj0+D2DeE++QPWJvXWt7j0xJh29lnrxvKUEjT2ZiNm726WVPt+jyzy2aHO8QzvKPkKjWT6sfM29nRPHPPOEKr79I/c9TPkuvc8iZ7x9VDa9xWtQu6+GJD4pRgg+Jv1uvnBrBT4D/i29hOViPeYuoT25Lxi9NIkKPZ0J0b0anXC+SlqhvQMhyLyLuUw9M1dKPc4NZz0W2CM+qOCkOcLFir7FVHE7B3aWvBWyBb3qPoI8rVIZPadVcT2QhY49BgafPGDNkj3vYqc9YP6bPTPeuL3z0d49fJ0WPuLaID1k/Fw988bJPkB4Mb5R8aa+xR5wvhLc6zzqK5q+rqwrvl5FDr5c6Qa/7NO4vZlvjT0lpxE+mV2SPVR52TwMXgs+XiJDOhD6jj2JMFQ98JAfPr+vw72CHPo8qyUIvoIXHr4HPRY+fxnFPtI+RL4jXy+9NSVUvvc2Db/3Jx4+PEQqPr6PWj75TBc+NK7rvBxyij3pBSc+ES1SPo2yHb0GjEM9I/7ivXclnr4J0lw8aye5PAK9fDrLPcq8PfIDvMbN6L3zOoq80zthPl+1xz1fOJI9ojwBPoYmFT2jNoE+TTBqvU4iOb4pNUG+Fldwvvu9mr2dK/W9XbqbPtiBIj5EOi2+dChXveX4Ur6GW04+Att8vc4uDD5rsSK+e+2GvYY57j0PddE9M2WZvcbVn73sf5i7ik2KPX29Uz3vwI6+RLMiPsbdtz3ZcYq822lCPqKDd77QDhU+KJryPXSzUz2LEyo+ZksZPZyO4rtQ3hG+75arvtWpp73CP4k+msaePSPlqj2lhbg9bgFLPYwBRj0/ZF+8LOXuPu5WIL5/Ymg8Y3rYvZT1ML7AFnu8nDlqvbG+h7zDfoA87MEJPnAGI77ipIo+1twyPlnuzL1oL3y9/bKKvRbhXT1jX5i9wiZGPlXAdj3ipTA8iBPnvEt/k70yYSu+VTM9vSw3Bj5fTbA9fms0PhBcwzwIAfE9uHHwPetFVb5EIBo9MUtdvZXcPL4LpIO9RLWzPfTFAD5IemW+9NBtPRyR070OQVc9A7B+PHM39jvNdQC+YKN7PpKsyz0pKZQ7tiMevT7Pxz2PoDw8qS9wvT2UFDudgfG945cWPnI7O77FNPm8BkGPPnEvvT2PQG69Jit3vgOWabzQS8C9RU7YvR9QoT1+oi++jRubPZwTWLuQLVs+6sUMPgGthb6znoU9cCkZPsNOWD5xETG+dMC/PpPkjz2MXPa9I22vvbIL5r3HdYe9zRxSPhLybD0VAvS8I0CpPRMezz1+o6+939HKvaAmn71w/He9nsgwveBxMD5su6e+17cUPpmtiT0/Ju69WtoFvFHbgb23r+G8",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "+SH3vA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "kFisvf58rr2Kqzo9WAA4PrnODL7zuuQ8Y18VPcoVDj1LXBI+IhfgPSxXiT3S9FM9DTSqvY4V9zuRXBg9vFlUPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "node_local",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.813828,
+          "step": 50
+        },
+        {
+          "mae_seconds": 152.058075,
+          "step": 100
+        },
+        {
+          "mae_seconds": 152.465302,
+          "step": 150
+        },
+        {
+          "mae_seconds": 152.030899,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.768997,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 213.000992,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.331879,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.756256,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 219.910736,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.767868,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 156.539307,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 172.890961,
+        "mae_seconds": 151.768997,
+        "median_absolute_error": 95.899063,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 325.301971,
+        "predictions": 138910,
+        "rmse_seconds": 365.731138,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 0,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 0,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 0,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 0,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 128.435364,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.024811,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 262.154144,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 272.560608,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.72052,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.700356,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.640884,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.44260329008102417,
+          -0.3535032570362091,
+          -0.025384826585650444,
+          0.08893804252147675,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.09734028577804565,
+          0.13051730394363403,
+          0.0575617253780365,
+          0.05697927251458168,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "rl+WvkH5Wz7fJRg/dxwevgaQ873C7O09i27Lu7Z/xj44PIA+9D0NPvwXgj7yX7y9p9C4vV5AeTxxEHc9kaQmPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "sKmvvp56pjxo86U+UmWJu4a+qToOiyE+S0f+vaqkAD7HXES9DL6Xvo6wJD5qr5K9etJFPpPJMr6kPMY9AXqGuiJhAb1e5Ny94xGvvqczcb27ryc9ed+8veIzrz1B/wc+UGwYvbCMWjzVcUE+4LCQPazsRj0mcq68wF+ivd5X8z095o09qA4qvBSIEz0s5b+9MZ3JvaPZ0D13SQU+8UpOvSu7Oj1xvvG9Hjk2vVEqOT5WG9O+gpiovvAVgb45hxI+pLUfvcWpIz7SzYc9IAoZvXYqnj1g9Ra+T8t6O1wi7L4QmrG+qht4vYJ5dzxLpBK+mqomPQEhoTzvjAG87LSAvWZyi701SAC+2WAEPX/xo71TwJE9SQJ1Pri2hj70E5C9hKZwPhD8lj5FKNw+ZhWJPUrg4j3YPE09JIgwvgIrDr7VcgA+g4ukvuEC7b3Tn6M+Ya+JvgAVp72q2Wq9EnC9PZzE3z037RE+7Zv0vXKp9L2wJKu9R7jLvHI2Lz0yaV+7v63PPDKBab281Wq+RN/ivTpaIL50JNW8cF9CvuBXt7yFGhK+GHW4vOcqLb6oJEC+QHQ0vcEYU77n1I0+ZE2VPfKcIz3BN5+9aFeZudXeObuP0QI+5uWEvRnRxj1leyc+i/wHvkAAZj7SanQ9dzKIPb16hTyT1w2+EVy1u2ZD+z2SqHA7AH8dOuqOgz0219c9XxgYPtVRBz4xVy8+CrV/vlnqbb6m3Zm+oADWPqBdIL5bHjw+Hx0uPTp6X7zT7i09CIkxvYrszryVBmM8kjrxPEHsKD0qYLc9J/yfvPZhgr7qzvO81mj8PmJHhL7aflc+tiTiPaHeKL68MDK+VjaKPSBkND1Jczu+WYJdPvVCP718sxG+411ivtSnMr4OoME8kjgqPTRANz5DZAw+dUCnvtQAVb0bMLA9x+yOPqAEy72TK2s9LyiUPUj5aD4XK+A9E0dAPrEaDD3JbDG+s401PsbWzz1ZUfy9MOjivMSqGr55mkA+I6cMPFWfsT4GNwi/COu5vLY0pj1mloO8Q1giu7kkAb6H2jK9vJSevYCh/D2jtHe+HipBPgWpqT2Cdae9djzmvPSSYb1HYC28kr5ZPgFUsTxL1d09z0bYvcMXBb42ruE9GYg0PhAeIjxEbF+9bQk5PmWy9j0GtM49JXM5PPSNFD4LdAS+NDElO1Z/h72BCRK97TGFPtI3Xbo7ihi8exYzPKiew7z/a5496e/dPU4dL7w8ydi+8IlkvrgQkr7vblA9FXXsveljJT6CctM9IcCuvULy0T3R4iU+QlUmPtDCBj3NKri9RvhuvKJlGD16jJC9TesFvsPF4D1K0Sq+/+r5PANxhT1Jkg6+n83avc5tAL6mbei8CMWCPW6ZHb3JCBO8JZWLPpQRvTxNYH2+tgW0PZTXTr2QJCM8ED0nvtrW9D1GafQ9HsW7vtd5i74lZ4+9NLPcvWykij5QqHI9uBaOvS/Yhj1BngY+3LGHvh8Z/z0eXME9isZ7PuNBpD0qDC09TNUHPsZ+Pz0qNdk9xQMFP+rN4b7c9ic9V4ciPlW5LD5CEJM96/kUvhCnIrzCEQG+W13fPRkfYz1HPAu+j89Nvqs9Wb4Pf2++26wlPqIq2r0s4LC9YZaovRj6rL0v2wK7zWJcvV0RVj0nlRm+p+IqvXSKEL7zrra9PeebvExwhD2R9UQ+sGcmvfWSFj4sbde9unzaPW4fJL78DVu9JNMZvqFYlD2EtIu+lXZfvnK0M77hOwu+Tyu/vd4zsLwtJ489NCWDPu11273AkQg+Cb0yvkoZGj3KFcg97Yp+PHQlNr5MFdU+spOePcbFgDyx8Gc+yOupPAAG7Lwjlga+MkElvmzKIL0Stpk94ExkPobFtTz89IO+Y4SSPacxB71xbR486OspPeACsT1nViA9FprIvlsuDz7ozgk+/j+5vba5wr0m+jQ9Ps/7vLpYFz1eSn87V2axPoa8Rz7O1gs+ID81PKA/ajypoEE+tr7AvRBtIDyYkN48WLy0vbBEW720ZwE+yam/vSAZvD1pSl+9ddkqPd7vHr1NiiK+0+ODPgzSzLuVnzI+UPJUvg0dY74V4LK9SMKevN2p9D1gxnS+9m9avlnOP72NKva9Zt38PS7h9D1G9+Q9GIEsPQCkQTo4d/29onx7vrYaWL41E3q+uJnTPMRjpb54i/k8VNScPf3eXDxMLBc+4xW1PWhiAL7349G9AiwlPop0uT0+wTy+m6kSPY8qoz2REP09U25hPrzOnb7aWvY+21WvvXFpHL74dRy9Hg/FPUBxh729fxI+",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "6BpQOw==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "5pSxvRF7CL5G0iq+fophvT9iXr2D24+9HV7aPb0D9z1o8hy+jNoxPeCjBb6SPNW8tACpPXGngz1kMz+9LLeVvQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "self",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.422455,
+          "step": 50
+        },
+        {
+          "mae_seconds": 151.675217,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.778687,
+          "step": 150
+        },
+        {
+          "mae_seconds": 151.747803,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.44249,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 212.198196,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.26545,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.429657,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 220.066223,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.441025,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 157.514587,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 172.312851,
+        "mae_seconds": 151.44249,
+        "median_absolute_error": 95.899826,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 324.700653,
+        "predictions": 138910,
+        "rmse_seconds": 365.846984,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 621016,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 621016,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 138012,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 138012,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 128.368958,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.776413,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 260.883789,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 270.657349,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.106873,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.498917,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.897537,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.44260329008102417,
+          -0.3535032570362091,
+          -0.025384826585650444,
+          0.08893804252147675,
+          0.44260329008102417,
+          -0.3535032570362091,
+          -0.025384826585650444,
+          0.08893804252147675,
+          0.6871233582496643,
+          0.9935095310211182
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.09734028577804565,
+          0.13051730394363403,
+          0.0575617253780365,
+          0.05697927251458168,
+          0.09734028577804565,
+          0.13051730394363403,
+          0.0575617253780365,
+          0.05697927251458168,
+          0.12890245020389557,
+          0.08011160045862198
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "1dlzvjCTl7utrxM/aCeZvQUlKz4Vpd09knmjvVAuxj7elrk++YgePucgIDxBCYe9BKL2vVg+/700P4C+GVZ1vg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "MbXyug==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "YuLNvciIzL3COSC+maHyvZyudL3LQjW9KMCXPTc4AD7x7xe+6rFoPbwF0z2P6Ly8Eh5WPZiL1j1KcwI+SlbevQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "true",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 150.441895,
+          "step": 50
+        },
+        {
+          "mae_seconds": 149.305283,
+          "step": 100
+        },
+        {
+          "mae_seconds": 148.627441,
+          "step": 150
+        },
+        {
+          "mae_seconds": 148.268494,
+          "step": 200
+        },
+        {
+          "mae_seconds": 148.207901,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 207.890137,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 115.617058,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 148.197281,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 204.940903,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 148.207779,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 148.704269,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 169.006317,
+        "mae_seconds": 148.207901,
+        "median_absolute_error": 93.528503,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 317.691467,
+        "predictions": 138910,
+        "rmse_seconds": 363.550547,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 595783,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 2070170,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 130351,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 313439,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 125.700638,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 176.106232,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 254.474289,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 261.019623,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 131.249496,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 96.497139,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 137.996719,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.44260329008102417,
+          -0.3535032570362091,
+          -0.025384826585650444,
+          0.08893804252147675,
+          0.4269561171531677,
+          -0.3274487257003784,
+          -0.028281917795538902,
+          0.08670549094676971,
+          4.468683242797852,
+          0.953141450881958
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.09734028577804565,
+          0.13051730394363403,
+          0.0575617253780365,
+          0.05697927251458168,
+          0.1323648989200592,
+          0.15850016474723816,
+          0.062531977891922,
+          0.05966183543205261,
+          1.1946873664855957,
+          0.21085526049137115
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "MjGcvnMqJD2zadY+QksLProN7LzRKS4+l9xDvo0stT50S+8+01ycPrc1FzyKzJy+Dt2gvUFx271ATc6+X8kbvw==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "ZVmRvA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "qnYAvjO7yD08gUq+71sqvpZ4lb0Nmhu+d76TvSLaDj7vYXG+H/HhPaYsOT7bcR++WCJhPYGtfT0KOhu+eRdNPg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "reverse",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.399399,
+          "step": 50
+        },
+        {
+          "mae_seconds": 151.95929,
+          "step": 100
+        },
+        {
+          "mae_seconds": 152.166565,
+          "step": 150
+        },
+        {
+          "mae_seconds": 152.092468,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.564133,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 212.517288,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.279289,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.550995,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 221.757339,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.56279,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 157.192947,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 172.288208,
+        "mae_seconds": 151.564133,
+        "median_absolute_error": 95.907135,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 325.272949,
+        "predictions": 138910,
+        "rmse_seconds": 366.514538,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 593745,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 2073968,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 129320,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 310498,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.964539,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.531631,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 262.31424,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 269.578094,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.917007,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.812439,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.899582,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.44260329008102417,
+          -0.3535032570362091,
+          -0.025384826585650444,
+          0.08893804252147675,
+          0.4248434901237488,
+          -0.3338402807712555,
+          -0.024016782641410828,
+          0.08639427274465561,
+          5.244430065155029,
+          0.9498810768127441
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.09734028577804565,
+          0.13051730394363403,
+          0.0575617253780365,
+          0.05697927251458168,
+          0.13196402788162231,
+          0.14764490723609924,
+          0.05594281479716301,
+          0.05815206468105316,
+          1.5419316291809082,
+          0.21786166727542877
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "dYrlvm4mPz7HBNM+howEPnUrXr7Cspo97pu1vcElrD5lFpo+5K5VPs6CpD54kJK+4HODPUlqwL3b11O+ZKLnPQ==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "pfzkvsLNfL2K89k+CeOVO5Awwzr+k709Ro2MvTw/3z0EZsM7PnyNvtemAT722Xi9pPvnPeFerb0+nx4+znwgvYI5try1ajm+ZquvvkUkQb7ckIe9oPQTPcxeoz7M0I4+YWGOPglVKT5wZYA9QvtDO4cW0TpfXsq7R7uuvWXJJT0Np5U9ibStPFzoaj1AdeW97PhWvrC08j3NcA0+rbPQvXZ6cT2w2Ny9imKDO33iUj6A8dG+Ji+WvkSEX742qvg9b6kgvbiyWz1fS748IRzCuyt6Lj6fdIe9gJi1uz8jpL7uc4K+8hScvdmNxTxAnh2+R89yPaaXOrxAkFG7n1mLvVb327nicyu9MXmbPeGdyL11wyc9AxZoPstVJj7TxDu95vUPPhQItT77r7M+Dk0EPo2cAj5cojQ+AM2UvXlRS75lOCI+cERJvs4aQDtWph0+9G9Qu8nuCL4wHM+8h8QpPr8w4D2nXe89vGpIvfbvIr6fMDO+Og0Cu5E0bz0KDVM89SscPT97Xr0dZYS+cqievYxuWL53KvM79v6LviPMi77HUyS+MCgEvtC8Qr39Xoc9CJbcvaoOfr5l/qM+QyaUPQ72/TstSY29Y8y3u5Jl3Duqnvg9gFzwvQ2uoT1TYCg+HYYGvv0BcD6Kar49bOtqPQMa1jyhYUO+KXFaO+6WUz3fUJW9JblvvZcpBj6Rkp89MvNUPjZhIz7qc2w8KJBgvkPLkr5GHG++F7zAPqMBMr5DMhM+bx9wPX6bA70q3XU91oo7vt9o9LzTsz49/2mlPDh6yjwN3r89oReQPWTLi76pzKK9EYuiPi4Slb78w9I9NXv1PfOSHb6mxYG+KzMIPqNyAr5BPz2+/tFTPqUPU705q9W97mKbvsrqRL4BVzI9z9r4PBnaLD6qFv89jo6Rvj4KlL2c96k96sWEPuTy3b3MIqs9L1BzPcA0ij6Prrw93REGPnHavT1CSjK+2qskPn8PGz5cpgW8mPeAvYCYVr5no+g9culzvImDsD7tsOm+nxOnvM6Crz2aobi8RRtnvIjNCr7vbaK9DHj4vO7tID5V2z++le03Pv4ugT3Mk529sdlovbMDs7097/I81UhePksWnT2CDCQ+jRLvvQ81Ar4wYeq7mCx1PSBNLb2s9LO7dfTLPasetbq2k8Q9yD6KOl9i0z2oqpu98HfpPH5KEL0xBry9xRJ3PoH0E72McKa9xzRuvO48ir3+ugM+9p0jPg0+dT05X8O+VuoevjgSiL5Wa7U9uCKAvtZFaz1hpjW9IntUvpsshj1m8To+LcK3vOwVqr2p6x0+LAFTPbINVT3YLKg9DysTvawVqz2GpZy9bjEmvdCUpL0w7SK+Fx74vfKg+b0sfGs+OZRwPt3RA75SLbK9xwY0Pt+FiL1Mq8O+A6u5PkETJT78SBI+yfR0PWXkkT4vC+Q9JX6AvlD4kb7bCIq+3KMYvT2Ooj743qI98egnvVB9iD3M4yI+tXcOvb7nnT2M0g49Mip3PmcMKz2ueMa9qUQfPpWNzjzn9F0+CJAPP0aIs75mUdg9kwljPsHSYD5rvx29Zl1ivRu2OL4dtw69Cq/VPUs7+b1FdlU8ZxXJvtoYsr6aYmG+RLAWPrlft7qUPPM803d4voHAJ73xyhE+2k+rvZEcBz494Hy9K2dLvf/Sd76a2kE+n4hNPSXnXD7N80k+SAQ6PdO7aj70uhc+h+ZSPmShCr6UFx2+VJxKO//DhD6GZIm+oaCrvYt9x701AU06b5YxvdmuJz2XjPc9scd1Ppkb4L1mzke8oUXsvWt4QT1B/129uJ1hPU0qmb30aI4+7R9yvDrtBr5RO/49NGfAPCaZ97w3Y9m9V5FlvquqNb1baJM9ig1DPrGqKDwC9GO+qsM7PfC+6Lymoj27ZDUHPVpvuD1vHe88yh6ivlR3Hj4kf0w+EjzfvZ300r1gRow97lWgvQ8vkjzRYv08iLexPnvHSj65/iY+LiJJPd9tCD7mSmo+E72Ivbch97wjjBG9REkDvsA/jb1z6HY+pRNOvtJG2DwosO29Kj1kPTkY6bwgyMa9W44iPtkNu714trk+p/stvkgMGb5cf1k9JxuOvS4MrTx1u2K+BY5svknuZr0nvhm+/uhJPp1eMD4UVHY+XINuPuwamT2o8iq+CC4fvIgosb3vszi+jk8yvXRAAr5+lye9TloPPW/CaTy01X88SCk+vBC31r06MaC9jRgnPO3mBz3cA3K+qTMjPjc9Nj6XOAw+tW+MvlpyJj00WN0+mPG8vbMGqb6xKI+9nBX1PZGrFzuHwWk+",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "uCoTvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "gO4gvvB+wL1nU7K9r+OEvR4rkL3/V6G9eqW2PROZjT2iPhK+rOq9PcK9Er5GmXs91uvLPC5QjT2s96W9nuWsvQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "permuted",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 152.391739,
+          "step": 50
+        },
+        {
+          "mae_seconds": 152.008575,
+          "step": 100
+        },
+        {
+          "mae_seconds": 152.203079,
+          "step": 150
+        },
+        {
+          "mae_seconds": 151.670258,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.462646,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 212.880005,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.924294,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.449936,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 219.40155,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.461792,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 155.039917,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 172.664078,
+        "mae_seconds": 151.462646,
+        "median_absolute_error": 95.83786,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 323.992096,
+        "predictions": 138910,
+        "rmse_seconds": 364.952715,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 573315,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 1642399,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 120436,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 217838,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.613853,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.786194,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 262.630615,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 271.206909,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 130.998459,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.009071,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 143.403473,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          0.44260329008102417,
+          -0.3535032570362091,
+          -0.025384826585650444,
+          0.08893804252147675,
+          0.3947819769382477,
+          -0.34633374214172363,
+          -0.02296379953622818,
+          0.07374226301908493,
+          4.849187850952148,
+          0.9171968698501587
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.09734028577804565,
+          0.13051730394363403,
+          0.0575617253780365,
+          0.05697927251458168,
+          0.14820261299610138,
+          0.1449062079191208,
+          0.051480233669281006,
+          0.058611661195755005,
+          1.7858777046203613,
+          0.27651676535606384
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 1,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "mQbFvmXlsD6gLqs+dlvcPO9HM75UF7S9NE+4vS0Gwj6oAZY+TqYzPj+Yhj71I5k+mzr2vCLyybzm9yq+BfZVPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "FVq/vA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "TCcGvt6X1L2NVHa9BT8HPE+Lrr0QL/W93seWPQUxAj5aNi++K8oQPRH0CL4O2Km9Miu8PTVixz1nZqa9pNHBvQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "node_local",
+      "best_step": 200,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.448502,
+          "step": 50
+        },
+        {
+          "mae_seconds": 151.185455,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.068512,
+          "step": 150
+        },
+        {
+          "mae_seconds": 150.996445,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.054611,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.622574,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.436256,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.984024,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 217.307556,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.995163,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 156.368805,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 171.045685,
+        "mae_seconds": 150.996445,
+        "median_absolute_error": 96.162415,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 321.114624,
+        "predictions": 138910,
+        "rmse_seconds": 364.908186,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 0,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 0,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 0,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 0,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.035736,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.242477,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.699615,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 264.160492,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.36882,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 98.062447,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 144.750198,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          -0.05255669727921486,
+          -0.24523600935935974,
+          -0.16520819067955017,
+          -0.02460455149412155,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.1404319703578949,
+          0.2533327043056488,
+          0.25524383783340454,
+          0.25890058279037476,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "VCW/vprjDz6CWhK+WOfiPetzlL2p9R09ZMFIvmrsMT0c60e+7vGtPTE4Sr57Kow+CuuHvb/Gfj7NQo0+oYhlvg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "Hk4NvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "AhrfvVJSD77JUzA9MPysvW0tYz2VsOQ5jxeWPMAwHL09kbu8yPY9vZdJL72xzte9LIMSvihCyz3ER8w9ou6FPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "self",
+      "best_step": 200,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.595703,
+          "step": 50
+        },
+        {
+          "mae_seconds": 151.226349,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.076874,
+          "step": 150
+        },
+        {
+          "mae_seconds": 150.976288,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.073303,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.880219,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.264404,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.963684,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 218.272202,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.974655,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 157.855667,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 171.085495,
+        "mae_seconds": 150.976288,
+        "median_absolute_error": 95.967407,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 322.001343,
+        "predictions": 138910,
+        "rmse_seconds": 365.022666,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 621016,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 621016,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 138012,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 138012,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.283234,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.330017,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.786682,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 265.161743,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 128.428101,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.64769,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 144.961075,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          -0.05255669727921486,
+          -0.24523600935935974,
+          -0.16520819067955017,
+          -0.02460455149412155,
+          -0.05255669727921486,
+          -0.24523600935935974,
+          -0.16520819067955017,
+          -0.02460455149412155,
+          0.6871233582496643,
+          0.9935095310211182
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.1404319703578949,
+          0.2533327043056488,
+          0.25524383783340454,
+          0.25890058279037476,
+          0.1404319703578949,
+          0.2533327043056488,
+          0.25524383783340454,
+          0.25890058279037476,
+          0.12890245020389557,
+          0.08011160045862198
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "bOfFvq63jT4Gmkm+X+qtPQzcGr58bIo+T8ijvvtDbb7QUS2+fmXwPRkMfr7BNZ8+Q8lKvicUiz6PXZQ+v4MWvg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "zC4LvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "puLMvant5L0zASQ9Q6EvvXwv7bxkpc299+KGPfmkib3qlF09CigLvbv1dL0kz7G9QXwOvulWyj30IaA9Kl1MPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "true",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 150.59639,
+          "step": 50
+        },
+        {
+          "mae_seconds": 149.112976,
+          "step": 100
+        },
+        {
+          "mae_seconds": 148.006882,
+          "step": 150
+        },
+        {
+          "mae_seconds": 147.645126,
+          "step": 200
+        },
+        {
+          "mae_seconds": 147.257385,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 203.971725,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 116.287247,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 147.247452,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 200.311951,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 147.256699,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 150.181534,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 167.242142,
+        "mae_seconds": 147.257385,
+        "median_absolute_error": 94.12149,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 311.637573,
+        "predictions": 138910,
+        "rmse_seconds": 366.888607,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 595783,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 2070170,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 130351,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 313439,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.873322,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 174.861954,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 247.474579,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 253.770569,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 131.944336,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 96.674492,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 138.095688,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          -0.05255669727921486,
+          -0.24523600935935974,
+          -0.16520819067955017,
+          -0.02460455149412155,
+          -0.06492272019386292,
+          -0.21171429753303528,
+          -0.1784926950931549,
+          -0.023642605170607567,
+          4.468683242797852,
+          0.953141450881958
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.1404319703578949,
+          0.2533327043056488,
+          0.25524383783340454,
+          0.25890058279037476,
+          0.14411720633506775,
+          0.2718994617462158,
+          0.26797711849212646,
+          0.2523304522037506,
+          1.1946873664855957,
+          0.21085526049137115
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "VSC9vjio3z6H1A+8TxAIP0m4nD3u8ME+3caVPgTaX76Qvhu+XPOOvux9hb7HC+g+4YovvK2Qfz66exg+yajkPg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "bG3GvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "jJg8vo9zcb7ncwQ+cpNKPshWSz7421U+StIfvjY3vr3RRoI84qEpvpgJ171yOV6+198TvgwIDT6tWpQ9YqVJvg==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "reverse",
+      "best_step": 150,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.599106,
+          "step": 50
+        },
+        {
+          "mae_seconds": 151.282211,
+          "step": 100
+        },
+        {
+          "mae_seconds": 151.053116,
+          "step": 150
+        },
+        {
+          "mae_seconds": 151.116394,
+          "step": 200
+        },
+        {
+          "mae_seconds": 151.11853,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.617844,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 118.526451,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.040817,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 216.797623,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 151.052124,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 155.238434,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 171.169281,
+        "mae_seconds": 151.053116,
+        "median_absolute_error": 96.175537,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 323.465515,
+        "predictions": 138910,
+        "rmse_seconds": 365.226535,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 593745,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 2073968,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 129320,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 310498,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.560806,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.404907,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.621948,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 264.222198,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.678635,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 97.757217,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 144.939163,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          -0.05255669727921486,
+          -0.24523600935935974,
+          -0.16520819067955017,
+          -0.02460455149412155,
+          -0.054040856659412384,
+          -0.2261621356010437,
+          -0.16558139026165009,
+          -0.02930341847240925,
+          5.244430065155029,
+          0.9498810768127441
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.1404319703578949,
+          0.2533327043056488,
+          0.25524383783340454,
+          0.25890058279037476,
+          0.13830317556858063,
+          0.2535092532634735,
+          0.2525452673435211,
+          0.24873566627502441,
+          1.5419316291809082,
+          0.21786166727542877
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "F0HcvXEbHj5d5ja+l0rAPS32ZzyvHpw9xKhzPmvS8D39+K++zFS3PQCMRr4/e4g+N2ccvlYoXT7ts5o+1C8Rvg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "qTLnvA==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "vARAvTwD2L0NMko9+9Jove7lBT0+v5O8BoC3vTksM73It8q9vDNCvdHrAL0qEqa97kHIvRn0kj1FSqs9jw2DPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    },
+    {
+      "arm": "permuted",
+      "best_step": 250,
+      "checkpoints": [
+        {
+          "mae_seconds": 152.175644,
+          "step": 0
+        },
+        {
+          "mae_seconds": 151.101685,
+          "step": 50
+        },
+        {
+          "mae_seconds": 150.899033,
+          "step": 100
+        },
+        {
+          "mae_seconds": 150.679733,
+          "step": 150
+        },
+        {
+          "mae_seconds": 150.362396,
+          "step": 200
+        },
+        {
+          "mae_seconds": 150.268433,
+          "step": 250
+        }
+      ],
+      "mask_metrics": [
+        {
+          "mae_seconds": 210.542694,
+          "mask": "schedule_resolved",
+          "targets": 49063,
+          "value": false
+        },
+        {
+          "mae_seconds": 117.354301,
+          "mask": "schedule_resolved",
+          "targets": 89847,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.255615,
+          "mask": "ambiguous_run_source",
+          "targets": 138884,
+          "value": false
+        },
+        {
+          "mae_seconds": 218.792557,
+          "mask": "ambiguous_run_source",
+          "targets": 26,
+          "value": true
+        },
+        {
+          "mae_seconds": 150.266632,
+          "mask": "ambiguous_run_target",
+          "targets": 138877,
+          "value": false
+        },
+        {
+          "mae_seconds": 157.761459,
+          "mask": "ambiguous_run_target",
+          "targets": 33,
+          "value": true
+        }
+      ],
+      "metrics": {
+        "coverage": 1.0,
+        "macro_route_mae_seconds": 170.98381,
+        "mae_seconds": 150.268433,
+        "median_absolute_error": 95.095825,
+        "nonpositive_predictions": 0,
+        "p90_absolute_error": 319.683044,
+        "predictions": 138910,
+        "rmse_seconds": 365.092818,
+        "targets": 138910
+      },
+      "parameters": 465,
+      "replay_work": {
+        "train": {
+          "observed_messages": 573315,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 1642399,
+          "targets": 625073
+        },
+        "validation": {
+          "observed_messages": 120436,
+          "persistent_state_values": 1036,
+          "target_edge_incidences": 217838,
+          "targets": 138910
+        }
+      },
+      "route_metrics": [
+        {
+          "mae_seconds": 127.598534,
+          "route_id": "Blue",
+          "targets": 19372
+        },
+        {
+          "mae_seconds": 175.100723,
+          "route_id": "Green-B",
+          "targets": 11913
+        },
+        {
+          "mae_seconds": 258.993011,
+          "route_id": "Green-D",
+          "targets": 17251
+        },
+        {
+          "mae_seconds": 266.508972,
+          "route_id": "Green-E",
+          "targets": 7588
+        },
+        {
+          "mae_seconds": 129.640594,
+          "route_id": "Mattapan",
+          "targets": 8533
+        },
+        {
+          "mae_seconds": 96.813187,
+          "route_id": "Orange",
+          "targets": 40546
+        },
+        {
+          "mae_seconds": 142.231705,
+          "route_id": "Red",
+          "targets": 33707
+        }
+      ],
+      "scaler": {
+        "feature_mean": [
+          5.927036285400391,
+          5.9838032722473145,
+          5.893571376800537,
+          0.9990065097808838,
+          0.9931560158729553,
+          -0.010249469429254532,
+          -0.008187289349734783,
+          -0.1401824951171875,
+          -0.17774821817874908,
+          0.09759979695081711,
+          0.12306562811136246,
+          0.09928280115127563,
+          0.13956770300865173,
+          0.13198938965797424,
+          0.04570186138153076,
+          0.2186368703842163,
+          0.14415596425533295,
+          -0.05255669727921486,
+          -0.24523600935935974,
+          -0.16520819067955017,
+          -0.02460455149412155,
+          -0.04187791049480438,
+          -0.2598944306373596,
+          -0.12061413377523422,
+          0.022437553852796555,
+          4.849187850952148,
+          0.9171968698501587
+        ],
+        "feature_scale": [
+          0.5553379654884338,
+          0.45987072587013245,
+          0.7268609404563904,
+          0.03149241954088211,
+          0.08223937451839447,
+          0.6781637668609619,
+          0.7360744476318359,
+          0.7110899686813354,
+          0.6656099557876587,
+          0.29564177989959717,
+          0.3291357457637787,
+          0.30049654841423035,
+          0.3460952639579773,
+          0.3371146619319916,
+          0.20856636762619019,
+          0.41241058707237244,
+          0.3512646555900574,
+          0.1404319703578949,
+          0.2533327043056488,
+          0.25524383783340454,
+          0.25890058279037476,
+          0.12594150006771088,
+          0.23059715330600739,
+          0.2292373925447464,
+          0.2468188852071762,
+          1.7858777046203613,
+          0.27651676535606384
+        ],
+        "target_mean": 5.897211074829102,
+        "target_scale": 0.7324146032333374
+      },
+      "seed": 2,
+      "state": {
+        "hidden.bias": {
+          "float32_base64": "36LCvhYVOz5MBBG+7CCmPbElOr7AEoo+FCfaPpXf4T3qup2+AKyaPeyUc75zIr4+YEabvgz5mj6dYag+TZJevg==",
+          "shape": [
+            16
+          ]
+        },
+        "hidden.weight": {
+          "float32_base64": "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",
+          "shape": [
+            16,
+            27
+          ]
+        },
+        "output.bias": {
+          "float32_base64": "q3dgvQ==",
+          "shape": [
+            1
+          ]
+        },
+        "output.weight": {
+          "float32_base64": "xmnDvcvF3L2BXRM9mKYJPQsxrj3/5Hg9YTX2va0iLr2oiGe9P55WvU8jI71Uwe29rP8hvs+74z2Eqdc9tuCSPQ==",
+          "shape": [
+            1,
+            16
+          ]
+        }
+      },
+      "trained_examples": 1024000
+    }
+  ],
+  "schema": 1,
+  "split": "validation",
+  "targets": 138910,
+  "validation_gate": {
+    "incumbent_true_topology_mae_seconds": 145.792679,
+    "mean": {
+      "macro_route_mae_seconds": {
+        "node_local": 172.090795,
+        "permuted": 171.823756,
+        "reverse": 171.946818,
+        "self": 171.630005,
+        "true": 168.15593
+      },
+      "mae_seconds": {
+        "node_local": 151.408468,
+        "permuted": 150.870575,
+        "reverse": 151.414383,
+        "self": 151.150096,
+        "true": 147.725922
+      },
+      "p90_absolute_error": {
+        "node_local": 323.422333,
+        "permuted": 322.195943,
+        "reverse": 324.585653,
+        "self": 323.88031,
+        "true": 314.648722
+      }
+    },
+    "passed": false,
+    "selected_arm": "true",
+    "selected_beats_incumbent_in_every_seed": false,
+    "true_beats_every_memory_control_in_every_seed": true,
+    "true_beats_memory_controls_on_macro_route_mae": true,
+    "true_beats_memory_controls_on_p90_absolute_error": true
+  }
+}
