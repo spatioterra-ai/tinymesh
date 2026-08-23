@@ -13,8 +13,7 @@ from tinygrad import Context, Device, Tensor, TinyJit, nn
 from tinygrad.helpers import getenv
 from tinygrad.uop.ops import Ops
 
-from experiments.metr_la_forecast import _execution_batch, _operators
-from experiments.metr_la_protocol import Protocol, Scores, WindowBatch, WindowSpan, batches, prepare, score
+from experiments.metr_la_protocol import Protocol, Scores, WindowBatch, WindowSpan, batches, execution_batch, operators, prepare, score
 from tinymesh.datasets import metr_la
 from tinymesh.nn import DirectedDiffusion
 
@@ -213,7 +212,7 @@ def evaluate(
     protocol.target,
     protocol.observed,
   ))
-  operators = _operators(protocol, "local_diffusion", device)
+  selected_operators = operators(protocol, "local_diffusion", device)
   persistence = Probe(
     _persistence(protocol, protocol.validation, tensors, evaluation_samples, batch_size, DATA_SEED + 1),
     _persistence(protocol, protocol.test, tensors, evaluation_samples, batch_size, DATA_SEED + 2) if evaluate_test else None,
@@ -234,7 +233,7 @@ def evaluate(
   )
   arms = tuple(_run_arm(
     name,
-    operators,
+    selected_operators,
     protocol,
     tensors,
     device=device,
@@ -300,7 +299,7 @@ def _run_arm(
   model = Model(2, hidden_features, protocol.train.history, protocol.train.horizon, temporal=temporal)
   _update_target(model.online, model.target, 0)
   initial_target = _snapshot(model.target)
-  fixed = _execution_batch(
+  fixed = execution_batch(
     next(batches(protocol, protocol.train, batch_size, shuffle=DATA_SEED, tensors=tensors)),
     device,
     batch_size,
@@ -331,7 +330,7 @@ def _run_arm(
     return loss.realize(*optimizer.schedule_step())
 
   for step in range(steps):
-    batch = _execution_batch(
+    batch = execution_batch(
       next(batches(protocol, protocol.train, batch_size, shuffle=DATA_SEED + step, tensors=tensors)),
       device,
       batch_size,
@@ -449,7 +448,7 @@ def _sample(
 ) -> tuple[Tensor, Tensor, Tensor]:
   values, targets, masks = [], [], []
   for batch in _sampled_batches(protocol, protocol.train, tensors, samples, batch_size, DATA_SEED):
-    batch = _execution_batch(batch, device, batch_size)
+    batch = execution_batch(batch, device, batch_size)
     values.append(_representation(encoder, diffusion, batch.values).detach().realize())
     targets.append(batch.target)
     masks.append(batch.observed)
@@ -475,7 +474,7 @@ def _probe_scores(
   def errors():
     for batch in _sampled_batches(protocol, span, tensors, samples, batch_size, shuffle):
       size = len(batch.starts)
-      execution = _execution_batch(batch, device, batch_size)
+      execution = execution_batch(batch, device, batch_size)
       prediction = predict(execution.values)[:size].to(protocol.data.speed.device).realize()
       target = batch.target.to(protocol.data.speed.device).realize()
       yield (
