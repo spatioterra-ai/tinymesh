@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from experiments.tools.mbta_population import Plan, audit_events, open_population
+from experiments.tools.mbta_population import Manifest, audit_events, open_population
 
 
 TEMPORAL_CANDIDATES = tuple((hours, support) for hours in (1, 2, 4) for support in (4, 16, 64))
@@ -148,7 +148,7 @@ def _targets(connection: Any) -> None:
     raise TaskError(f"target: {duplicate} duplicate physical identities")
 
 
-def _schedule(connection: Any, source_dir: Path, source: Plan) -> None:
+def _schedule(connection: Any, source_dir: Path, source: Manifest) -> None:
   trips = str(_source(source_dir, source, "trips"))
   calls = str(_source(source_dir, source, "stop_times"))
   stops = str(_source(source_dir, source, "stops"))
@@ -524,7 +524,7 @@ def _rows(connection: Any, query: str) -> list[dict[str, Any]]:
   return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
-def _source(directory: Path, plan: Plan, name: str) -> Path:
+def _source(directory: Path, plan: Manifest, name: str) -> Path:
   source = next((source for source in plan.sources if source.name == name), None)
   if source is None:
     raise TaskError(f"manifest: missing {name}")

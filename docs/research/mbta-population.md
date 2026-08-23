@@ -64,6 +64,20 @@ directory only after all 34 sources seal. Raw parquet and operational rows
 remain outside Git. The repository retains only a 16 KiB source manifest and
 a 208 KiB date-route audit.
 
+```text
+Plan[optional expected checksums]
+  | acquire or seal
+  v
+Manifest[required observed checksums]
+  | verify bytes
+  v
+Population tables
+```
+
+The Python lifecycle makes these states distinct even though both artifacts
+retain the flat schema-v1 JSON layout. A plan cannot be opened as a population;
+only a fully checksummed manifest reaches verification and table construction.
+
 ## Source contract
 
 The [official public catalog](https://performancedata.mbta.com/) defines daily

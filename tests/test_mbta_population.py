@@ -15,14 +15,16 @@ from experiments.tools.mbta_population import (
   END_DATE,
   INDEX_FIELDS,
   INDEX_URL,
+  Manifest,
   PERFORMANCE_BASE,
+  PlannedSource,
   START_DATE,
   Plan,
   PopulationError,
-  Source,
   acquire,
   plan,
-  read,
+  read_manifest,
+  read_plan,
   seal,
   _write,
 )
@@ -51,7 +53,7 @@ class MbtaPopulationTest(unittest.TestCase):
       path = Path(directory) / "plan.json"
       _write(path, value)
 
-      self.assertEqual(read(path), value)
+      self.assertEqual(read_plan(path), value)
       self.assertEqual(path.read_text(), path.read_text())
 
   def test_missing_duplicate_future_and_cap_fail_before_acquisition(self) -> None:
@@ -93,8 +95,8 @@ class MbtaPopulationTest(unittest.TestCase):
         sealed = acquire(value, target)
 
       self.assertTrue((target / "manifest.json").is_file())
-      self.assertEqual(read(target / "manifest.json"), sealed)
-      self.assertTrue(all(source.sha256 is not None for source in sealed.sources))
+      self.assertEqual(read_manifest(target / "manifest.json"), sealed)
+      self.assertIsInstance(sealed, Manifest)
       self.assertEqual(len(tuple(target.glob("*.parquet"))), 28)
 
   def test_acquisition_failure_leaves_no_target_or_staging_directory(self) -> None:
@@ -130,8 +132,25 @@ class MbtaPopulationTest(unittest.TestCase):
 
       sealed = seal(value, source)
 
-      self.assertEqual(read(source / "manifest.json"), sealed)
+      self.assertEqual(read_manifest(source / "manifest.json"), sealed)
       self.assertTrue(all(item.sha256 == hashlib.sha256(b"x").hexdigest() for item in sealed.sources))
+
+  def test_manifest_reader_rejects_a_plan(self) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+      path = Path(directory) / "plan.json"
+      _write(path, self._small_plan())
+
+      with self.assertRaisesRegex(PopulationError, "unsealed checksum"):
+        read_manifest(path)
+
+  def test_retained_manifest_round_trips_without_schema_churn(self) -> None:
+    path = FIXTURE / "manifest.json"
+    value = read_manifest(path)
+    with tempfile.TemporaryDirectory() as directory:
+      copy = Path(directory) / "manifest.json"
+      _write(copy, value)
+
+      self.assertEqual(copy.read_bytes(), path.read_bytes())
 
   def test_exact_retained_population_decision(self) -> None:
     result = observe()
@@ -226,7 +245,7 @@ class MbtaPopulationTest(unittest.TestCase):
   @staticmethod
   def _small_plan() -> Plan:
     sources = tuple(
-      Source(
+      PlannedSource(
         "performance",
         f"{START_DATE + timedelta(days=index)}.parquet",
         f"https://example.test/{index}",
