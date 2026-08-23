@@ -16,16 +16,15 @@ from experiments.transport_forecast import (
   VALIDATION_TRAJECTORIES,
   Checkpoint,
   Evaluation,
+  Forecast,
   Model,
-  Operator,
   Trajectories,
   _fit,
+  _forecast,
   _metrics,
   _model,
-  _operator,
   _parameter_count,
   _persistence,
-  _predict,
   _topology,
   _trajectories,
 )
@@ -123,7 +122,7 @@ def study(
     device,
   )
   Tensor.manual_seed(seed)
-  model, operator, _ = _model(
+  forecast = _model(
     model_name,
     "none" if model_name == "lstm" else "true",
     source,
@@ -131,8 +130,7 @@ def study(
     device,
   )
   best_epoch, training_seconds, checkpoints = _fit(
-    model,
-    operator,
+    forecast,
     train,
     validation,
     epochs=epochs,
@@ -140,6 +138,7 @@ def study(
     batch_size=batch_size,
     learning_rate=learning_rate,
   )
+  model = forecast.model
   state = _state(model)
   targets = tuple(
     TargetResult(
@@ -198,10 +197,10 @@ def _scope(
 ) -> InitialResult:
   topology = _topology(nodes)
   structures = ("none",) if model_name == "lstm" else ("true", "permuted", "self")
-  operators = []
+  forecasts = []
   for structure in structures:
-    operator, edges = _operator(model_name, structure, topology, device)
-    operators.append((structure, operator, edges, _predictor(model, operator)))
+    forecast = _forecast(model, structure, topology, device)
+    forecasts.append((structure, forecast, _predictor(forecast)))
 
   seed = TRANSFER_SEED + nodes + int(initial == "pulse")
   data = _trajectories(
@@ -219,32 +218,30 @@ def _scope(
     tuple(
       Result(
         structure,
-        edges,
+        forecast.edges,
         _evaluate(
-          model,
-          operator,
+          forecast,
           predict,
           data,
           history,
           horizon,
         ),
       )
-      for structure, operator, edges, predict in operators
+      for structure, forecast, predict in forecasts
     ),
   )
 
 
-def _predictor(model: Model, operator: Operator) -> TinyJit:
+def _predictor(forecast: Forecast) -> TinyJit:
   @TinyJit
   def predict(values: Tensor) -> Tensor:
-    return _predict(model, values, operator).realize()
+    return forecast(values).realize()
 
   return predict
 
 
 def _evaluate(
-  model: Model,
-  operator: Operator,
+  forecast: Forecast,
   predict: TinyJit,
   data: Trajectories,
   history: int,
@@ -252,7 +249,7 @@ def _evaluate(
 ) -> Evaluation:
   values, target = data.windows(history)
   one_step = _metrics(
-    _predict(model, values, operator, realize_steps=True),
+    forecast(values, realize_steps=True),
     target,
   )
   window = data.values[:, :history]

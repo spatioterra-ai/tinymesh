@@ -88,21 +88,15 @@ class TransportForecastTest(unittest.TestCase):
       ("diffusion_linear", "true", LinearDiffusionForecast),
     ):
       with self.subTest(model=name):
-        model, operator, _ = _model(
+        forecast = _model(
           name,
           structure,
           topology,
           hidden_features=2,
           device=Device.DEFAULT,
         )
-        self.assertIsInstance(model, expected_type)
-        if isinstance(model, LocalForecast):
-          output = model(values)
-        elif isinstance(operator, Graph):
-          output = model(values, operator)
-        else:
-          self.assertIsInstance(operator, DirectedDiffusion)
-          output = model(values, operator)
+        self.assertIsInstance(forecast.model, expected_type)
+        output = forecast(values)
         self.assertEqual(output.shape, (2, 8, 1))
 
   def test_invalid_model_topology_is_rejected(self) -> None:

@@ -4,13 +4,12 @@ from tinygrad import Device, Tensor
 
 from experiments.directed_gru import DiffusionForecast
 from experiments.transport_forecast import (
+  _forecast,
   _model,
-  _operator,
   _topology,
   _trajectories,
 )
 from experiments.transport_transfer import _initials, _nodes, _state, _validate
-from tinymesh.nn import DirectedDiffusion
 
 
 class TransportTransferTest(unittest.TestCase):
@@ -54,29 +53,27 @@ class TransportTransferTest(unittest.TestCase):
 
   def test_one_model_accepts_unseen_graph_sizes_without_mutation(self) -> None:
     Tensor.manual_seed(0)
-    model, _, _ = _model(
+    source = _model(
       "diffusion_gru",
       "true",
       _topology(24),
       hidden_features=2,
       device=Device.DEFAULT,
     )
+    model = source.model
     self.assertIsInstance(model, DiffusionForecast)
     before = _state(model)
 
     for nodes in (32, 48):
       topology = _topology(nodes)
-      operator, _ = _operator(
-        "diffusion_gru",
+      forecast = _forecast(
+        model,
         "true",
         topology,
         Device.DEFAULT,
       )
-      self.assertIsInstance(operator, DirectedDiffusion)
-
-      prediction = model(
+      prediction = forecast(
         Tensor.zeros(1, 2, nodes, 1, device=Device.DEFAULT),
-        operator,
         realize_steps=True,
       )
 
