@@ -8,14 +8,11 @@ from experiments.metr_la_forecast import (
     A3Forecast,
     DiffusionForecast,
     LocalDiffusionForecast,
-    _execution_batch,
-    _graphs,
     _objective,
-    _operators,
     forecast,
     train,
 )
-from experiments.metr_la_protocol import _baseline, baselines, batches, prepare
+from experiments.metr_la_protocol import _baseline, baselines, batches, execution_batch, graphs, operators, prepare
 from tinymesh import Graph
 from tinymesh.datasets import METRLA
 
@@ -104,36 +101,36 @@ class METRLAForecastTest(unittest.TestCase):
     def test_partial_batches_are_padded_without_new_targets(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3)
         batch = next(batches(protocol, protocol.validation, batch_size=8))
-        padded = _execution_batch(batch, Device.DEFAULT, batch_size=8)
+        padded = execution_batch(batch, Device.DEFAULT, batch_size=8)
 
         self.assertEqual(padded.values.shape, (8, 2, 4, 2))
         self.assertEqual(padded.anchor.shape, (8, 4, 1))
         self.assertEqual(int(padded.observed.sum().item()), int(batch.observed.sum().item()))
 
     def test_false_graph_is_an_isomorphic_relabeling(self) -> None:
-        graphs = _graphs(dataset().graph)
+        selected = graphs(dataset().graph)
 
         self.assertNotEqual(
-            tuple(zip(graphs["true"].source, graphs["true"].target)),
-            tuple(zip(graphs["permuted"].source, graphs["permuted"].target)),
+            tuple(zip(selected["true"].source, selected["true"].target)),
+            tuple(zip(selected["permuted"].source, selected["permuted"].target)),
         )
-        self.assertEqual(graphs["true"].edges, graphs["permuted"].edges)
+        self.assertEqual(selected["true"].edges, selected["permuted"].edges)
         self.assertEqual(
-            sorted(graphs["true"].in_degree(device=Device.DEFAULT).tolist()),
-            sorted(graphs["permuted"].in_degree(device=Device.DEFAULT).tolist()),
+            sorted(selected["true"].in_degree(device=Device.DEFAULT).tolist()),
+            sorted(selected["permuted"].in_degree(device=Device.DEFAULT).tolist()),
         )
-        self.assertEqual(graphs["self"].edges, graphs["self"].nodes)
+        self.assertEqual(selected["self"].edges, selected["self"].nodes)
 
     def test_diffusion_controls_preserve_affinity_and_parameter_shape(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
-        operators = _operators(protocol, "diffusion_gru", Device.DEFAULT)
+        selected = operators(protocol, "diffusion_gru", Device.DEFAULT)
 
         self.assertEqual(
-            operators["true"].forward_weight.tolist(),
-            operators["permuted"].forward_weight.tolist(),
+            selected["true"].forward_weight.tolist(),
+            selected["permuted"].forward_weight.tolist(),
         )
-        self.assertEqual(operators["self"].forward_weight.tolist(), [1.0] * 4)
-        self.assertEqual(operators["self"].reverse_weight.tolist(), [1.0] * 4)
+        self.assertEqual(selected["self"].forward_weight.tolist(), [1.0] * 4)
+        self.assertEqual(selected["self"].reverse_weight.tolist(), [1.0] * 4)
 
     def test_residual_head_starts_at_latest_speed(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3)
@@ -148,7 +145,7 @@ class METRLAForecastTest(unittest.TestCase):
     def test_diffusion_residual_starts_at_latest_speed(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         batch = next(batches(protocol, protocol.train, batch_size=17))
-        diffusion = _operators(protocol, "diffusion_gru", Device.DEFAULT)["true"]
+        diffusion = operators(protocol, "diffusion_gru", Device.DEFAULT)["true"]
         model = DiffusionForecast(6, 2, 2, 3, head="residual")
 
         prediction = model(batch.values, diffusion, batch.anchor)
@@ -159,7 +156,7 @@ class METRLAForecastTest(unittest.TestCase):
     def test_local_diffusion_starts_at_persistence_with_a_closed_gate(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         batch = next(batches(protocol, protocol.train, batch_size=17))
-        diffusion = _operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
+        diffusion = operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
         model = LocalDiffusionForecast(6, 2, 2, 3, head="residual")
 
         prediction = model(batch.values, diffusion, batch.anchor)
@@ -171,9 +168,9 @@ class METRLAForecastTest(unittest.TestCase):
     def test_transport_is_zero_only_for_self_diffusion(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         values = protocol.features[2]
-        operators = _operators(protocol, "local_diffusion", Device.DEFAULT)
-        self_fields = operators["self"](values)
-        true_fields = operators["true"](values)
+        selected = operators(protocol, "local_diffusion", Device.DEFAULT)
+        self_fields = selected["self"](values)
+        true_fields = selected["true"](values)
 
         self.assertEqual(max((field - values).abs().max().item() for field in self_fields), 0.0)
         self.assertGreater(max((field - values).abs().max().item() for field in true_fields), 0.0)
@@ -182,7 +179,7 @@ class METRLAForecastTest(unittest.TestCase):
         Tensor.manual_seed(0)
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         batch = next(batches(protocol, protocol.train, batch_size=17))
-        diffusion = _operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
+        diffusion = operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
         model = LocalDiffusionForecast(6, 2, 2, 3, head="residual")
         optimizer = nn.optim.SGD(nn.state.get_parameters(model), lr=0.01)
 
@@ -203,7 +200,7 @@ class METRLAForecastTest(unittest.TestCase):
     def test_diffusion_forecast_does_not_materialize_product_adjacency(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         batch = next(batches(protocol, protocol.train, batch_size=2))
-        diffusion = _operators(protocol, "diffusion_gru", Device.DEFAULT)["true"]
+        diffusion = operators(protocol, "diffusion_gru", Device.DEFAULT)["true"]
         output = DiffusionForecast(6, 2, 2, 3)(batch.values, diffusion)
         shapes = {
             tuple(int(size) for size in uop._shape)
@@ -216,7 +213,7 @@ class METRLAForecastTest(unittest.TestCase):
     def test_local_diffusion_does_not_materialize_product_adjacency(self) -> None:
         protocol = prepare(dataset(), history=2, horizon=3, feature_set="calendar")
         batch = next(batches(protocol, protocol.train, batch_size=2))
-        diffusion = _operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
+        diffusion = operators(protocol, "local_diffusion", Device.DEFAULT)["true"]
         output = LocalDiffusionForecast(6, 3, 2, 3)(batch.values, diffusion)
         shapes = {
             tuple(int(size) for size in uop._shape)

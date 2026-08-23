@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass
 from itertools import islice
-from random import Random
 from time import perf_counter
 
 from tinygrad import Context, Device, Tensor, TinyJit, nn
@@ -16,8 +15,9 @@ from experiments.metr_la_protocol import (
     Protocol,
     ProtocolObservation,
     Scores,
-    WindowBatch,
     batches,
+    execution_batch,
+    operators,
     observe as observe_protocol,
     prepare,
     score,
@@ -273,13 +273,13 @@ def smoke(
     tensors = _execution_tensors(protocol, device)
     Tensor.manual_seed(seed)
     model = _model(architecture, protocol, hidden_features, head)
-    operator = _operators(protocol, architecture, device)["true"]
+    operator = operators(protocol, architecture, device)["true"]
     optimizer = nn.optim.Adam(nn.state.get_parameters(model), lr=learning_rate, fused=False)
     train_step = _training_step(model, operator, optimizer, loss)
     losses = []
     start = perf_counter()
     for batch in islice(batches(protocol, protocol.train, batch_size, shuffle=seed, tensors=tensors), steps):
-        batch = _execution_batch(batch, device, batch_size)
+        batch = execution_batch(batch, device, batch_size)
         losses.append(float(train_step(batch.values, batch.anchor, batch.target, batch.observed).item()))
     return SmokeObservation(
         device,
@@ -322,14 +322,14 @@ def train(
     _validate(topologies, seeds, epochs, batch_size, hidden_features, learning_rate, checkpoint_every, head, loss, architecture, evaluate_test)
     if protocol.feature_set != _feature_set(architecture):
         raise ValueError(f"{architecture} requires the {_feature_set(architecture)!r} feature set")
-    operators, tensors, results = _operators(protocol, architecture, device), _execution_tensors(protocol, device), []
+    selected_operators, tensors, results = operators(protocol, architecture, device), _execution_tensors(protocol, device), []
     for topology in topologies:
         for seed in seeds:
             Tensor.manual_seed(seed)
             model = _model(architecture, protocol, hidden_features, head)
             best_epoch, runtime, checkpoints, validation = _fit(
                 model,
-                operators[topology],
+                selected_operators[topology],
                 protocol,
                 tensors,
                 device=device,
@@ -346,14 +346,14 @@ def train(
                     seed,
                     best_epoch,
                     _parameter_count(model),
-                    _sparse_calls(model, operators[topology], protocol, device),
+                    _sparse_calls(model, selected_operators[topology], protocol, device),
                     runtime,
                     checkpoints,
                     validation,
                     (
                         _evaluate(
                             model,
-                            operators[topology],
+                            selected_operators[topology],
                             protocol,
                             protocol.test,
                             tensors,
@@ -379,45 +379,6 @@ def train(
         observe_protocol(protocol),
         tuple(results),
     )
-
-
-def _graphs(graph: Graph) -> dict[str, Graph]:
-    permutation = list(range(graph.nodes))
-    Random(0).shuffle(permutation)
-    return {
-        "true": graph,
-        "permuted": Graph(
-            graph.nodes,
-            [permutation[source] for source in graph.source],
-            [permutation[target] for target in graph.target],
-        ),
-        "self": Graph(graph.nodes, list(range(graph.nodes)), list(range(graph.nodes))),
-    }
-
-
-def _operators(
-    protocol: Protocol,
-    architecture: str,
-    device: str,
-) -> dict[str, Graph | DirectedDiffusion]:
-    graphs = _graphs(protocol.data.graph)
-    if architecture == "a3tgcn":
-        return graphs
-    affinity = protocol.data.affinity.to(device).realize()
-    operators = {
-        "true": DirectedDiffusion(graphs["true"], affinity),
-        "permuted": DirectedDiffusion(graphs["permuted"], affinity),
-        "self": DirectedDiffusion(
-            graphs["self"],
-            Tensor.ones(graphs["self"].edges, dtype=affinity.dtype, device=device),
-        ),
-    }
-    Tensor.realize(*(
-        weight
-        for operator in operators.values()
-        for weight in (operator.forward_weight, operator.reverse_weight)
-    ))
-    return operators
 
 
 def _model(
@@ -476,7 +437,7 @@ def _fit(
             shuffle=seed * 1_000_003 + epoch,
             tensors=tensors,
         ):
-            batch = _execution_batch(batch, device, batch_size)
+            batch = execution_batch(batch, device, batch_size)
             train_step(batch.values, batch.anchor, batch.target, batch.observed)
         if epoch % checkpoint_every != 0 and epoch != epochs:
             continue
@@ -540,7 +501,7 @@ def _evaluate(
     def errors():
         for batch in batches(protocol, span, batch_size, tensors=tensors):
             size = len(batch.starts)
-            execution = _execution_batch(batch, device, batch_size)
+            execution = execution_batch(batch, device, batch_size)
             predict = predictors.get(execution.values.shape)
             if predict is None:
                 predictors[execution.values.shape] = predict = _predictor(model, operator)
@@ -566,26 +527,6 @@ def _predictor(
 
 def _execution_tensors(protocol: Protocol, device: str) -> tuple[Tensor, Tensor, Tensor]:
     return tuple(value.to(device).realize() for value in (protocol.features, protocol.target, protocol.observed))
-
-
-def _execution_batch(batch: WindowBatch, device: str, batch_size: int) -> WindowBatch:
-    if len(batch.starts) < batch_size:
-        padding = batch_size - len(batch.starts)
-        batch = WindowBatch(
-            batch.values.cat(batch.values[-1:].expand(padding, *batch.values.shape[1:]), dim=0),
-            batch.anchor.cat(batch.anchor[-1:].expand(padding, *batch.anchor.shape[1:]), dim=0),
-            batch.target.cat(batch.target[-1:].expand(padding, *batch.target.shape[1:]), dim=0),
-            batch.observed.cat(
-                Tensor.zeros(padding, *batch.observed.shape[1:], dtype=batch.observed.dtype, device=batch.observed.device),
-                dim=0,
-            ),
-            batch.starts + (batch.starts[-1],) * padding,
-        )
-    values = tuple(
-        value.contiguous().to(device).realize()
-        for value in (batch.values, batch.anchor, batch.target, batch.observed)
-    )
-    return WindowBatch(*values, batch.starts)
 
 
 class _GRU:

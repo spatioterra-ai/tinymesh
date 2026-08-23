@@ -2,7 +2,6 @@ import unittest
 
 from tinygrad import Context, Device, Tensor, nn
 
-from experiments.metr_la_forecast import _execution_batch, _operators
 from experiments.metr_la_jepa import (
     ARMS,
     FactorizedEncoder,
@@ -16,14 +15,14 @@ from experiments.metr_la_jepa import (
     _validate,
     _variation,
 )
-from experiments.metr_la_protocol import batches, prepare
+from experiments.metr_la_protocol import batches, execution_batch, operators, prepare
 from tests.test_metr_la_forecast import dataset
 
 
 class METRLAJEPATest(unittest.TestCase):
     def setUp(self) -> None:
         self.protocol = prepare(dataset(steps=60), history=2, horizon=3, feature_set="calendar")
-        self.operators = _operators(self.protocol, "local_diffusion", Device.DEFAULT)
+        self.operators = operators(self.protocol, "local_diffusion", Device.DEFAULT)
 
     def test_factorized_encoder_preserves_time_and_node_axes(self) -> None:
         values = Tensor.randn(3, 2, 4, 2, device=Device.DEFAULT).realize()
@@ -71,7 +70,7 @@ class METRLAJEPATest(unittest.TestCase):
         self.assertGreater(_variation(varying), 0.0)
 
     def test_target_stops_gradient_and_follows_online_encoder(self) -> None:
-        batch = _execution_batch(
+        batch = execution_batch(
             next(batches(self.protocol, self.protocol.train, batch_size=4)),
             Device.DEFAULT,
             4,

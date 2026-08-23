@@ -9,7 +9,9 @@ from random import Random
 
 from tinygrad import Tensor
 
+from tinymesh import Graph
 from tinymesh.datasets import METRLA
+from tinymesh.nn import DirectedDiffusion
 
 
 @dataclass(frozen=True, eq=False)
@@ -298,6 +300,65 @@ def batches(
             observed[target_index].permute(0, 2, 1),
             selected,
         )
+
+
+def execution_batch(batch: WindowBatch, device: str, batch_size: int) -> WindowBatch:
+    if len(batch.starts) < batch_size:
+        padding = batch_size - len(batch.starts)
+        batch = WindowBatch(
+            batch.values.cat(batch.values[-1:].expand(padding, *batch.values.shape[1:]), dim=0),
+            batch.anchor.cat(batch.anchor[-1:].expand(padding, *batch.anchor.shape[1:]), dim=0),
+            batch.target.cat(batch.target[-1:].expand(padding, *batch.target.shape[1:]), dim=0),
+            batch.observed.cat(
+                Tensor.zeros(padding, *batch.observed.shape[1:], dtype=batch.observed.dtype, device=batch.observed.device),
+                dim=0,
+            ),
+            batch.starts + (batch.starts[-1],) * padding,
+        )
+    values = tuple(
+        value.contiguous().to(device).realize()
+        for value in (batch.values, batch.anchor, batch.target, batch.observed)
+    )
+    return WindowBatch(*values, batch.starts)
+
+
+def graphs(graph: Graph) -> dict[str, Graph]:
+    permutation = list(range(graph.nodes))
+    Random(0).shuffle(permutation)
+    return {
+        "true": graph,
+        "permuted": Graph(
+            graph.nodes,
+            [permutation[source] for source in graph.source],
+            [permutation[target] for target in graph.target],
+        ),
+        "self": Graph(graph.nodes, list(range(graph.nodes)), list(range(graph.nodes))),
+    }
+
+
+def operators(
+    protocol: Protocol,
+    architecture: str,
+    device: str,
+) -> dict[str, Graph | DirectedDiffusion]:
+    selected = graphs(protocol.data.graph)
+    if architecture == "a3tgcn":
+        return selected
+    affinity = protocol.data.affinity.to(device).realize()
+    diffusion = {
+        "true": DirectedDiffusion(selected["true"], affinity),
+        "permuted": DirectedDiffusion(selected["permuted"], affinity),
+        "self": DirectedDiffusion(
+            selected["self"],
+            Tensor.ones(selected["self"].edges, dtype=affinity.dtype, device=device),
+        ),
+    }
+    Tensor.realize(*(
+        weight
+        for operator in diffusion.values()
+        for weight in (operator.forward_weight, operator.reverse_weight)
+    ))
+    return diffusion
 
 
 def baselines(protocol: Protocol, span: WindowSpan) -> Baselines:
