@@ -1,14 +1,21 @@
 import json
 import unittest
-from dataclasses import replace
+from dataclasses import asdict, replace
 
 from experiments.gtfs_realtime import FIXTURE, normalize
 from experiments.gtfs_schedule import parse
 from experiments.gtfs_transition import (
+  ActiveAfterTerminal,
   BLOCKING,
+  ContentChangedWithoutGeneration,
+  FeedGapExceeded,
+  FeedGenerationRegressed,
   POLICY,
   TransitionError,
   TransitionPolicy,
+  TripObservationStale,
+  VehicleObservationStale,
+  VehicleStopRegressed,
   evaluate,
   fingerprint,
 )
@@ -66,6 +73,7 @@ class GtfsTransitionTest(unittest.TestCase):
 
     self.assertEqual(codes(transition), ["CONTENT_CHANGED_WITHOUT_GENERATION"])
     finding = transition.findings[0]
+    self.assertIsInstance(finding, ContentChangedWithoutGeneration)
     self.assertEqual((finding.severity, finding.previous_at, finding.current_at), (BLOCKING, current.generated_at, current.generated_at))
     self.assertEqual((transition.eligible_trips, transition.eligible_vehicles), ((), ()))
 
@@ -75,6 +83,7 @@ class GtfsTransitionTest(unittest.TestCase):
     transition = evaluate(self.snapshot, current, self.snapshot.generated_at, POLICY_30_90)
 
     self.assertEqual(codes(transition), ["FEED_GENERATION_REGRESSED"])
+    self.assertIsInstance(transition.findings[0], FeedGenerationRegressed)
     self.assertEqual(transition.findings[0].severity, BLOCKING)
     self.assertEqual((transition.eligible_trips, transition.eligible_vehicles), ((), ()))
 
@@ -85,6 +94,7 @@ class GtfsTransitionTest(unittest.TestCase):
 
     self.assertEqual(codes(transition), ["FEED_GAP_EXCEEDED"])
     finding = transition.findings[0]
+    self.assertIsInstance(finding, FeedGapExceeded)
     self.assertEqual((finding.severity, finding.limit_seconds), (POLICY, 30))
     self.assertEqual(len(transition.eligible_trips), 2)
     self.assertEqual(len(transition.eligible_vehicles), 1)
@@ -97,6 +107,7 @@ class GtfsTransitionTest(unittest.TestCase):
     trip_transition = evaluate(previous, trip_current, self.snapshot.generated_at, POLICY_30_90)
 
     self.assertEqual(codes(trip_transition), ["TRIP_OBSERVATION_STALE"])
+    self.assertIsInstance(trip_transition.findings[0], TripObservationStale)
     self.assertEqual(trip_transition.findings[0].severity, POLICY)
     self.assertNotIn(stale_trip.instance, trip_transition.eligible_trips)
     self.assertEqual(len(trip_transition.eligible_vehicles), 1)
@@ -106,6 +117,7 @@ class GtfsTransitionTest(unittest.TestCase):
     vehicle_transition = evaluate(previous, vehicle_current, self.snapshot.generated_at, POLICY_30_90)
 
     self.assertEqual(codes(vehicle_transition), ["VEHICLE_OBSERVATION_STALE"])
+    self.assertIsInstance(vehicle_transition.findings[0], VehicleObservationStale)
     self.assertEqual(len(vehicle_transition.eligible_trips), 2)
     self.assertEqual(vehicle_transition.eligible_vehicles, ())
 
@@ -117,11 +129,28 @@ class GtfsTransitionTest(unittest.TestCase):
 
     self.assertEqual(codes(transition), ["VEHICLE_STOP_REGRESSED"])
     finding = transition.findings[0]
+    self.assertIsInstance(finding, VehicleStopRegressed)
     self.assertEqual(
       (finding.vehicle_id, finding.previous_stop_sequence, finding.current_stop_sequence),
       ("city-bus-1", 3, 2),
     )
     self.assertEqual((finding.previous_at, finding.current_at), (None, None))
+    self.assertEqual(
+      asdict(finding),
+      {
+        "code": "VEHICLE_STOP_REGRESSED",
+        "severity": "blocking",
+        "source_id": SOURCE_ID,
+        "instance": asdict(finding.instance),
+        "vehicle_id": "city-bus-1",
+        "previous_stop_sequence": 3,
+        "current_stop_sequence": 2,
+        "previous_at": None,
+        "current_at": None,
+        "as_of": self.snapshot.generated_at,
+        "limit_seconds": None,
+      },
+    )
     self.assertEqual(len(transition.eligible_trips), 2)
     self.assertEqual(transition.eligible_vehicles, ())
 
@@ -151,6 +180,7 @@ class GtfsTransitionTest(unittest.TestCase):
     transition = evaluate(previous, self.snapshot, self.snapshot.generated_at, POLICY_30_90)
 
     self.assertEqual(codes(transition), ["ACTIVE_AFTER_TERMINAL"])
+    self.assertIsInstance(transition.findings[0], ActiveAfterTerminal)
     self.assertNotIn(self.snapshot.trips[1].instance, transition.eligible_trips)
     self.assertEqual(transition.eligible_vehicles, ())
 
@@ -175,6 +205,10 @@ class GtfsTransitionTest(unittest.TestCase):
       evaluate(self.snapshot, self.snapshot, self.snapshot.generated_at - 1, POLICY_30_90)
     with self.assertRaisesRegex(TransitionError, "non-negative"):
       evaluate(self.snapshot, self.snapshot, self.snapshot.generated_at, TransitionPolicy(-1, 90, 90))
+
+  def test_finding_variants_require_their_subject(self) -> None:
+    with self.assertRaisesRegex(TypeError, "instance"):
+      ActiveAfterTerminal(source_id=SOURCE_ID, as_of=self.snapshot.generated_at)
 
 
 if __name__ == "__main__":

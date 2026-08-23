@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, is_dataclass, replace
+from dataclasses import asdict, dataclass, field, is_dataclass, replace
 from datetime import date
 from pathlib import Path
+from typing import Literal
 
 from experiments.gtfs_realtime import FIXTURE, Snapshot, TripInstance, VehicleObservation, normalize
 from experiments.gtfs_schedule import load as load_schedule
@@ -33,19 +34,91 @@ class VehicleKey:
   vehicle_id: str
 
 
-@dataclass(frozen=True)
-class Finding:
-  code: str
-  severity: str
+@dataclass(frozen=True, kw_only=True)
+class _FindingFields:
+  code: str = field(init=False)
+  severity: str = field(init=False)
   source_id: str
-  instance: TripInstance | None
-  vehicle_id: str | None
-  previous_stop_sequence: int | None
-  current_stop_sequence: int | None
-  previous_at: int | None
-  current_at: int | None
+  instance: TripInstance | None = field(default=None, init=False)
+  vehicle_id: str | None = field(default=None, init=False)
+  previous_stop_sequence: int | None = field(default=None, init=False)
+  current_stop_sequence: int | None = field(default=None, init=False)
+  previous_at: int | None = field(default=None, init=False)
+  current_at: int | None = field(default=None, init=False)
   as_of: int
-  limit_seconds: int | None
+  limit_seconds: int | None = field(default=None, init=False)
+
+
+@dataclass(frozen=True, kw_only=True)
+class FeedGenerationRegressed(_FindingFields):
+  code: Literal["FEED_GENERATION_REGRESSED"] = field(default="FEED_GENERATION_REGRESSED", init=False)
+  severity: Literal["blocking"] = field(default=BLOCKING, init=False)
+  previous_at: int = field()
+  current_at: int = field()
+
+
+@dataclass(frozen=True, kw_only=True)
+class ContentChangedWithoutGeneration(_FindingFields):
+  code: Literal["CONTENT_CHANGED_WITHOUT_GENERATION"] = field(default="CONTENT_CHANGED_WITHOUT_GENERATION", init=False)
+  severity: Literal["blocking"] = field(default=BLOCKING, init=False)
+  previous_at: int = field()
+  current_at: int = field()
+
+
+@dataclass(frozen=True, kw_only=True)
+class FeedGapExceeded(_FindingFields):
+  code: Literal["FEED_GAP_EXCEEDED"] = field(default="FEED_GAP_EXCEEDED", init=False)
+  severity: Literal["policy"] = field(default=POLICY, init=False)
+  previous_at: int = field()
+  current_at: int = field()
+  limit_seconds: int = field()
+
+
+@dataclass(frozen=True, kw_only=True)
+class ActiveAfterTerminal(_FindingFields):
+  code: Literal["ACTIVE_AFTER_TERMINAL"] = field(default="ACTIVE_AFTER_TERMINAL", init=False)
+  severity: Literal["blocking"] = field(default=BLOCKING, init=False)
+  instance: TripInstance = field()
+
+
+@dataclass(frozen=True, kw_only=True)
+class TripObservationStale(_FindingFields):
+  code: Literal["TRIP_OBSERVATION_STALE"] = field(default="TRIP_OBSERVATION_STALE", init=False)
+  severity: Literal["policy"] = field(default=POLICY, init=False)
+  instance: TripInstance = field()
+  current_at: int = field()
+  limit_seconds: int = field()
+
+
+@dataclass(frozen=True, kw_only=True)
+class VehicleStopRegressed(_FindingFields):
+  code: Literal["VEHICLE_STOP_REGRESSED"] = field(default="VEHICLE_STOP_REGRESSED", init=False)
+  severity: Literal["blocking"] = field(default=BLOCKING, init=False)
+  instance: TripInstance = field()
+  vehicle_id: str = field()
+  previous_stop_sequence: int = field()
+  current_stop_sequence: int = field()
+
+
+@dataclass(frozen=True, kw_only=True)
+class VehicleObservationStale(_FindingFields):
+  code: Literal["VEHICLE_OBSERVATION_STALE"] = field(default="VEHICLE_OBSERVATION_STALE", init=False)
+  severity: Literal["policy"] = field(default=POLICY, init=False)
+  instance: TripInstance = field()
+  vehicle_id: str = field()
+  current_at: int = field()
+  limit_seconds: int = field()
+
+
+Finding = (
+  FeedGenerationRegressed
+  | ContentChangedWithoutGeneration
+  | FeedGapExceeded
+  | ActiveAfterTerminal
+  | TripObservationStale
+  | VehicleStopRegressed
+  | VehicleObservationStale
+)
 
 
 @dataclass(frozen=True)
@@ -88,21 +161,19 @@ def evaluate(
   _validate_inputs(previous, current, as_of, policy)
   previous_fingerprint = fingerprint(previous)
   current_fingerprint = fingerprint(current)
-  findings = []
+  findings: list[Finding] = []
 
   if current.generated_at < previous.generated_at:
     findings.append(
-      _finding(
-        "FEED_GENERATION_REGRESSED", BLOCKING, current, as_of, previous_at=previous.generated_at, current_at=current.generated_at
+      FeedGenerationRegressed(
+        source_id=current.source_id, as_of=as_of, previous_at=previous.generated_at, current_at=current.generated_at
       )
     )
   elif current.generated_at == previous.generated_at and current_fingerprint != previous_fingerprint:
     findings.append(
-      _finding(
-        "CONTENT_CHANGED_WITHOUT_GENERATION",
-        BLOCKING,
-        current,
-        as_of,
+      ContentChangedWithoutGeneration(
+        source_id=current.source_id,
+        as_of=as_of,
         previous_at=previous.generated_at,
         current_at=current.generated_at,
       )
@@ -111,14 +182,12 @@ def evaluate(
   gap = current.generated_at - previous.generated_at
   if gap > policy.max_feed_gap_seconds:
     findings.append(
-      _finding(
-        "FEED_GAP_EXCEEDED",
-        POLICY,
-        current,
-        as_of,
+      FeedGapExceeded(
+        source_id=current.source_id,
+        as_of=as_of,
         previous_at=previous.generated_at,
         current_at=current.generated_at,
-        limit=policy.max_feed_gap_seconds,
+        limit_seconds=policy.max_feed_gap_seconds,
       )
     )
 
@@ -127,17 +196,15 @@ def evaluate(
   for trip in current.trips:
     prior = previous_trips.get(trip.instance)
     if prior is not None and prior.relationship == "CANCELED" and trip.relationship != "CANCELED":
-      findings.append(_finding("ACTIVE_AFTER_TERMINAL", BLOCKING, current, as_of, instance=trip.instance))
+      findings.append(ActiveAfterTerminal(source_id=current.source_id, as_of=as_of, instance=trip.instance))
     if as_of - trip.observed_at > policy.max_trip_age_seconds:
       findings.append(
-        _finding(
-          "TRIP_OBSERVATION_STALE",
-          POLICY,
-          current,
-          as_of,
+        TripObservationStale(
+          source_id=current.source_id,
+          as_of=as_of,
           instance=trip.instance,
           current_at=trip.observed_at,
-          limit=policy.max_trip_age_seconds,
+          limit_seconds=policy.max_trip_age_seconds,
         )
       )
   for vehicle in current.vehicles:
@@ -145,11 +212,9 @@ def evaluate(
     prior = previous_vehicles.get(key)
     if prior is not None and vehicle.current_stop_sequence < prior.current_stop_sequence:
       findings.append(
-        _finding(
-          "VEHICLE_STOP_REGRESSED",
-          BLOCKING,
-          current,
-          as_of,
+        VehicleStopRegressed(
+          source_id=current.source_id,
+          as_of=as_of,
           instance=vehicle.instance,
           vehicle_id=vehicle.vehicle_id,
           previous_stop_sequence=prior.current_stop_sequence,
@@ -158,15 +223,13 @@ def evaluate(
       )
     if as_of - vehicle.observed_at > policy.max_vehicle_age_seconds:
       findings.append(
-        _finding(
-          "VEHICLE_OBSERVATION_STALE",
-          POLICY,
-          current,
-          as_of,
+        VehicleObservationStale(
+          source_id=current.source_id,
+          as_of=as_of,
           instance=vehicle.instance,
           vehicle_id=vehicle.vehicle_id,
           current_at=vehicle.observed_at,
-          limit=policy.max_vehicle_age_seconds,
+          limit_seconds=policy.max_vehicle_age_seconds,
         )
       )
 
@@ -211,46 +274,17 @@ def _validate_inputs(previous: Snapshot, current: Snapshot, as_of: int, policy: 
       raise TransitionError(f"policy.{name}: expected non-negative integer")
 
 
-def _finding(
-  code: str,
-  severity: str,
-  snapshot: Snapshot,
-  as_of: int,
-  *,
-  instance: TripInstance | None = None,
-  vehicle_id: str | None = None,
-  previous_stop_sequence: int | None = None,
-  current_stop_sequence: int | None = None,
-  previous_at: int | None = None,
-  current_at: int | None = None,
-  limit: int | None = None,
-) -> Finding:
-  return Finding(
-    code,
-    severity,
-    snapshot.source_id,
-    instance,
-    vehicle_id,
-    previous_stop_sequence,
-    current_stop_sequence,
-    previous_at,
-    current_at,
-    as_of,
-    limit,
-  )
-
-
 def _eligibility(snapshot: Snapshot, findings: tuple[Finding, ...]) -> tuple[tuple[TripInstance, ...], tuple[VehicleKey, ...]]:
   trips = {trip.instance for trip in snapshot.trips}
   vehicles = {_vehicle_key(vehicle) for vehicle in snapshot.vehicles}
-  if any(finding.severity == BLOCKING and finding.instance is None for finding in findings):
+  if any(isinstance(finding, (FeedGenerationRegressed, ContentChangedWithoutGeneration)) for finding in findings):
     return (), ()
   for finding in findings:
-    if finding.code in {"ACTIVE_AFTER_TERMINAL", "TRIP_OBSERVATION_STALE"} and finding.instance is not None:
+    if isinstance(finding, (ActiveAfterTerminal, TripObservationStale)):
       trips.discard(finding.instance)
-      if finding.code == "ACTIVE_AFTER_TERMINAL":
+      if isinstance(finding, ActiveAfterTerminal):
         vehicles = {vehicle for vehicle in vehicles if vehicle.instance != finding.instance}
-    if finding.code in {"VEHICLE_STOP_REGRESSED", "VEHICLE_OBSERVATION_STALE"} and finding.instance is not None and finding.vehicle_id is not None:
+    if isinstance(finding, (VehicleStopRegressed, VehicleObservationStale)):
       vehicles.discard(VehicleKey(finding.instance, finding.vehicle_id))
   return tuple(sorted(trips)), tuple(sorted(vehicles))
 
