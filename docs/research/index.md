@@ -79,6 +79,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   directed affinity.
 - [MUTAG](mutag-data.md) — variable-size molecular graphs with aligned atom,
   bond, and graph labels.
+- [GTFS semantic boundary](gtfs-boundary.md) — Schedule and Realtime facts
+  lowered into deterministic sparse views without a public transport API.
 - [MBTA Blue Line replay](mbta-replay-data.md) — version-aligned operations,
   rejected mixed-stop targets, and validated movement-derived headway.
 - [MBTA departure-event mesh](mbta-event-mesh.md) — reversible physical

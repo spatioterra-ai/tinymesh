@@ -1,7 +1,9 @@
 # MBTA Blue Line replay data
 
-Status: retained boundary evidence; arrival, travel-time, and dwell targets are
-rejected; movement-derived trunk headway is validated for replay extension.
+Status: retained boundary evidence. Arrival, travel-time, and dwell targets are
+rejected; movement-derived trunk headway advanced through the later
+[population](mbta-population.md), [task](mbta-headway-task.md), and
+[topology](mbta-topology.md) stages.
 
 ## Purpose and status
 
@@ -169,6 +171,6 @@ uv run --locked python -m experiments.run gtfs_replay
 
 The standard-library audit validates artifact checksums, typed fields,
 canonical identities, exact Schedule joins, field-specific lineage, topology,
-and headway reconstruction. The next justified step is a longer replay and
-task specification for movement-derived trunk headway—not a public adapter or
-model added from this two-hour witness.
+and headway reconstruction. This evidence justified the later bounded replay
+and task specification for movement-derived trunk headway; it did not justify
+a public adapter or model from this two-hour witness.

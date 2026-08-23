@@ -1,6 +1,8 @@
 # MBTA departure-event mesh
 
-Status: Stage 1 carrier retained; longer replay acquisition remains unstarted.
+Status: Stage 1 carrier retained. The later [population](mbta-population.md),
+[task](mbta-headway-task.md), and [topology](mbta-topology.md) stages completed
+without replacing it.
 
 ## Decision
 
