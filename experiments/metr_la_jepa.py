@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
+from functools import partial
 from itertools import islice
 from math import prod
 from random import Random
@@ -67,6 +68,7 @@ class FactorizedEncoder:
 
 
 Encoder = SpatialEncoder | FactorizedEncoder
+Representation = Callable[[Tensor], Tensor]
 
 
 class Predictor:
@@ -86,8 +88,8 @@ class Model:
     self.predictor = Predictor(history * hidden_features, horizon * hidden_features)
 
   def loss(self, context: Tensor, target: Tensor, diffusion: DirectedDiffusion) -> Tensor:
-    prediction = self.predictor(_embedding(self.online, context, diffusion))
-    truth = _embedding(self.target, target, diffusion).detach()
+    prediction = self.predictor(_embedding(self.online, diffusion, context))
+    truth = _embedding(self.target, diffusion, target).detach()
     return (prediction - truth).abs().mean()
 
 
@@ -218,8 +220,7 @@ def evaluate(
     _persistence(protocol, protocol.test, tensors, evaluation_samples, batch_size, DATA_SEED + 2) if evaluate_test else None,
   )
   raw_history, _ = _probe(
-    None,
-    None,
+    _raw_history,
     protocol,
     tensors,
     device=device,
@@ -306,9 +307,9 @@ def _run_arm(
   )
   context, target = _blocks(fixed)
   initial_loss = model.loss(context, target, diffusion).item()
+  represent = partial(_embedding, model.target, diffusion)
   random_probe, initial_std = _probe(
-    model.target,
-    diffusion,
+    represent,
     protocol,
     tensors,
     device=device,
@@ -339,8 +340,7 @@ def _run_arm(
     _update_target(model.online, model.target, ema_decay)
 
   trained_probe, trained_std = _probe(
-    model.target,
-    diffusion,
+    represent,
     protocol,
     tensors,
     device=device,
@@ -375,8 +375,7 @@ def _run_arm(
 
 
 def _probe(
-  encoder: Encoder | None,
-  diffusion: DirectedDiffusion | None,
+  represent: Representation,
   protocol: Protocol,
   tensors: tuple[Tensor, Tensor, Tensor],
   *,
@@ -390,8 +389,7 @@ def _probe(
   evaluate_test: bool,
 ) -> tuple[Probe, float]:
   values, target, observed = _sample(
-    encoder,
-    diffusion,
+    represent,
     protocol,
     tensors,
     device=device,
@@ -422,12 +420,12 @@ def _probe(
     index = Tensor(random.sample(range(samples), batch_size), device=device)
     train_step(values[index], target[index], observed[index])
   validation = _probe_scores(
-    model, encoder, diffusion, protocol, protocol.validation, tensors, mean, scale, device,
+    model, represent, protocol, protocol.validation, tensors, mean, scale, device,
     evaluation_samples, batch_size, DATA_SEED + 1,
   )
   test = (
     _probe_scores(
-      model, encoder, diffusion, protocol, protocol.test, tensors, mean, scale, device,
+      model, represent, protocol, protocol.test, tensors, mean, scale, device,
       evaluation_samples, batch_size, DATA_SEED + 2,
     )
     if evaluate_test
@@ -437,8 +435,7 @@ def _probe(
 
 
 def _sample(
-  encoder: Encoder | None,
-  diffusion: DirectedDiffusion | None,
+  represent: Representation,
   protocol: Protocol,
   tensors: tuple[Tensor, Tensor, Tensor],
   *,
@@ -449,7 +446,7 @@ def _sample(
   values, targets, masks = [], [], []
   for batch in _sampled_batches(protocol, protocol.train, tensors, samples, batch_size, DATA_SEED):
     batch = execution_batch(batch, device, batch_size)
-    values.append(_representation(encoder, diffusion, batch.values).detach().realize())
+    values.append(represent(batch.values).detach().realize())
     targets.append(batch.target)
     masks.append(batch.observed)
   return Tensor.cat(*values, dim=0).realize(), Tensor.cat(*targets, dim=0).realize(), Tensor.cat(*masks, dim=0).realize()
@@ -457,8 +454,7 @@ def _sample(
 
 def _probe_scores(
   model: nn.Linear,
-  encoder: Encoder | None,
-  diffusion: DirectedDiffusion | None,
+  represent: Representation,
   protocol: Protocol,
   span: WindowSpan,
   tensors: tuple[Tensor, Tensor, Tensor],
@@ -469,7 +465,7 @@ def _probe_scores(
   batch_size: int,
   shuffle: int,
 ) -> Scores:
-  predict = _probe_predictor(model, encoder, diffusion, mean, scale)
+  predict = _probe_predictor(model, represent, mean, scale)
 
   def errors():
     for batch in _sampled_batches(protocol, span, tensors, samples, batch_size, shuffle):
@@ -521,28 +517,23 @@ def _sampled_batches(
 
 def _probe_predictor(
   model: nn.Linear,
-  encoder: Encoder | None,
-  diffusion: DirectedDiffusion | None,
+  represent: Representation,
   mean: Tensor,
   scale: Tensor,
 ) -> TinyJit:
   @TinyJit
   def predict(values: Tensor) -> Tensor:
-    features = (_representation(encoder, diffusion, values) - mean) / scale
+    features = (represent(values) - mean) / scale
     return model(features).realize()
 
   return predict
 
 
-def _representation(encoder: Encoder | None, diffusion: DirectedDiffusion | None, values: Tensor) -> Tensor:
-  if encoder is None:
-    return values.permute(0, 2, 1, 3).reshape(values.shape[0], values.shape[2], -1).contiguous()
-  if diffusion is None:
-    raise ValueError("an encoder requires directed diffusion")
-  return _embedding(encoder, values, diffusion)
+def _raw_history(values: Tensor) -> Tensor:
+  return values.permute(0, 2, 1, 3).reshape(values.shape[0], values.shape[2], -1).contiguous()
 
 
-def _embedding(encoder: Encoder, values: Tensor, diffusion: DirectedDiffusion) -> Tensor:
+def _embedding(encoder: Encoder, diffusion: DirectedDiffusion, values: Tensor) -> Tensor:
   state = encoder(values, diffusion)
   return state.permute(0, 2, 1, 3).reshape(values.shape[0], values.shape[2], -1).contiguous()
 
