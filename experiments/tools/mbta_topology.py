@@ -323,8 +323,8 @@ def _messages(connection: Any, arm: str) -> None:
 
 
 @dataclass(frozen=True)
-class Arrays:
-  features: Any
+class Examples:
+  arm_features: dict[str, Any]
   target: Any
   anchor: Any
   temporal: Any
@@ -339,11 +339,12 @@ class Arrays:
 
 
 def validation(connection: Any, feature_protocol: dict) -> dict:
-  arrays = {arm: (_arrays(connection, "train", arm, feature_protocol), _arrays(connection, "validation", arm, feature_protocol)) for arm in ARMS}
-  baselines = _baselines(arrays["self"][1])
+  train = _examples(connection, "train", feature_protocol)
+  held_out = _examples(connection, "validation", feature_protocol)
+  baselines = _baselines(held_out)
   results = [
     _fit(arm, seed, train, held_out)
-    for arm, (train, held_out) in arrays.items()
+    for arm in ARMS
     for seed in SEEDS
   ]
   self_mae = sum(result["metrics"]["mae_seconds"] for result in results if result["arm"] == "self") / len(SEEDS)
@@ -351,7 +352,7 @@ def validation(connection: Any, feature_protocol: dict) -> dict:
   return {
     "schema": 1,
     "split": "validation",
-    "targets": len(arrays["self"][1].target),
+    "targets": len(held_out.target),
     "protocol_sha256": _digest(feature_protocol),
     "baselines": baselines,
     "results": results,
@@ -368,17 +369,17 @@ def validation(connection: Any, feature_protocol: dict) -> dict:
 def test(connection: Any, feature_protocol: dict, frozen_validation: dict) -> dict:
   if frozen_validation.get("decision") != "freeze:open_learned_test_once":
     raise ExperimentError("test: validation did not pass the frozen topology gate")
-  arrays = {arm: _arrays(connection, "test", arm, feature_protocol) for arm in ARMS}
+  held_out = _examples(connection, "test", feature_protocol)
   results = [
-    _evaluate_frozen(result, arrays[result["arm"]])
+    _evaluate_frozen(result, held_out)
     for result in frozen_validation["results"]
   ]
-  baselines = _baselines(arrays["self"])
+  baselines = _baselines(held_out)
   gate = _claim_gate(results, baselines)
   return {
     "schema": 1,
     "split": "test",
-    "targets": len(arrays["self"].target),
+    "targets": len(held_out.target),
     "protocol_sha256": _digest(feature_protocol),
     "validation_sha256": _digest(frozen_validation),
     "baselines": baselines,
@@ -425,15 +426,17 @@ def _claim_gate(results: list[dict], baselines: dict) -> dict:
   }
 
 
-def _arrays(connection: Any, split: str, arm: str, feature_protocol: dict) -> Arrays:
+def _examples(connection: Any, split: str, feature_protocol: dict) -> Examples:
   import numpy as np
 
   values = connection.execute(
-    f"""
+    """
     SELECT elapsed_seconds, anchor_seconds, temporal_seconds, plan_value, plan_observed,
       persistence_value, persistence_observed, weekday, local_hour, route_id,
-      {arm}_message_seconds AS message_seconds, {arm}_age_seconds AS age_seconds,
-      coalesce({arm}_observed, 0) AS message_observed,
+      self_message_seconds, self_age_seconds, coalesce(self_observed, 0) AS self_observed,
+      true_message_seconds, true_age_seconds, coalesce(true_observed, 0) AS true_observed,
+      reverse_message_seconds, reverse_age_seconds, coalesce(reverse_observed, 0) AS reverse_observed,
+      permuted_message_seconds, permuted_age_seconds, coalesce(permuted_observed, 0) AS permuted_observed,
       schedule_resolved, ambiguous_run_source, ambiguous_run_target
     FROM topology_features WHERE split = ? ORDER BY target_id
     """,
@@ -441,28 +444,28 @@ def _arrays(connection: Any, split: str, arm: str, feature_protocol: dict) -> Ar
   ).fetchnumpy()
   route_names = [row["route_id"] for row in feature_protocol["route_blend"]]
   persistence = values["persistence_value"].astype("float64")
-  message = np.ma.filled(values["message_seconds"], persistence).astype("float64")
-  age = np.ma.filled(values["age_seconds"], 0).astype("float64")
-  features = np.stack(
-    [
-      np.log1p(values["temporal_seconds"]),
-      np.log1p(values["plan_value"]),
-      np.log1p(persistence),
-      values["plan_observed"],
-      values["persistence_observed"],
-      np.sin(2 * pi * values["weekday"] / 7),
-      np.cos(2 * pi * values["weekday"] / 7),
-      np.sin(2 * pi * values["local_hour"] / 24),
-      np.cos(2 * pi * values["local_hour"] / 24),
-      np.log1p(message),
-      np.log1p(age),
-      values["message_observed"] > 0,
-      *((values["route_id"] == route).astype("float64") for route in route_names),
-    ],
-    axis=1,
-  ).astype("float32")
-  return Arrays(
-    features,
+  shared = (
+    np.log1p(values["temporal_seconds"]),
+    np.log1p(values["plan_value"]),
+    np.log1p(persistence),
+    values["plan_observed"],
+    values["persistence_observed"],
+    np.sin(2 * pi * values["weekday"] / 7),
+    np.cos(2 * pi * values["weekday"] / 7),
+    np.sin(2 * pi * values["local_hour"] / 24),
+    np.cos(2 * pi * values["local_hour"] / 24),
+  )
+  routes = tuple((values["route_id"] == route).astype("float64") for route in route_names)
+  arm_features = {}
+  for arm in ARMS:
+    message = np.ma.filled(values[f"{arm}_message_seconds"], persistence).astype("float64")
+    age = np.ma.filled(values[f"{arm}_age_seconds"], 0).astype("float64")
+    arm_features[arm] = np.stack(
+      (*shared, np.log1p(message), np.log1p(age), values[f"{arm}_observed"] > 0, *routes),
+      axis=1,
+    ).astype("float32")
+  return Examples(
+    arm_features,
     values["elapsed_seconds"].astype("float32"),
     values["anchor_seconds"].astype("float32"),
     values["temporal_seconds"].astype("float32"),
@@ -477,17 +480,19 @@ def _arrays(connection: Any, split: str, arm: str, feature_protocol: dict) -> Ar
   )
 
 
-def _fit(arm: str, seed: int, train: Arrays, validation: Arrays) -> dict:
+def _fit(arm: str, seed: int, train: Examples, validation: Examples) -> dict:
   import numpy as np
 
-  mean = train.features.mean(axis=0)
-  scale = train.features.std(axis=0)
+  train_features = train.arm_features[arm]
+  validation_features = validation.arm_features[arm]
+  mean = train_features.mean(axis=0)
+  scale = train_features.std(axis=0)
   scale[scale < 1e-6] = 1
   transformed_target = np.log1p(train.target)
   target_mean = float(transformed_target.mean())
   target_scale = float(transformed_target.std())
-  training = ((train.features - mean) / scale).astype("float32")
-  held_out = ((validation.features - mean) / scale).astype("float32")
+  training = ((train_features - mean) / scale).astype("float32")
+  held_out = ((validation_features - mean) / scale).astype("float32")
   normalized_target = ((transformed_target - target_mean) / target_scale).astype("float32")
   normalized_anchor = ((np.log1p(train.anchor) - target_mean) / target_scale).astype("float32")
   validation_anchor = ((np.log1p(validation.anchor) - target_mean) / target_scale).astype("float32")
@@ -543,12 +548,12 @@ def _fit(arm: str, seed: int, train: Arrays, validation: Arrays) -> dict:
   }
 
 
-def _evaluate_frozen(frozen: dict, arrays: Arrays) -> dict:
+def _evaluate_frozen(frozen: dict, examples: Examples) -> dict:
   import numpy as np
 
   scaler = frozen["scaler"]
-  features = ((arrays.features - np.asarray(scaler["feature_mean"])) / np.asarray(scaler["feature_scale"])).astype("float32")
-  anchor = ((np.log1p(arrays.anchor) - scaler["target_mean"]) / scaler["target_scale"]).astype("float32")
+  features = ((examples.arm_features[frozen["arm"]] - np.asarray(scaler["feature_mean"])) / np.asarray(scaler["feature_scale"])).astype("float32")
+  anchor = ((np.log1p(examples.anchor) - scaler["target_mean"]) / scaler["target_scale"]).astype("float32")
   model = ResidualModel(features.shape[1], HIDDEN)
   nn.state.load_state_dict(model, _tensors(frozen["state"]), verbose=False)
   prediction = _predict(model, features, anchor, scaler["target_mean"], scaler["target_scale"])
@@ -558,9 +563,9 @@ def _evaluate_frozen(frozen: dict, arrays: Arrays) -> dict:
     "best_step": frozen["best_step"],
     "parameters": frozen["parameters"],
     "trained_examples": frozen["trained_examples"],
-    "metrics": _metrics(arrays, prediction),
-    "route_metrics": _route_metrics(arrays, prediction),
-    "mask_metrics": _mask_metrics(arrays, prediction),
+    "metrics": _metrics(examples, prediction),
+    "route_metrics": _route_metrics(examples, prediction),
+    "mask_metrics": _mask_metrics(examples, prediction),
   }
 
 
@@ -593,25 +598,25 @@ def _tensors(state: dict[str, dict]) -> dict[str, Tensor]:
   }
 
 
-def _baselines(arrays: Arrays) -> dict:
+def _baselines(examples: Examples) -> dict:
   return {
-    "persistence": _metrics(arrays, arrays.persistence, arrays.persistence_observed),
-    "temporal": _metrics(arrays, arrays.temporal),
-    "plan": _metrics(arrays, arrays.plan, arrays.plan_observed),
-    "anchor": _metrics(arrays, arrays.anchor),
+    "persistence": _metrics(examples, examples.persistence, examples.persistence_observed),
+    "temporal": _metrics(examples, examples.temporal),
+    "plan": _metrics(examples, examples.plan, examples.plan_observed),
+    "anchor": _metrics(examples, examples.anchor),
   }
 
 
-def _metrics(arrays: Arrays, prediction: Any, observed: Any | None = None) -> dict:
+def _metrics(examples: Examples, prediction: Any, observed: Any | None = None) -> dict:
   import numpy as np
 
-  mask = np.ones(len(arrays.target), dtype="bool") if observed is None else observed
-  error = prediction[mask] - arrays.target[mask]
+  mask = np.ones(len(examples.target), dtype="bool") if observed is None else observed
+  error = prediction[mask] - examples.target[mask]
   absolute = np.abs(error)
-  route_mae = [absolute[arrays.route[mask] == route].mean() for route in sorted(set(arrays.route[mask]))]
+  route_mae = [absolute[examples.route[mask] == route].mean() for route in sorted(set(examples.route[mask]))]
   return {
     "predictions": int(mask.sum()),
-    "targets": len(arrays.target),
+    "targets": len(examples.target),
     "coverage": round(float(mask.mean()), 6),
     "mae_seconds": round(float(absolute.mean()), 6),
     "rmse_seconds": round(float(sqrt(np.square(error).mean())), 6),
@@ -622,34 +627,34 @@ def _metrics(arrays: Arrays, prediction: Any, observed: Any | None = None) -> di
   }
 
 
-def _route_metrics(arrays: Arrays, prediction: Any) -> list[dict]:
+def _route_metrics(examples: Examples, prediction: Any) -> list[dict]:
   import numpy as np
 
   return [
     {
       "route_id": route,
       "targets": int(mask.sum()),
-      "mae_seconds": round(float(np.abs(prediction[mask] - arrays.target[mask]).mean()), 6),
+      "mae_seconds": round(float(np.abs(prediction[mask] - examples.target[mask]).mean()), 6),
     }
-    for route in sorted(set(arrays.route))
-    if (mask := arrays.route == route).any()
+    for route in sorted(set(examples.route))
+    if (mask := examples.route == route).any()
   ]
 
 
-def _mask_metrics(arrays: Arrays, prediction: Any) -> list[dict]:
+def _mask_metrics(examples: Examples, prediction: Any) -> list[dict]:
   import numpy as np
 
   masks = {
-    "schedule_resolved": arrays.schedule_resolved,
-    "ambiguous_run_source": arrays.ambiguous_run_source,
-    "ambiguous_run_target": arrays.ambiguous_run_target,
+    "schedule_resolved": examples.schedule_resolved,
+    "ambiguous_run_source": examples.ambiguous_run_source,
+    "ambiguous_run_target": examples.ambiguous_run_target,
   }
   return [
     {
       "mask": name,
       "value": value,
       "targets": int(selected.sum()),
-      "mae_seconds": round(float(np.abs(prediction[selected] - arrays.target[selected]).mean()), 6) if selected.any() else None,
+      "mae_seconds": round(float(np.abs(prediction[selected] - examples.target[selected]).mean()), 6) if selected.any() else None,
     }
     for name, mask in masks.items()
     for value in (False, True)
