@@ -24,6 +24,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Does the public LAMP export support a forecast-sufficient population? | A capped 28-day acquisition lowers 947,489 physical departures and reproduces 940,776 movement-headway labels. It measures 201 mismatches, 1,007 boundary labels, 384 ambiguous-order rows, and 78.2% exact Schedule identity. | Advance to a retrospective event-time task. Keep the full source population, make carrier and Schedule masks explicit, and make no online claim. |
 | What is the retrospective MBTA next-headway floor? | The frozen task retains 940,551 physical targets. Public plan leads validation at 152.648 s MAE, but the train-only temporal median leads the single test open at 159.788 s versus plan at 166.062 s and persistence at 229.802 s. | Carry both strong controls into Stage 4 and require improvement over each. Keep the claim retrospective. |
 | Does directed MBTA topology add next-headway signal? | On the single test opening, the true upstream arm reaches 149.398 s mean MAE versus 155.042 self-only, 155.241 reversed, and 154.771 degree-preserving permuted controls. It wins every seed, route-macro MAE, p90 error, and both Schedule-provenance slices. | Yes, within the frozen retrospective MBTA task. Retain the bounded directional signal; make no universal, online, or every-route claim. |
+| Does event-native memory improve the MBTA topology model? | True-topology memory beats every matched memory control in every validation seed, but its 147.726 s mean MAE loses to the frozen 145.793 s topology MLP in every seed. | No for this bounded design and budget. Stop at validation, keep test closed, and add no runtime memory abstraction. |
 
 ## Sparse core
 
@@ -97,6 +98,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   temporal split, leakage-safe baselines, validation evidence, and test gate.
 - [MBTA topology signal](mbta-topology.md) — sparse as-of neighbor messages,
   matched false-topology controls, and frozen learned validation evidence.
+- [MBTA event memory](mbta-event-memory.md) — causal event folds, bounded lane
+  state, matched topology controls, and a validation-only stop decision.
 
 - [Chickenpox forecast](chickenpox-forecast.md) — matched node-local and graph
   recurrence without a stable graph advantage.
