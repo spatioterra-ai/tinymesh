@@ -2,13 +2,13 @@ import unittest
 
 from tinygrad import Device, Tensor, nn
 
-from experiments.transport_forecast import _topology, _trajectories
+from experiments.transport_protocol import topology, trajectories
 from experiments.transport_jepa import Model, MeshEncoder, _mesh, _snapshot, _standardize, _update_target, _validate
 
 
 class TransportJEPATest(unittest.TestCase):
   def setUp(self) -> None:
-    self.topology = _topology(24)
+    self.topology = topology(24)
 
   def test_product_mesh_separates_time_and_directed_space(self) -> None:
     meshes = {name: _mesh(self.topology, name, 4, Device.DEFAULT) for name in ("true", "permuted", "temporal", "spatial")}
@@ -40,7 +40,7 @@ class TransportJEPATest(unittest.TestCase):
     self.assertEqual(gradient.shape, values.shape)
 
   def test_target_stops_gradient_and_follows_online_encoder(self) -> None:
-    data = _trajectories(self.topology, 4, 4, 7, Device.DEFAULT)
+    data = trajectories(self.topology, 4, 4, 7, Device.DEFAULT)
     context, target = data.values[:, :2].contiguous().realize(), data.values[:, 2:].contiguous().realize()
     mesh = _mesh(self.topology, "true", 2, Device.DEFAULT)
     Tensor.manual_seed(3)
