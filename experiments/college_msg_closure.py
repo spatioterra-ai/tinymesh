@@ -2,25 +2,13 @@
 
 from __future__ import annotations
 
-import gzip
-import hashlib
 import json
 import os
 from dataclasses import asdict, dataclass
 from itertools import groupby
-from pathlib import Path
-from typing import Iterable
 
-
-SOURCE_BYTES = 345_339
-SOURCE_SHA256 = "50ae2d98ed3bad9ddb18dbd495a89e5e10cfb8f7e86932827db29fc41b41f9fa"
-
-
-@dataclass(frozen=True, order=True)
-class Interaction:
-  timestamp: int
-  source: int
-  target: int
+from tinymesh import TemporalEdges
+from tinymesh.datasets import college_msg
 
 
 @dataclass(frozen=True)
@@ -57,51 +45,19 @@ class Observation:
   decision: str
 
 
-def load(path: str | Path) -> tuple[Interaction, ...]:
-  """Load the exact checksum-pinned CollegeMsg gzip source."""
-  source = Path(path)
-  payload = source.read_bytes()
-  if len(payload) != SOURCE_BYTES or hashlib.sha256(payload).hexdigest() != SOURCE_SHA256:
-    raise ValueError("source does not match the pinned CollegeMsg artifact")
-  with gzip.open(source, "rt", encoding="ascii") as lines:
-    return parse(lines)
-
-
-def parse(lines: Iterable[str]) -> tuple[Interaction, ...]:
-  """Parse sorted ``source target timestamp`` rows without changing identity."""
-  interactions = []
-  previous = -1
-  for line_number, line in enumerate(lines, 1):
-    fields = line.split()
-    if len(fields) != 3:
-      raise ValueError(f"line {line_number}: expected source target timestamp")
-    try:
-      source, target, timestamp = map(int, fields)
-    except ValueError as error:
-      raise ValueError(f"line {line_number}: fields must be integers") from error
-    if source < 0 or target < 0 or timestamp < 0:
-      raise ValueError(f"line {line_number}: identifiers and timestamp must be non-negative")
-    if timestamp < previous:
-      raise ValueError(f"line {line_number}: timestamp moved backward")
-    interactions.append(Interaction(timestamp, source, target))
-    previous = timestamp
-  if not interactions:
-    raise ValueError("source contains no interactions")
-  return tuple(interactions)
-
-
-def observe(interactions: tuple[Interaction, ...]) -> Observation:
+def observe(interactions: TemporalEdges) -> Observation:
   """Measure first-contact incidence from graph state strictly before each time."""
-  nodes = {node for interaction in interactions for node in (interaction.source, interaction.target)}
-  directed = {(interaction.source, interaction.target) for interaction in interactions if interaction.source != interaction.target}
+  if interactions.edges == 0:
+    raise ValueError("closure measurement requires at least one interaction")
+  directed = {(source, target) for source, target in zip(interactions.source, interactions.target) if source != target}
   source = SourceAudit(
-    messages=len(interactions),
-    nodes=len(nodes),
+    messages=interactions.edges,
+    nodes=interactions.nodes,
     directed_pairs=len(directed),
     undirected_pairs=len({_pair(source, target) for source, target in directed}),
-    self_messages=sum(interaction.source == interaction.target for interaction in interactions),
-    first_timestamp=interactions[0].timestamp,
-    last_timestamp=interactions[-1].timestamp,
+    self_messages=sum(source == target for source, target in zip(interactions.source, interactions.target)),
+    first_timestamp=interactions.timestamp[0],
+    last_timestamp=interactions.timestamp[-1],
   )
   closure = _measure_closure(interactions)
   return Observation(
@@ -109,20 +65,21 @@ def observe(interactions: tuple[Interaction, ...]) -> Observation:
     closure=closure,
     relation="directed_message",
     projection="undirected_first_contact",
-    decision="retain:research_only",
+    decision="retain:closure_research_only",
   )
 
 
-def _measure_closure(interactions: tuple[Interaction, ...]) -> ClosureAudit:
+def _measure_closure(interactions: TemporalEdges) -> ClosureAudit:
   known: set[int] = set()
   edges: set[tuple[int, int]] = set()
   neighbors: dict[int, set[int]] = {}
   open_wedges: set[tuple[int, int]] = set()
   entry_contacts = wedge_formations = non_wedge_formations = 0
   wedge_pair_seconds = non_wedge_pair_seconds = 0
-  previous = interactions[0].timestamp
+  previous = interactions.timestamp[0]
 
-  for timestamp, group in groupby(interactions, key=lambda interaction: interaction.timestamp):
+  events = zip(interactions.timestamp, interactions.source, interactions.target)
+  for timestamp, group in groupby(events, key=lambda event: event[0]):
     elapsed = timestamp - previous
     possible = len(known) * (len(known) - 1) // 2 - len(edges)
     wedge_pairs = len(open_wedges)
@@ -131,9 +88,9 @@ def _measure_closure(interactions: tuple[Interaction, ...]) -> ClosureAudit:
 
     messages = tuple(group)
     new_pairs = {
-      _pair(interaction.source, interaction.target)
-      for interaction in messages
-      if interaction.source != interaction.target and _pair(interaction.source, interaction.target) not in edges
+      _pair(source, target)
+      for _, source, target in messages
+      if source != target and _pair(source, target) not in edges
     }
     for pair in new_pairs:
       if pair[0] not in known or pair[1] not in known:
@@ -145,11 +102,13 @@ def _measure_closure(interactions: tuple[Interaction, ...]) -> ClosureAudit:
 
     for source, target in sorted(new_pairs):
       _add_edge(source, target, edges, neighbors, open_wedges)
-    known.update(node for interaction in messages for node in (interaction.source, interaction.target))
+    known.update(node for _, source, target in messages for node in (source, target))
     previous = timestamp
 
   first_contacts = len(edges)
-  repeat_messages = len(interactions) - sum(interaction.source == interaction.target for interaction in interactions) - first_contacts
+  repeat_messages = interactions.edges - sum(
+    source == target for source, target in zip(interactions.source, interactions.target)
+  ) - first_contacts
   wedge_rate = _rate(wedge_formations, wedge_pair_seconds)
   non_wedge_rate = _rate(non_wedge_formations, non_wedge_pair_seconds)
   ratio = wedge_rate / non_wedge_rate if wedge_rate is not None and non_wedge_rate not in (None, 0) else None
@@ -203,9 +162,7 @@ def _rate(formations: int, pair_seconds: int) -> float | None:
 
 def main() -> None:
   path = os.environ.get("SOURCE")
-  if path is None:
-    raise SystemExit("SOURCE must name the checksum-pinned CollegeMsg.txt.gz")
-  print(json.dumps(asdict(observe(load(path))), indent=2))
+  print(json.dumps(asdict(observe(college_msg(path).events)), indent=2))
 
 
 if __name__ == "__main__":

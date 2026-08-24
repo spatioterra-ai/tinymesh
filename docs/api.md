@@ -9,6 +9,8 @@ factory, trainer, or PyTorch compatibility layer.
 
 ::: tinymesh.StaticGraphTemporalSignal
 
+::: tinymesh.TemporalEdges
+
 ## Neural networks
 
 ::: tinymesh.nn.SAGEConv
@@ -48,3 +50,7 @@ factory, trainer, or PyTorch compatibility layer.
 ::: tinymesh.datasets.MUTAG
 
 ::: tinymesh.datasets.mutag
+
+::: tinymesh.datasets.CollegeMsg
+
+::: tinymesh.datasets.college_msg

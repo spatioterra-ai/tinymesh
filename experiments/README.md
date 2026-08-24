@@ -30,12 +30,14 @@ uv run --locked --with 'duckdb==1.4.1' --module experiments.tools.mbta_replay_ex
 ```
 
 CollegeMsg remains an external artifact because its source page does not state
-a redistribution license. Download it without committing it; the experiment
-accepts only the pinned 345,339-byte gzip with SHA-256
+a redistribution license. `tinymesh.datasets.college_msg()` downloads it from
+SNAP into tinygrad's cache and accepts only the pinned 345,339-byte gzip with
+SHA-256
 `50ae2d98ed3bad9ddb18dbd495a89e5e10cfb8f7e86932827db29fc41b41f9fa`:
 
 ```console
-curl --create-dirs -L https://snap.stanford.edu/data/CollegeMsg.txt.gz \
-  -o .data/CollegeMsg.txt.gz
-uv run --locked python -m experiments.run college_msg_closure SOURCE=.data/CollegeMsg.txt.gz
+uv run --locked python -m experiments.run college_msg_closure
 ```
+
+`SOURCE=/path/to/CollegeMsg.txt.gz` selects an already-downloaded copy; the
+same size and checksum validation applies.

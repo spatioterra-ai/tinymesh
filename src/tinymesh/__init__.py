@@ -1,4 +1,4 @@
 from tinymesh.graph import Graph
-from tinymesh.temporal import StaticGraphTemporalSignal
+from tinymesh.temporal import StaticGraphTemporalSignal, TemporalEdges
 
-__all__ = ["Graph", "StaticGraphTemporalSignal"]
+__all__ = ["Graph", "StaticGraphTemporalSignal", "TemporalEdges"]

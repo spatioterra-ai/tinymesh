@@ -1,8 +1,10 @@
 import csv
+import gzip
 import hashlib
 import json
 import math
 from array import array
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from io import BytesIO
@@ -14,7 +16,7 @@ from tinygrad import Tensor, dtypes
 from tinygrad.helpers import fetch
 
 from tinymesh.graph import Graph
-from tinymesh.temporal import StaticGraphTemporalSignal
+from tinymesh.temporal import StaticGraphTemporalSignal, TemporalEdges
 
 _CHICKENPOX_URL = (
     "https://raw.githubusercontent.com/benedekrozemberczki/"
@@ -74,6 +76,12 @@ _MUTAG_MEMBER_MAX_BYTES = {
 }
 _MUTAG_NODE_TYPES = ("C", "N", "O", "F", "I", "Cl", "Br")
 _MUTAG_BOND_TYPES = ("aromatic", "single", "double", "triple")
+_COLLEGE_MSG_SOURCE = (
+    "CollegeMsg.txt.gz",
+    "https://snap.stanford.edu/data/CollegeMsg.txt.gz",
+    345_339,
+    "50ae2d98ed3bad9ddb18dbd495a89e5e10cfb8f7e86932827db29fc41b41f9fa",
+)
 
 
 @dataclass(frozen=True, eq=False)
@@ -184,6 +192,23 @@ class MUTAG:
 
 
 @dataclass(frozen=True)
+class CollegeMsg:
+    """Directed private-message events with retained source node identities."""
+
+    events: TemporalEdges
+    node_ids: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "node_ids", tuple(self.node_ids))
+        if len(self.node_ids) != self.events.nodes:
+            raise ValueError(f"expected {self.events.nodes} node IDs, got {len(self.node_ids)}")
+        if any(not isinstance(node_id, int) or isinstance(node_id, bool) or node_id < 0 for node_id in self.node_ids):
+            raise ValueError("node IDs must be non-negative integers")
+        if len(set(self.node_ids)) != len(self.node_ids):
+            raise ValueError("node IDs must be unique")
+
+
+@dataclass(frozen=True)
 class _MontevideoSource:
     node_ids: tuple[int, ...]
     source: tuple[int, ...]
@@ -267,6 +292,31 @@ def mutag(path: str | Path | None = None, *, device: str | None = None) -> MUTAG
         raise ValueError("MUTAG source must be a ZIP archive") from error
 
 
+def college_msg(path: str | Path | None = None) -> CollegeMsg:
+    """Load the checksum-pinned CollegeMsg temporal interaction stream."""
+    source = _fetch_source(_COLLEGE_MSG_SOURCE) if path is None else Path(path)
+    payload = source.read_bytes()
+    if len(payload) != _COLLEGE_MSG_SOURCE[2] or hashlib.sha256(payload).hexdigest() != _COLLEGE_MSG_SOURCE[3]:
+        raise ValueError("CollegeMsg source identity mismatch")
+    try:
+        with gzip.open(source, "rt", encoding="ascii") as rows:
+            raw = _parse_college_msg(rows)
+    except (gzip.BadGzipFile, UnicodeDecodeError, OSError) as error:
+        raise ValueError("CollegeMsg source must be an ASCII gzip") from error
+
+    node_ids = tuple(sorted({node for source, target, _ in raw for node in (source, target)}))
+    node_index = {node_id: index for index, node_id in enumerate(node_ids)}
+    return CollegeMsg(
+        TemporalEdges(
+            len(node_ids),
+            tuple(node_index[source] for source, _, _ in raw),
+            tuple(node_index[target] for _, target, _ in raw),
+            tuple(timestamp for _, _, timestamp in raw),
+        ),
+        node_ids,
+    )
+
+
 def metr_la(
     path: str | Path | None = None,
     *,
@@ -312,6 +362,28 @@ def _read_sensor_ids(path: Path) -> tuple[str, ...]:
     if len(set(sensor_ids)) != len(sensor_ids):
         raise ValueError("sensor IDs must be unique")
     return sensor_ids
+
+
+def _parse_college_msg(rows: Iterable[str]) -> tuple[tuple[int, int, int], ...]:
+    interactions = []
+    previous = -1
+    for line_number, row in enumerate(rows, 1):
+        fields = row.split()
+        if len(fields) != 3:
+            raise ValueError(f"CollegeMsg row {line_number} must contain source, target, timestamp")
+        try:
+            source, target, timestamp = map(int, fields)
+        except ValueError as error:
+            raise ValueError(f"CollegeMsg row {line_number} fields must be integers") from error
+        if source < 0 or target < 0 or timestamp < 0:
+            raise ValueError(f"CollegeMsg row {line_number} values must be non-negative")
+        if timestamp < previous:
+            raise ValueError(f"CollegeMsg row {line_number} timestamp moved backward")
+        interactions.append((source, target, timestamp))
+        previous = timestamp
+    if not interactions:
+        raise ValueError("CollegeMsg source must contain at least one interaction")
+    return tuple(interactions)
 
 
 def _read_traffic(path: Path, sensor_ids: tuple[str, ...]) -> tuple[tuple[datetime, ...], array[float]]:

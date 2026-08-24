@@ -2,7 +2,7 @@ import unittest
 
 from tinygrad import Device, Tensor, dtypes
 
-from tinymesh import Graph, StaticGraphTemporalSignal
+from tinymesh import Graph, StaticGraphTemporalSignal, TemporalEdges
 
 
 def signal() -> StaticGraphTemporalSignal:
@@ -27,6 +27,37 @@ def signal() -> StaticGraphTemporalSignal:
         ).realize(),
         Tensor.ones(2, device=Device.DEFAULT).realize(),
     )
+
+
+class TemporalEdgesTest(unittest.TestCase):
+    def test_preserves_order_direction_duplicates_and_strict_prefixes(self) -> None:
+        events = TemporalEdges(3, [0, 1, 0, 0], [1, 0, 1, 2], [10, 10, 20, 30])
+
+        self.assertEqual(events.edges, 4)
+        self.assertEqual(events.source, (0, 1, 0, 0))
+        self.assertEqual(events.target, (1, 0, 1, 2))
+        self.assertEqual(events.timestamp, (10, 10, 20, 30))
+        self.assertEqual(events.prefix(10).edges, 0)
+        self.assertEqual(events.prefix(20).timestamp, (10, 10))
+        self.assertEqual(events.prefix(31), events)
+        self.assertEqual(events.prefix(0).nodes, events.nodes)
+
+    def test_rejects_invalid_identity_alignment_and_time(self) -> None:
+        cases = (
+            ((0, (), (), ()), "positive integer"),
+            ((True, (), (), ()), "positive integer"),
+            ((2, (0,), (), (1,)), "same length"),
+            ((2, (2,), (0,), (1,)), "source node IDs"),
+            ((2, (0,), (False,), (1,)), "target node IDs"),
+            ((2, (0,), (1,), (-1,)), "non-negative integers"),
+            ((2, (0, 1), (1, 0), (2, 1)), "nondecreasing"),
+        )
+        for arguments, message in cases:
+            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
+                TemporalEdges(*arguments)
+
+        with self.assertRaisesRegex(ValueError, "integer timestamp"):
+            TemporalEdges(1, (), (), ()).prefix(1.5)  # type: ignore[arg-type]
 
 
 class TemporalSignalTest(unittest.TestCase):

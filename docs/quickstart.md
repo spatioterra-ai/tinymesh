@@ -235,6 +235,41 @@ The checked fixture gives two heads opposite initial attention parameters. One
 step sends equal and opposite gradients to them and lowers loss from `0.214323`
 to `0.168497`. No new `Graph` operation is involved.
 
+## Follow changing edges
+
+CollegeMsg is an ordered stream of directed messages rather than node fields
+over one fixed graph:
+
+```python
+from tinymesh.datasets import college_msg
+
+messages = college_msg()
+events = messages.events
+
+print(events.nodes, events.edges)
+# 1899 59835
+
+first = events.source[0], events.target[0], events.timestamp[0]
+print(messages.node_ids[first[0]], messages.node_ids[first[1]], first[2])
+# 1 2 1082040961
+
+past = events.prefix(events.timestamp[2])
+print(past.edges)
+# 2
+```
+
+`node_ids` maps compact endpoints back to the source identities. Direction,
+duplicates, and equal timestamps remain visible. A strict prefix retains only
+events before its cutoff while preserving the stable node universe.
+
+The loader downloads the checksum-pinned gzip from SNAP into tinygrad's cache;
+the artifact is not distributed with tinymesh. `TemporalEdges` does not invent
+snapshots, merge reciprocal messages, or decide when an interaction becomes a
+durable graph edge. Those are task policies.
+
+Read the [CollegeMsg record](research/college-msg-closure.md) for provenance,
+the temporal-closure measurement, and its limits.
+
 ## Carry state through time
 
 Load the public PyTorch Geometric Temporal chickenpox signal without adding

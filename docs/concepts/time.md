@@ -117,6 +117,38 @@ alignment, and cache lifetime.
 
 Proving fixed-topology recurrence does not prove dynamic graphs.
 
+## Edge events precede dynamic snapshots
+
+Some sources report changes as individual events rather than prebuilt graphs:
+
+```text
+stable nodes N
+source    [E]
+target    [E]
+timestamp [E] nondecreasing
+```
+
+`TemporalEdges` owns only those aligned facts. It preserves direction,
+duplicates, and equal timestamps. A strict causal prefix uses `timestamp <
+cutoff`; the full stable node universe remains available so endpoint identity
+never changes between prefixes.
+
+```python
+from tinymesh import TemporalEdges
+
+events = TemporalEdges(3, [0, 1, 0], [1, 0, 2], [10, 10, 20])
+past = events.prefix(20)
+
+assert past.source == (0, 1)
+assert past.timestamp == (10, 10)
+```
+
+An event stream is source truth, not a sequence of `Graph` objects. Converting
+it into first-contact, cumulative, active-window, directed, or undirected
+topology requires task-specific semantics. CollegeMsg is the first public
+caller: its dataset record retains original account IDs while its
+`TemporalEdges` use compact endpoints.
+
 ## A node-time mesh is a graph product
 
 A fixed graph observed at ordered times has a conceptual joint domain:

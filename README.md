@@ -56,8 +56,9 @@ ordered COO edges / products + node tensors
   `[..., N, H]`.
 - `tinymesh.nn` composes direct tinygrad-style node- and edge-aware graph
   convolution, attention, recurrence, period attention, and directed diffusion.
-- `StaticGraphTemporalSignal` and the pinned Chickenpox, Montevideo, and
-  METR-LA loaders keep graph, node, time, feature, target, and edge axes aligned.
+- `StaticGraphTemporalSignal` and the Chickenpox, Montevideo, and METR-LA
+  loaders keep fixed-graph fields aligned; `TemporalEdges` and CollegeMsg
+  preserve changing directed edge facts without imposing snapshots.
 - CPU and Metal follow the same checked contracts.
 
 The [API reference](docs/api.md) is generated from the source. The current
