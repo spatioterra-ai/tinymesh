@@ -85,3 +85,8 @@ uv run --locked python -m experiments.run mutag_data DEV=METAL
 
 The next stage will define train-only self-supervision, frozen probes, splits,
 and controls. Those policies do not belong in the loader.
+
+The cross-dataset [network measurement](network-measurement.md) confirms that
+all 188 molecular graphs are connected and contain no isolated nodes. Their
+per-graph diameters have mean 8.22, p90 11, and maximum 15. Because every bond
+is reciprocal, weak and directed distance agree.

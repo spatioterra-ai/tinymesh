@@ -77,7 +77,7 @@ class CatalogTest(unittest.TestCase):
                 framework
                 if name == "framework_benchmark"
                 else event_mesh
-                if name == "gtfs_event_mesh"
+                if name in ("gtfs_event_mesh", "network_measurement")
                 else headway_task
                 if name == "mbta_headway_task"
                 else mbta_topology

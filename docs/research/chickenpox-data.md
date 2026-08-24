@@ -122,3 +122,8 @@ This is not a generic worker, shuffle, prefetch, or multiple-graph loader. It
 is the smallest deterministic window contract over resident tinygrad tensors.
 The [Chickenpox forecast](chickenpox-forecast.md) records the first end-to-end
 training result and its limits.
+
+The cross-dataset [network measurement](network-measurement.md) confirms that
+the 20-node graph is one strong component: every ordered non-self node pair is
+reachable, with mean directed distance 2.51 and diameter 6. These are topology
+facts, not evidence that the graph improves a forecast.

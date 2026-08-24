@@ -67,6 +67,16 @@ CATALOG = {
     "montevideo_data": Experiment("data", "tinymesh.datasets"),
     "metr_la_data": Experiment("data", "tinymesh.datasets"),
     "mutag_data": Experiment("data", "tinymesh.datasets"),
+    "network_measurement": Experiment(
+        "data",
+        "research-only",
+        (),
+        references=(
+            "submodules/pytorch-geometric",
+            "submodules/pytorch-geometric-temporal",
+            "submodules/torch-spatiotemporal",
+        ),
+    ),
     "gtfs_schedule": Experiment("data", "research-only", ()),
     "gtfs_realtime": Experiment("data", "research-only", ()),
     "gtfs_transition": Experiment("data", "research-only", ()),

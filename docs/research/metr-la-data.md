@@ -160,3 +160,9 @@ revision. It does not show that the affinity improves a forecast. The
 [METR-LA forecast](metr-la-forecast.md) now owns the forward split, train-only
 preprocessing, missing-value-aware loss, temporal controls, and false
 topologies; its learned graph comparison remains pending.
+
+The cross-dataset [network measurement](network-measurement.md) finds a
+195-node strong core, 13 strong components, and two weak components. One sensor
+has only its retained self-loop and is therefore isolated from non-self
+messages. Directed reachability is 93.8%, with mean reachable distance 5.85
+hops and diameter 17. The affinity is broad but not fully connected.
