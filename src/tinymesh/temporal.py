@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from bisect import bisect_left
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from typing import overload
@@ -7,6 +8,47 @@ from typing import overload
 from tinygrad import Tensor, dtypes
 
 from tinymesh.graph import Graph
+
+
+@dataclass(frozen=True)
+class TemporalEdges:
+    """Timestamped directed edges over one stable node universe."""
+
+    nodes: int
+    source: tuple[int, ...]
+    target: tuple[int, ...]
+    timestamp: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        for name in ("source", "target", "timestamp"):
+            object.__setattr__(self, name, tuple(getattr(self, name)))
+        if not isinstance(self.nodes, int) or isinstance(self.nodes, bool) or self.nodes <= 0:
+            raise ValueError("nodes must be a positive integer")
+        if len({len(self.source), len(self.target), len(self.timestamp)}) != 1:
+            raise ValueError("source, target, and timestamp must have the same length")
+        for name, endpoints in (("source", self.source), ("target", self.target)):
+            if any(not isinstance(node, int) or isinstance(node, bool) or node < 0 or node >= self.nodes for node in endpoints):
+                raise ValueError(f"{name} node IDs must be integers in [0, {self.nodes})")
+        if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in self.timestamp):
+            raise ValueError("timestamps must be non-negative integers")
+        if any(left > right for left, right in zip(self.timestamp, self.timestamp[1:])):
+            raise ValueError("timestamps must be nondecreasing")
+
+    @property
+    def edges(self) -> int:
+        return len(self.source)
+
+    def prefix(self, cutoff: int) -> TemporalEdges:
+        """Return the events with timestamps strictly before ``cutoff``."""
+        if not isinstance(cutoff, int) or isinstance(cutoff, bool):
+            raise ValueError("cutoff must be an integer timestamp")
+        stop = bisect_left(self.timestamp, cutoff)
+        return TemporalEdges(
+            self.nodes,
+            self.source[:stop],
+            self.target[:stop],
+            self.timestamp[:stop],
+        )
 
 
 @dataclass(frozen=True, eq=False)

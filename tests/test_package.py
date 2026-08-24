@@ -4,14 +4,15 @@ from pathlib import Path
 
 import tinymesh
 from tinygrad import Tensor
-from tinymesh import Graph, StaticGraphTemporalSignal
+from tinymesh import Graph, StaticGraphTemporalSignal, TemporalEdges
 
 
 class PackageTest(unittest.TestCase):
     def test_public_surface(self) -> None:
-        self.assertEqual(tinymesh.__all__, ["Graph", "StaticGraphTemporalSignal"])
+        self.assertEqual(tinymesh.__all__, ["Graph", "StaticGraphTemporalSignal", "TemporalEdges"])
         self.assertIs(tinymesh.Graph, Graph)
         self.assertIs(tinymesh.StaticGraphTemporalSignal, StaticGraphTemporalSignal)
+        self.assertIs(tinymesh.TemporalEdges, TemporalEdges)
         self.assertFalse(hasattr(tinymesh, "CSRTopology"))
 
     def test_nn_surface_is_direct(self) -> None:
