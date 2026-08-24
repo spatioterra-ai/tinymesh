@@ -87,7 +87,7 @@ class CatalogTest(unittest.TestCase):
                 else mbta_event_memory
                 if name == "mbta_event_memory"
                 else ()
-                if name == "mbta_population"
+                if name in ("college_msg_closure", "mbta_population")
                 else tinygrad
             )
             for name, experiment in CATALOG.items()

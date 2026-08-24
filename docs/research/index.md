@@ -16,6 +16,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Can tinygrad express JEPA learning over graph patches? | Aligned latent loss falls 90.9%; reversed and positionless controls lose on CPU and Metal while the EMA target receives zero gradient. | Yes. Keep the mechanism research-only until a real representation task justifies a reusable owner. |
 | Can variable-size graph collections stay dependency-free and sparse? | MUTAG lowers 188 graphs and 7,442 labeled directed edges identically on CPU and Metal from one bounded, pinned archive. | Yes. Keep source labels canonical and derive model features with tinygrad operations. |
 | Are the dataset topologies connected and locally shallow? | Exact sparse measurement finds Chickenpox fully reachable, Montevideo weakly connected but only 17.0% directionally reachable, METR-LA split into two weak components with one non-self isolate, and every MUTAG graph connected. | Record topology assumptions with the data evidence. Add no graph-analytics API without a learning caller. |
+| Does temporal messaging exhibit triadic closure? | In CollegeMsg, 5,609 prior-wedge contacts form at 107.655 per million pair-days versus 6,403 non-wedge contacts at 31.635, a 3.403x descriptive rate ratio. | Retain the checksum-pinned research measurement. Call it communication, not friendship or causality, and add no temporal-social runtime API. |
 | Does Graph-JEPA improve MUTAG representations? | Positionless patch prediction gains 2.48 probe points over its paired random encoder in all three seeds, but exact cosine search regresses every trained arm and every learned arm trails the fixed graph summary. | Continue the minimal positionless mechanism only as representation research. Claim no searchable geometry; keep JEPA, retrieval, and indexing research-only. |
 | Can one sparse graph represent a bounded node-time mesh? | Cartesian products, batched endpoint gathers, and batched GINE pass 30 focused tests on CPU and Metal without dense adjacency. | Yes when joint message passing needs explicit node-time vertices. Keep long fixed-topology sequences factorized. |
 | Does causal JEPA learn a useful node-time representation? | The true-mesh encoder improves over its paired random initialization in all three seeds and test agrees, but spatial-only features beat the joint product in two of three. | Continue the objective as research; reject explicit temporal edges as the incumbent on this task. Promote no JEPA API. |
@@ -76,6 +77,8 @@ They are evidence, not API promises. This page is the current decision ledger;
 
 - [Network measurement](network-measurement.md) — components, direction,
   degree, reachability, and exact hop distance across the public datasets.
+- [CollegeMsg temporal closure](college-msg-closure.md) — first contacts,
+  prior wedges, exact pair-time exposure, and the communication boundary.
 - [Chickenpox](chickenpox-data.md) — weekly node fields over one pinned graph.
 - [Montevideo bus](montevideo-data.md) — hourly fields, projected positions,
   and road distance.
