@@ -27,6 +27,7 @@ class CollegeMsgClosureTest(unittest.TestCase):
     )
     self.assertEqual((result.closure.wedge_pair_seconds, result.closure.non_wedge_pair_seconds), (40, 50))
     self.assertEqual(result.projection, "undirected_first_contact")
+    self.assertEqual(result.decision, "retain:closure_research_only")
 
   def test_same_timestamp_edges_do_not_close_each_other(self) -> None:
     result = observe(TemporalEdges(4, (0, 1, 0, 2), (1, 2, 2, 3), (10, 10, 10, 20)))

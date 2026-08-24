@@ -65,7 +65,7 @@ def observe(interactions: TemporalEdges) -> Observation:
     closure=closure,
     relation="directed_message",
     projection="undirected_first_contact",
-    decision="retain:research_only",
+    decision="retain:closure_research_only",
   )
 
 
