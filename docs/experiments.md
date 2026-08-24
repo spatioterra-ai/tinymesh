@@ -39,6 +39,7 @@ environment, and recorded in the result envelope. Representative runs:
 
 ```console
 uv run --locked --with torch==2.8.0 --with torch-geometric==2.8.0 python -m experiments.run framework_benchmark DEV=METAL DEGREE=8 HIDDEN=32 NODES=4096 SAMPLES=50 WARMUPS=10 WIDTH=32
+uv run --locked python -m experiments.run network_measurement
 uv run --locked python -m experiments.run mean_sage DEV=CPU
 uv run --locked python -m experiments.run gtfs_event_mesh
 uv run --locked python -m experiments.run mbta_population

@@ -122,3 +122,10 @@ graph weight.
 
 This stage proves deterministic lowering and real sparse composition. It makes
 no forecasting or performance claim.
+
+The cross-dataset [network measurement](network-measurement.md) adds the
+missing structural qualification. All 675 nodes form one weak component, but
+the source has no reciprocal edges, 675 singleton strong components, and only
+17.0% directed pair reachability. Its mean reachable distance is 40.47 hops and
+its directed diameter is 114; the graph is a sparse directed route relation,
+not a mutually reachable proximity network.

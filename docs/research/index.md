@@ -15,6 +15,7 @@ They are evidence, not API promises. This page is the current decision ledger;
 | Does graph structure improve the real forecasts tested so far? | Chickenpox is tied with a node-local model and Montevideo geometry loses to persistence. On METR-LA, factorized true transport beats both topology controls on MAE and RMSE in two seeds, but the earlier self-only model still dominates it. | Graph structure measurably affects METR-LA forecasts; it has not improved the best model. Compare bounded convergence before changing architecture or API. |
 | Can tinygrad express JEPA learning over graph patches? | Aligned latent loss falls 90.9%; reversed and positionless controls lose on CPU and Metal while the EMA target receives zero gradient. | Yes. Keep the mechanism research-only until a real representation task justifies a reusable owner. |
 | Can variable-size graph collections stay dependency-free and sparse? | MUTAG lowers 188 graphs and 7,442 labeled directed edges identically on CPU and Metal from one bounded, pinned archive. | Yes. Keep source labels canonical and derive model features with tinygrad operations. |
+| Are the dataset topologies connected and locally shallow? | Exact sparse measurement finds Chickenpox fully reachable, Montevideo weakly connected but only 17.0% directionally reachable, METR-LA split into two weak components with one non-self isolate, and every MUTAG graph connected. | Record topology assumptions with the data evidence. Add no graph-analytics API without a learning caller. |
 | Does Graph-JEPA improve MUTAG representations? | Positionless patch prediction gains 2.48 probe points over its paired random encoder in all three seeds, but exact cosine search regresses every trained arm and every learned arm trails the fixed graph summary. | Continue the minimal positionless mechanism only as representation research. Claim no searchable geometry; keep JEPA, retrieval, and indexing research-only. |
 | Can one sparse graph represent a bounded node-time mesh? | Cartesian products, batched endpoint gathers, and batched GINE pass 30 focused tests on CPU and Metal without dense adjacency. | Yes when joint message passing needs explicit node-time vertices. Keep long fixed-topology sequences factorized. |
 | Does causal JEPA learn a useful node-time representation? | The true-mesh encoder improves over its paired random initialization in all three seeds and test agrees, but spatial-only features beat the joint product in two of three. | Continue the objective as research; reject explicit temporal edges as the incumbent on this task. Promote no JEPA API. |
@@ -73,6 +74,8 @@ They are evidence, not API promises. This page is the current decision ledger;
 
 ## Data boundaries
 
+- [Network measurement](network-measurement.md) — components, direction,
+  degree, reachability, and exact hop distance across the public datasets.
 - [Chickenpox](chickenpox-data.md) — weekly node fields over one pinned graph.
 - [Montevideo bus](montevideo-data.md) — hourly fields, projected positions,
   and road distance.
