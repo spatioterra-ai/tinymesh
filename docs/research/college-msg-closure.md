@@ -10,7 +10,7 @@ The [SNAP CollegeMsg source](https://snap.stanford.edu/data/CollegeMsg.html)
 contains directed private-message events from an online social network at the
 University of California, Irvine. Each row is `source target unix_timestamp`.
 The source page reports no redistribution license, so tinymesh does not commit
-the artifact. The experiment accepts only the 345,339-byte gzip with SHA-256
+the artifact. The public adapter accepts only the 345,339-byte gzip with SHA-256
 `50ae2d98ed3bad9ddb18dbd495a89e5e10cfb8f7e86932827db29fc41b41f9fa`.
 
 ```text
@@ -63,18 +63,19 @@ The pinned graph libraries answer adjacent but different questions:
   bipartite user-item graph, where ordinary user-user triadic closure does not
   apply.
 
-Tinymesh therefore uses no framework container or snapshot policy here. The
-executable evidence consumes only the checksum-pinned message stream, so the
-catalog records no reference gitlink.
+Tinymesh therefore uses no framework container or snapshot policy here.
+`TemporalEdges` retains only aligned event truth, while `college_msg()` owns
+source validation and identity lowering. The executable evidence consumes only
+that public boundary, so the catalog records no reference gitlink.
 
 ## Observation
 
 Revision
-[`2100277`](https://github.com/spatioterra-ai/tinymesh/tree/210027777f43f25850dcbe234f630e174c496b34)
+[`3297990`](https://github.com/spatioterra-ai/tinymesh/tree/32979901b3f29cc5dabc7d27506bee2524003b2c)
 produced this witness:
 
 ```console
-uv run --locked python -m experiments.run college_msg_closure SOURCE=.data/CollegeMsg.txt.gz
+uv run --locked python -m experiments.run college_msg_closure
 ```
 
 | Source property | Observation |
@@ -101,17 +102,21 @@ also not evidence of friendship.
 
 ## Decision
 
-Retain the source boundary and exact closure measurement as research. Promote
-nothing into `src/tinymesh`:
+Promote the reusable source truth and retain the interpretation as research:
 
 ```text
-experiments.college_msg_closure   source policy + bounded measurement
-src/tinymesh                      unchanged
+src/tinymesh.TemporalEdges          ordered event identity + strict prefix
+tinymesh.datasets.college_msg       checksum + source identity lowering
+experiments.college_msg_closure     first-contact projection + measurement
 ```
 
-The dataset is useful for studying temporal closure, repeated interaction,
-embeddedness, and local bridges as the network chapter develops. Any predictive
-stage must first freeze controls for activity, degree, recency, temporal splits,
-and negative sampling. A reusable temporal-relation carrier needs a second
-runtime caller with the same semantics; MBTA's event-as-node mesh does not meet
-that condition.
+CollegeMsg is the live public caller for aligned temporal edges; the closure
+experiment proves that the carrier retains every count from the earlier
+experiment-owned parser. No `Graph` snapshot, undirected projection, durable
+tie, feature tensor, or model follows automatically from an interaction event.
+
+The dataset is now available for studying temporal closure, repeated
+interaction, embeddedness, and local bridges as the network chapter develops.
+Any predictive stage must first freeze controls for activity, degree, recency,
+temporal splits, and negative sampling. MBTA's event-as-node mesh remains a
+different ontology and does not need to share this carrier.
