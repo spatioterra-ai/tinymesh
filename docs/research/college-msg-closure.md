@@ -116,7 +116,9 @@ experiment-owned parser. No `Graph` snapshot, undirected projection, durable
 tie, feature tensor, or model follows automatically from an interaction event.
 
 The dataset is now available for studying temporal closure, repeated
-interaction, embeddedness, and local bridges as the network chapter develops.
+interaction, embeddedness, and local bridges. The separate
+[tie-structure record](college-msg-ties.md) owns final-graph strength, overlap,
+and fragmentation policies.
 Any predictive stage must first freeze controls for activity, degree, recency,
 temporal splits, and negative sampling. MBTA's event-as-node mesh remains a
 different ontology and does not need to share this carrier.

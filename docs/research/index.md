@@ -79,6 +79,8 @@ They are evidence, not API promises. This page is the current decision ledger;
   degree, reachability, and exact hop distance across the public datasets.
 - [CollegeMsg temporal closure](college-msg-closure.md) — first contacts,
   prior wedges, exact pair-time exposure, and the communication boundary.
+- [CollegeMsg tie structure](college-msg-ties.md) — separate communication
+  strength views, neighborhood overlap, local bridges, and edge-removal curves.
 - [Chickenpox](chickenpox-data.md) — weekly node fields over one pinned graph.
 - [Montevideo bus](montevideo-data.md) — hourly fields, projected positions,
   and road distance.
