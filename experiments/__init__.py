@@ -77,6 +77,7 @@ CATALOG = {
             "submodules/torch-spatiotemporal",
         ),
     ),
+    "college_msg_closure": Experiment("data", "research-only", ("SOURCE",), references=()),
     "gtfs_schedule": Experiment("data", "research-only", ()),
     "gtfs_realtime": Experiment("data", "research-only", ()),
     "gtfs_transition": Experiment("data", "research-only", ()),
