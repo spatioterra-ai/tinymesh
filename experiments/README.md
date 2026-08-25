@@ -37,7 +37,14 @@ SHA-256
 
 ```console
 uv run --locked python -m experiments.run college_msg_closure
+uv run --locked python -m experiments.run college_msg_ties SEED=0
 ```
 
 `SOURCE=/path/to/CollegeMsg.txt.gz` selects an already-downloaded copy; the
 same size and checksum validation applies.
+
+`college_msg_ties` projects the complete stream to one final undirected contact
+graph, keeps message count, active days, and reciprocity as separate observed
+strength views, and compares seeded weak-first, strong-first, and random edge
+removal. It does not label friendship or promote graph analytics into the
+library.
