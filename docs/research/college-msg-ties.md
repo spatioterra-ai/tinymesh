@@ -88,6 +88,22 @@ ten-percent checkpoints, including zero and complete removal.
 | Active days | 0.6880 | 0.7803 | 0.7447 | 1,476 | 1,716 | 1,611 |
 | Reciprocity | 0.6768 | 0.7816 | 0.7447 | 1,354 | 1,749 | 1,611 |
 
+Two clean sensitivity runs at revision
+[`e05b08d`](https://github.com/spatioterra-ai/tinymesh/tree/e05b08d8946c39e05a56f48904764b46246856a6)
+changed both the within-strength tie order and random baseline:
+
+```console
+uv run --locked python -m experiments.run college_msg_ties SEED=1
+uv run --locked python -m experiments.run college_msg_ties SEED=2
+```
+
+Across all three seeds, message-count weak-first means span
+`0.6347-0.6369` versus `0.8011-0.8024` strong-first; active-day means span
+`0.6845-0.6880` versus `0.7738-0.7803`; and reciprocity means span
+`0.6750-0.6768` versus `0.7787-0.7816`. The random means span
+`0.7367-0.7447`. The ordering therefore survives this bounded sensitivity
+check, though three seeds do not remove the projection confounders.
+
 For reciprocity, weak-first removes one-way contacts before reciprocal contacts;
 strong-first reverses that order. These curves support the descriptive weak-tie
 pattern in this projection. They do not estimate what would happen if social
